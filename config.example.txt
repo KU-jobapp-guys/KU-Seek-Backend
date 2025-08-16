@@ -1,0 +1,5 @@
+OPENAPI_STUB_DIR = "swagger_server"
+DB_USER = <Your Username>
+DB_PASSWORD = <Your Password>
+DB_HOST = <Your Database Host>
+DB_PORT = <Your Database Port>
