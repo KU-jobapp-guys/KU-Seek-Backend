@@ -5,5 +5,6 @@ python_dateutil >= 2.6.0
 PyMySQL>=1.1.1
 DBUtils>=3.1.0
 cryptography
+python-decouple
 
 -r swagger_server/requirements.txt

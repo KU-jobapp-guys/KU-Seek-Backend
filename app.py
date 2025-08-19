@@ -1,14 +1,15 @@
 import sys
 import os
+from decouple import config
 
-if not os.path.exists("config.py"):
+if not os.path.exists(".env"):
     print(
-        "Configuration 'config.py' not found.  "
-        "You may create one from 'config.py.example'."
+        ".env file not found."
+        "You may create one from 'same-env.txt'."
     )
     sys.exit(1)
 
-from config import OPENAPI_STUB_DIR
+OPENAPI_STUB_DIR = config('OPENAPI_STUB_DIR', default='swagger_server')
 
 if not os.path.exists(OPENAPI_STUB_DIR):
     print(

@@ -1,22 +1,21 @@
 import sys
-
-from config import OPENAPI_STUB_DIR
-
-sys.path.append(OPENAPI_STUB_DIR)
-
 import pymysql
 from dbutils.pooled_db import PooledDB
-from config import DB_HOST, DB_PASSWORD, DB_USER, DB_NAME, DB_PORT
+from decouple import config
 from typing import List, Dict, Optional
 
 
+OPENAPI_STUB_DIR = config('OPENAPI_STUB_DIR', default='swagger_server')
+
+sys.path.append(OPENAPI_STUB_DIR)
+
 pool = PooledDB(
     creator=pymysql,
-    host=DB_HOST,
-    port=DB_PORT,
-    user=DB_USER,
-    password=DB_PASSWORD,
-    database=DB_NAME,
+    host=config('DB_HOST', default='127.0.0.1'),
+    port=config('DB_PORT', cast=int, default='1234'),
+    user=config('DB_USER', default='root'),
+    password=config('DB_PASSWORD', default='mysecrtpw123'),
+    database=config('DB_NAME', default='defaultdb'),
     maxconnections=1,
     connect_timeout=10,
     blocking=True,
