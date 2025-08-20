@@ -18,7 +18,7 @@ DB_NAME     = {your database}
 ```
 
 ## Running the backend (API service)
-1. docker compose up
+1. docker compose up -d db
 or to run manually (ensure your database is running)
 1. create a virtual env. <br>```python -m venv env```
 2. Activate the virtual environment.<br>
