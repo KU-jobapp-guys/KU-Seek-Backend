@@ -1,11 +1,13 @@
 import sys
 import os
-from decouple import config
+from decouple import config, Csv
+from flask_cors import CORS
+
 
 if not os.path.exists(".env"):
     print(
         ".env file not found."
-        "You may create one from 'same-env.txt'."
+        "You may create one from 'sample-env.txt'."
     )
     sys.exit(1)
 
@@ -30,7 +32,7 @@ except ModuleNotFoundError:
     )
     sys.exit(1)
 
-from openapi_server import encoder
+from openapi_server import encoder # noqa: E402
 
 
 def create_app():
@@ -41,6 +43,7 @@ def create_app():
         arguments={"title": "KU SEEK API"},
         pythonic_params=True,
     )
+    CORS(app.app)
     return app
 
 app = create_app()

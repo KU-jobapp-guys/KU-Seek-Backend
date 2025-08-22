@@ -125,14 +125,14 @@ def get_task_by_id(task_id: str) -> Optional[Dict]:
     return execute_query(query, fetchone=True)
 
 
-def update_task(task_id: str, task_data: Dict) -> Optional[Dict]:
+def update_task(task_id: str, body: Dict) -> Optional[Dict]:
     """
     Updates an existing task identified by its ID in the MySQL database.
     Corresponds to: PUT /api/v1/test/tasks/{id}
 
     Args:
         task_id (str): The unique ID of the task to update.
-        task_data (Dict): A dictionary containing the updated task information.
+        body (Dict): A dictionary containing the updated task information.
                           Fields like 'name' and 'completed' can be updated.
 
     Returns:
@@ -140,10 +140,10 @@ def update_task(task_id: str, task_data: Dict) -> Optional[Dict]:
     """
     update_fields = []
 
-    if 'name' in task_data:
-        update_fields.append(f"""name = '{task_data['name']}'""")
-    if 'completed' in task_data:
-        update_fields.append(f"completed = {task_data['completed']}")
+    if 'name' in body:
+        update_fields.append(f"""name = '{body['name']}'""")
+    if 'completed' in body:
+        update_fields.append(f"completed = {body['completed']}")
 
     if not update_fields:
         return get_task_by_id(task_id)
