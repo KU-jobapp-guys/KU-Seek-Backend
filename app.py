@@ -1,14 +1,16 @@
+"""Module for running the flask application."""
+
 import sys
 import os
+from decouple import config, Csv
+from flask_cors import CORS
 
-if not os.path.exists("config.py"):
-    print(
-        "Configuration 'config.py' not found.  "
-        "You may create one from 'config.py.example'."
-    )
+
+if not os.path.exists(".env"):
+    print(".env file not found." "You may create one from 'sample-env.txt'.")
     sys.exit(1)
 
-from config import OPENAPI_STUB_DIR
+OPENAPI_STUB_DIR = config("OPENAPI_STUB_DIR", default="swagger_server")
 
 if not os.path.exists(OPENAPI_STUB_DIR):
     print(
@@ -29,10 +31,11 @@ except ModuleNotFoundError:
     )
     sys.exit(1)
 
-from openapi_server import encoder
+from openapi_server import encoder  # noqa: E402
 
 
 def create_app():
+    """Setups and configure the application."""
     app = connexion.App(__name__, specification_dir="./openapi/")
     app.app.json_encoder = encoder.JSONEncoder
     app.add_api(
@@ -40,7 +43,12 @@ def create_app():
         arguments={"title": "KU SEEK API"},
         pythonic_params=True,
     )
+    CORS(
+        app.app,
+        origins=config("ALLOWED_ORIGINS", cast=Csv(), default="http://localhost:5173"),
+    )
     return app
+
 
 app = create_app()
 

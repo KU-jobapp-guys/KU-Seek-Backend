@@ -9,24 +9,110 @@ servers:
   - url: /api/v1
 
 paths:
-  /test/{var}:
-    parameters:
-      - name: var
-        in: path
-        required: true
-        description: Variable to return
-        schema:
-          type: string
+  /test/tasks:
     get:
-      summary: Returns the Variable
-      operationId: controller.test_api
+      summary: Get all tasks in the database
+      operationId: controller.get_all_tasks
       responses:
         200:
-          description: Success
+          description: A list of tasks
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  var:
-                    type: string
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+    post:
+      summary: Create a new task
+      operationId: controller.create_task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskInput'
+      responses:
+        201:
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+  /test/tasks/{task_id}:
+    parameters:
+      - name: task_id
+        in: path
+        required: true
+        description: The ID of the task
+        schema:
+          type: string
+    get:
+      summary: Get a single task by ID
+      operationId: controller.get_task_by_id
+      responses:
+        200:
+          description: A single task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        404:
+          description: Task not found
+    put:
+      summary: Update an existing task
+      operationId: controller.update_task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskInput'
+      responses:
+        200:
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        404:
+          description: Task not found
+    delete:
+      summary: Delete a task
+      operationId: controller.delete_task
+      responses:
+        204:
+          description: Task deleted successfully
+        404:
+          description: Task not found
+
+components:
+  schemas:
+    Task:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: The unique identifier for a task
+        name:
+          type: string
+          description: The name of the task
+        completed:
+          type: boolean
+          description: The completion status of the task
+          default: false
+    TaskInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: The name of the task
+        completed:
+          type: boolean
+          description: The completion status of the task
+          default: false
