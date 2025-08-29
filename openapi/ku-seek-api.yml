@@ -55,7 +55,7 @@ paths:
   /test/tasks:
     get:
       summary: Get all tasks in the database
-      operationId: controllers.task_controller.get_all_tasks
+      operationId: controllers.controller.get_all_tasks
       responses:
         200:
           description: A list of tasks
@@ -67,7 +67,7 @@ paths:
                   $ref: '#/components/schemas/Task'
     post:
       summary: Create a new task
-      operationId: controllers.task_controller.create_task
+      operationId: controllers.controller.create_task
       requestBody:
         required: true
         content:
@@ -92,7 +92,7 @@ paths:
           type: string
     get:
       summary: Get a single task by ID
-      operationId: controllers.task_controller.get_task_by_id
+      operationId: controllers.controller.get_task_by_id
       responses:
         200:
           description: A single task
@@ -104,7 +104,7 @@ paths:
           description: Task not found
     put:
       summary: Update an existing task
-      operationId: controllers.task_controller.update_task
+      operationId: controllers.controller.update_task
       requestBody:
         required: true
         content:
@@ -122,7 +122,7 @@ paths:
           description: Task not found
     delete:
       summary: Delete a task
-      operationId: controllers.task_controller.delete_task
+      operationId: controllers.controller.delete_task
       responses:
         204:
           description: Task deleted successfully
