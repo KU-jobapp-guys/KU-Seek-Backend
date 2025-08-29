@@ -24,6 +24,34 @@ paths:
                   csrf_token: 
                     type: string
 
+
+  /auth/oauth:
+    post:
+      summary: Login or Register a user and return user credentials.
+      operationId: controllers.auth_controller.handle_authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                  description: The grant code from the oauth2 flow
+      responses: 
+        200:
+          description: return client_id and access/refresh tokens
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserCredentials'
+        400:
+          description: Invalid authorization code 
+
+
   /test/tasks:
     get:
       summary: Get all tasks in the database
@@ -131,3 +159,33 @@ components:
           type: boolean
           description: The completion status of the task
           default: false
+    UserCredentials:
+      type: object
+      required:
+        - uid
+        - access_token
+        - refresh_token
+      properties:
+        uid:
+          type: string
+          description: The user's uid
+        access_token:
+          $ref: '#/components/schemas/token'
+        refresh_token:
+          $ref: '#/components/schemas/token'
+    token:
+      type: object
+      required:
+        - token
+        - issued
+        - expire
+      properties:
+        token:
+          type: string
+          description: The token itself
+        issued:
+          type: string
+          description: The token's issued time in UTC
+        expire:
+          type: string
+          description: The token's expiry time in UTC
