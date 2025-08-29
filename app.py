@@ -47,7 +47,13 @@ def create_app():
     # setup CORS Allowed origins
     CORS(
         app.app,
-        resources={r"/*": {"origins": config("ALLOWED_ORIGINS", cast=Csv(), default="http://localhost:5173")}},
+        resources={
+            r"/*": {
+                "origins": config(
+                    "ALLOWED_ORIGINS", cast=Csv(), default="http://localhost:5173"
+                )
+            }
+        },
     )
     # setup CSRF
     app.app.secret_key = config("SECRET_KEY", default="very-secure-secret-key")

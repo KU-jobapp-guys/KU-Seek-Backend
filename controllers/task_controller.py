@@ -21,7 +21,6 @@ class TaskController(BaseController):
         query = "SELECT * FROM tasks;"
         return self.execute_query(query, fetchall=True)
 
-
     def create_task(self, body: Dict) -> Dict:
         """
         Create a new task from the request body.
@@ -46,7 +45,6 @@ class TaskController(BaseController):
         query = f"INSERT INTO tasks (name, completed) VALUES ('{name}', {completed});"
         return self.execute_query(query, commit=True)
 
-
     def get_task_by_id(self, task_id: str) -> Optional[Dict]:
         """
         Return a task in the database with the corresponding id.
@@ -61,7 +59,6 @@ class TaskController(BaseController):
         """
         query = f"SELECT * FROM tasks WHERE id = {task_id};"
         return self.execute_query(query, fetchone=True)
-
 
     def update_task(self, task_id: str, body: Dict) -> Optional[Dict]:
         """
@@ -91,7 +88,6 @@ class TaskController(BaseController):
 
         self.execute_query(query, commit=True)
         return self.get_task_by_id(task_id)
-
 
     def delete_task(self, task_id: str) -> bool:
         """

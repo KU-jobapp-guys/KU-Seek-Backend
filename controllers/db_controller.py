@@ -1,6 +1,5 @@
 """Module containing the base class for all controllers."""
 
-
 import sys
 import pymysql
 from dbutils.pooled_db import PooledDB
@@ -12,7 +11,7 @@ OPENAPI_STUB_DIR = config("OPENAPI_STUB_DIR", default="swagger_server")
 sys.path.append(OPENAPI_STUB_DIR)
 
 
-class BaseController():
+class BaseController:
     """Base class for creating controllers."""
 
     def __init__(self):
@@ -95,4 +94,4 @@ class BaseController():
             if cursor:
                 cursor.close()
             if conn:
-                conn.close()   
+                conn.close()
