@@ -15,6 +15,9 @@ DB_PASSWORD = {your user password}
 DB_HOST     = {database host IP}
 DB_PORT     = {port of the database} # must be int
 DB_NAME     = {your database}
+ALLOWED_ORIGINS =  {the frontend host or http://localhost:5173 for default configuration}
+CLIENT_SECRETS_FILE = {the file path to your client secrets}
+CLIENT_ID = {Your google cloud console client ID}
 ```
 
 ## Running the backend (API service)

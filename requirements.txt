@@ -9,5 +9,6 @@ python-decouple
 flask-cors
 google-api-python-client
 google-auth-oauthlib
+PyJWT
 
 -r swagger_server/requirements.txt
