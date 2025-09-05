@@ -173,19 +173,20 @@ components:
           $ref: '#/components/schemas/token'
         refresh_token:
           $ref: '#/components/schemas/token'
+    error_message:
+      type: object
+      properties:
+        message:
+          type: string
     token:
       type: object
       required:
-        - token
-        - issued
-        - expire
+        - access_token
+        - refresh_token
       properties:
-        token:
+        access_token:
           type: string
-          description: The token itself
-        issued:
+          description: The access token
+        refresh_token:
           type: string
-          description: The token's issued time in UTC
-        expire:
-          type: string
-          description: The token's expiry time in UTC
+          description: The refresh token
