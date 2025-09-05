@@ -1,5 +1,6 @@
 """Module for sending csrf-tokens."""
 
+import random
 from typing import Dict, TypedDict
 from flask import jsonify
 from flask_wtf.csrf import generate_csrf
@@ -9,6 +10,7 @@ from google.auth.transport import requests
 from decouple import config
 from .db_controller import BaseController
 from jwt import encode
+from swagger_server.openapi_server import models
 from datetime import datetime, timedelta, UTC
 
 
@@ -52,18 +54,26 @@ def handle_authentication(body: Dict):
     redirect_uri = config("REDIRECT_URI", default="http://localhost:5173/login")
 
     # Create the OAuth flow
-    flow = Flow.from_client_secrets_file(
-        client_secrets_file,
-        scopes=[
-            "openid",
-            "https://www.googleapis.com/auth/userinfo.email",
-            "https://www.googleapis.com/auth/userinfo.profile",
-        ],
-        redirect_uri=redirect_uri,
-    )
+    try:
+        flow = Flow.from_client_secrets_file(
+            client_secrets_file,
+            scopes=[
+                "openid",
+                "https://www.googleapis.com/auth/userinfo.email",
+                "https://www.googleapis.com/auth/userinfo.profile",
+            ],
+            redirect_uri=redirect_uri,
+        )
+    except Exception as e:
+        return models.ErrorMessage(
+            f"Error during flow setup invalid flow credentails, {e}"
+        ), 400
 
     # Exchange the authorization code for tokens
-    flow.fetch_token(code=body["code"])
+    try:
+        flow.fetch_token(code=body["code"])
+    except Exception as e:
+        return models.ErrorMessage(f"Invalid authorization code, {e}"), 400
 
     credentials = flow.credentials
 
@@ -77,25 +87,33 @@ def handle_authentication(body: Dict):
 
     auth_controller = AuthenticationController()
 
-    is_registered = auth_controller.check_users(id_info["sub"])
+    try:
+        is_registered = auth_controller.check_users(id_info["sub"])
+    except Exception as e:
+        return models.ErrorMessage(f"Database error occured, {e}"), 400
 
     user_jwt = {}
-    if is_registered:
-        user = auth_controller.get_user(id_info["sub"])
-        user_jwt = auth_controller.login_user(user)
-    else:
-        # hardcoding to company for now, since KU auth is not created
-        user = auth_controller.register_user(
-            {
-                "username": id_info["email"],
-                "password": id_info["at_hash"],
-                "user_type": "company",
-            },
-            id_info,
-        )
-        user_jwt = auth_controller.login_user(user)
+    try:
+        if is_registered:
+            user = auth_controller.get_user(id_info["sub"])
+            user_jwt, refresh = auth_controller.login_user(user)
+        else:
+            # hardcoding to company for now, since KU auth is not created
+            user = auth_controller.register_user(
+                {
+                    "username": id_info["email"],
+                    "password": id_info["at_hash"],
+                    "user_type": "company",
+                },
+                id_info,
+            )
+            user_jwt, refresh = auth_controller.login_user(user)
 
-    return user_jwt
+        return models.Token(user_jwt, refresh)
+    except Exception as e:
+        return models.ErrorMessage(
+            f"Database error occured during authentication, {e}"
+        ), 400
 
 
 class AuthenticationController(BaseController):
@@ -116,16 +134,30 @@ class AuthenticationController(BaseController):
 
     def login_user(self, uid: str) -> Dict[str, str]:
         """Return a JTW for authorization."""
-        refresh = {
-            "iat": datetime.now(UTC).isoformat(),
-            "exp": (datetime.now(UTC) + timedelta(hours=1)).isoformat(),
-        }
+        # access token generation
+        iat = (datetime.now(UTC).isoformat(),)
+        exp = ((datetime.now(UTC) + timedelta(hours=1)).isoformat(),)
 
-        payload = {"uid": uid, "refresh_token": refresh}
+        payload = {"uid": uid, "iat": iat, "exp": exp}
 
         auth_token = encode(payload, SECRET_KEY, algorithm="HS512")
 
-        return {"user_token": auth_token}
+        # refresh token generation
+        refresh_id = random.getrandbits(32)
+        iat = (datetime.now(UTC).isoformat(),)
+        exp = ((datetime.now(UTC) + timedelta(days=30)).isoformat(),)
+
+        payload = {"uid": uid, "refresh": refresh_id, "iat": iat, "exp": exp}
+
+        refresh_token = encode(payload, SECRET_KEY, algorithm="HS512")
+        query = f"""
+                INSERT INTO tokens
+                (user_id, refresh_id) 
+                VALUES ({uid}, {refresh_id});
+                """
+        self.execute_query(query, commit=True)
+
+        return auth_token, refresh_token
 
     def get_user(self, google_uid):
         """Return the user id with the matching google_uid."""
