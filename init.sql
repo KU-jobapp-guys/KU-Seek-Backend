@@ -1,37 +1,3 @@
-CREATE TABLE IF NOT EXISTS users (
-id INT NOT NULL AUTO_INCREMENT,
-username  VARCHAR(255) NOT NULL,
-password  VARCHAR(255) NOT NULL,
-user_type VARCHAR(50) NOT NULL,
-PRIMARY KEY (id, username)
-);
-
-CREATE TABLE IF NOT EXISTS user_google_auth_info (
-  user_id INT NOT NULL,
-  google_uid VARCHAR(255) NOT NULL,
-  email VARCHAR(255) NOT NULL,
-  picture VARCHAR(255) NOT NULL,
-  first_name VARCHAR(255),
-  last_name VARCHAR(255),
-  PRIMARY KEY (google_uid),
-  FOREIGN KEY (user_id) REFERENCES users (id)
-);
-
-CREATE TABLE IF NOT EXISTS Company (
-    id INT NOT NULL AUTO_INCREMENT,
-    user_id INT,
-    company_name VARCHAR(255),
-    company_about TEXT,
-    company_type VARCHAR(50),
-    company_industry VARCHAR(100),
-    contact_email VARCHAR(255),
-    company_size VARCHAR(50),
-    company_website VARCHAR(255),
-    location VARCHAR(100),
-    full_location VARCHAR(255),
-    PRIMARY KEY (id)
-);
-
 CREATE TABLE IF NOT EXISTS Job (
     id INT NOT NULL AUTO_INCREMENT,
     company_id INT,
