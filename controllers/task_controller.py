@@ -1,0 +1,110 @@
+"""Module for handing API path logic."""
+
+from typing import List, Dict, Optional
+from .db_controller import BaseController
+
+
+class TaskController(BaseController):
+    """Controller to use CRUD operations for tasks."""
+
+    def __init__(self):
+        """Initialize the class."""
+        super().__init__()
+
+    def get_all_tasks(self) -> List[Dict]:
+        """
+        Return all tasks in the tasks table.
+
+        Retrieves all tasks from the MySQL database.
+        Corresponds to: GET /api/v1/test/tasks
+        """
+        query = "SELECT * FROM tasks;"
+        return self.execute_query(query, fetchall=True)
+
+    def create_task(self, body: Dict) -> Dict:
+        """
+        Create a new task from the request body.
+
+        Creates a new task and inserts it into the MySQL database.
+        Corresponds to: POST /api/v1/test/tasks
+
+        Args:
+            body: A request body containing task information,
+                            expected to have a 'name' field and optionally 'completed'.
+                            Example: {"name": "Buy groceries", "completed": false}
+
+        Returns:
+            Dict: a response message on a sucessful create operation.
+        """
+        if "name" not in body:
+            raise ValueError("Task data must contain a 'name' field.")
+
+        name = body["name"]
+        completed = False
+
+        query = f"INSERT INTO tasks (name, completed) VALUES ('{name}', {completed});"
+        return self.execute_query(query, commit=True)
+
+    def get_task_by_id(self, task_id: str) -> Optional[Dict]:
+        """
+        Return a task in the database with the corresponding id.
+
+        Retrieves a single task by its unique ID from the MySQL database.
+        Corresponds to: GET /api/v1/test/tasks/{id}
+
+        Args:
+            task_id: The unique ID of the task to retrieve.
+
+        Returns: The task dictionary if found, otherwise None.
+        """
+        query = f"SELECT * FROM tasks WHERE id = {task_id};"
+        return self.execute_query(query, fetchone=True)
+
+    def update_task(self, task_id: str, body: Dict) -> Optional[Dict]:
+        """
+        Update a task in the database.
+
+        Updates an existing task identified by its ID in the MySQL database.
+        Corresponds to: PUT /api/v1/test/tasks/{id}.
+
+        Args:
+            task_id: The unique ID of the task to update.
+            body: A dictionary containing the updated task information.
+                            Fields like 'name' and 'completed' can be updated.
+
+        Returns: The updated task dictionary if found and updated, otherwise None.
+        """
+        update_fields = []
+
+        if "name" in body:
+            update_fields.append(f"""name = '{body['name']}'""")
+        if "completed" in body:
+            update_fields.append(f"completed = {body['completed']}")
+
+        if not update_fields:
+            return self.get_task_by_id(task_id)
+
+        query = f"UPDATE tasks SET {', '.join(update_fields)} WHERE id = {task_id};"
+
+        self.execute_query(query, commit=True)
+        return self.get_task_by_id(task_id)
+
+    def delete_task(self, task_id: str) -> bool:
+        """
+        Delete a task in the database.
+
+        Deletes a task identified by its ID from the MySQL database.
+        Corresponds to: DELETE /api/v1/test/tasks/{id}.
+
+        Args:
+            task_id: The unique ID of the task to delete.
+
+        Returns: True if the task was found and deleted, False otherwise.
+        """
+        existing_task = self.get_task_by_id(task_id)
+        if not existing_task:
+            return False
+
+        query = f"DELETE FROM tasks WHERE id = {task_id};"
+        self.execute_query(query, commit=True)
+        return existing_task

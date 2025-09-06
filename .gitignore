@@ -1,6 +1,9 @@
 # Sensitive or Generatable files
 /swagger_server
 config.py
+**/client*
+**/secret*
+**/key*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

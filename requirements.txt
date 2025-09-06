@@ -7,5 +7,9 @@ DBUtils>=3.1.0
 cryptography
 python-decouple
 flask-cors
+flask-WTF
+google-api-python-client
+google-auth-oauthlib
+PyJWT
 
 -r swagger_server/requirements.txt
