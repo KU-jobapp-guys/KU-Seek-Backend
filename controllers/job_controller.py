@@ -16,7 +16,10 @@ class JobController(BaseController):
         Return all jobs in the jobs table.
 
         Retrieves all jobs from the MySQL database.
-        Corresponds to: GET /api/v1/jobs
+        Corresponds to: GET /api/v1/job/all
         """
         query = "SELECT * FROM Job;"
-        return self.execute_query(query, fetchall=True)
+        try:
+            return self.execute_query(query, fetchall=True)
+        except Exception as e:
+            return [{"error": f"Failed to fetch jobs: {str(e)}"}]

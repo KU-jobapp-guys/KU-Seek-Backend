@@ -1,6 +1,7 @@
 """Module containing endpoints for operations."""
 
 from .task_controller import TaskController
+from .job_controller import JobController
 from typing import Dict, Optional
 
 
@@ -30,3 +31,11 @@ def update_task(task_id: str, body: Dict) -> Optional[Dict]:
 def delete_task(task_id: str):
     """Return Placeholder."""
     return task_manager.delete_task(task_id)
+
+
+job_manager = JobController()
+
+
+def get_all_jobs():
+    """Return all Jobs."""
+    return job_manager.get_all_jobs()
