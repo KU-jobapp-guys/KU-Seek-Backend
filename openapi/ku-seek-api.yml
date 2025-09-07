@@ -51,7 +51,7 @@ paths:
         400:
           description: Invalid authorization code 
 
-  /job/all:
+  /jobs:
     get:
       summary: Get all jobs in the database
       operationId: controllers.controller.get_all_jobs

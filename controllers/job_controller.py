@@ -16,7 +16,7 @@ class JobController(BaseController):
         Return all jobs in the jobs table.
 
         Retrieves all jobs from the MySQL database.
-        Corresponds to: GET /api/v1/job/all
+        Corresponds to: GET /api/v1/jobs
         """
         try:
             jobs_query = """
