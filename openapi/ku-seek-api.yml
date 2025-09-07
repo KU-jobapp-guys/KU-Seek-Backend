@@ -9,10 +9,53 @@ servers:
   - url: /api/v1
 
 paths:
+  /csrf-token:
+    get:
+      summary: Get a csrf-token for form validation
+      operationId: controllers.auth_controller.get_csrf_token
+      responses:
+        200:
+          description: Return a csrf-token for validation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  csrf_token: 
+                    type: string
+
+
+  /auth/oauth:
+    post:
+      summary: Login or Register a user and return user credentials.
+      operationId: controllers.auth_controller.handle_authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                  description: The grant code from the oauth2 flow
+      responses: 
+        200:
+          description: return client_id and access/refresh tokens
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserCredentials'
+        400:
+          description: Invalid authorization code 
+
+
   /test/tasks:
     get:
       summary: Get all tasks in the database
-      operationId: controller.get_all_tasks
+      operationId: controllers.controller.get_all_tasks
       responses:
         200:
           description: A list of tasks
@@ -24,7 +67,7 @@ paths:
                   $ref: '#/components/schemas/Task'
     post:
       summary: Create a new task
-      operationId: controller.create_task
+      operationId: controllers.controller.create_task
       requestBody:
         required: true
         content:
@@ -49,7 +92,7 @@ paths:
           type: string
     get:
       summary: Get a single task by ID
-      operationId: controller.get_task_by_id
+      operationId: controllers.controller.get_task_by_id
       responses:
         200:
           description: A single task
@@ -61,7 +104,7 @@ paths:
           description: Task not found
     put:
       summary: Update an existing task
-      operationId: controller.update_task
+      operationId: controllers.controller.update_task
       requestBody:
         required: true
         content:
@@ -79,7 +122,7 @@ paths:
           description: Task not found
     delete:
       summary: Delete a task
-      operationId: controller.delete_task
+      operationId: controllers.controller.delete_task
       responses:
         204:
           description: Task deleted successfully
@@ -116,3 +159,34 @@ components:
           type: boolean
           description: The completion status of the task
           default: false
+    UserCredentials:
+      type: object
+      required:
+        - uid
+        - access_token
+        - refresh_token
+      properties:
+        uid:
+          type: string
+          description: The user's uid
+        access_token:
+          $ref: '#/components/schemas/token'
+        refresh_token:
+          $ref: '#/components/schemas/token'
+    error_message:
+      type: object
+      properties:
+        message:
+          type: string
+    token:
+      type: object
+      required:
+        - access_token
+        - refresh_token
+      properties:
+        access_token:
+          type: string
+          description: The access token
+        refresh_token:
+          type: string
+          description: The refresh token

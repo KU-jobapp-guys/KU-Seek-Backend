@@ -3,3 +3,7 @@ DB_USER = <Your Username>
 DB_PASSWORD = <Your Password>
 DB_HOST = <Your Database Host>
 DB_PORT = <Your Database Port>
+DB_NAME = <Your Database Name>
+ALLOWED_ORIGINS = http://localhost:5173
+CLIENT_SECRETS_FILE = "client_secret.json"
+CLIENT_ID = <Your client google cloud console ID>

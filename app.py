@@ -4,6 +4,7 @@ import sys
 import os
 from decouple import config, Csv
 from flask_cors import CORS
+from flask_wtf import CSRFProtect
 
 
 if not os.path.exists(".env"):
@@ -43,10 +44,21 @@ def create_app():
         arguments={"title": "KU SEEK API"},
         pythonic_params=True,
     )
+    # setup CORS Allowed origins
     CORS(
         app.app,
-        origins=config("ALLOWED_ORIGINS", cast=Csv(), default="http://localhost:5173"),
+        resources={
+            r"/*": {
+                "origins": config(
+                    "ALLOWED_ORIGINS", cast=Csv(), default="http://localhost:5173"
+                )
+            }
+        },
+        supports_credentials=True
     )
+    # setup CSRF (disabling for now)
+    app.app.secret_key = config("SECRET_KEY", default="very-secure-secret-key")
+    # CSRFProtect(app.app)
     return app
 
 
