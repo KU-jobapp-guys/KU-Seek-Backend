@@ -64,6 +64,27 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Job'
+    
+  /jobs/search:
+    post:
+      summary: Get filtered jobs from the database
+      operationId: controllers.controller.get_filtered_jobs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobFilter'
+
+      responses:
+        200:
+          description: A list of filtered jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Job'
 
   /test/tasks:
     get:
@@ -238,6 +259,51 @@ components:
           company:
             $ref: '#/components/schemas/Company'
     
+    JobFilter:
+      type: object
+      properties:
+        role:
+          type: string
+          maxLength: 50
+          description: The job role/position title
+        salary_min:
+          type: number
+          format: float
+          description: Minimum salary offered
+        salary_max:
+          type: number
+          format: float
+          description: Maximum salary offered
+        location:
+          type: string
+          maxLength: 255
+          description: Job location
+        work_hours:
+          type: string
+          maxLength: 20
+          description: Working hours
+        job_type:
+          type: string
+          maxLength: 40
+          description: Type of employment
+          enum: ["full-time", "part-time", "internship", "contract", "freelance"]
+        capacity:
+          type: integer
+          description: Number of positions available
+        company_name:
+          type: string
+          maxLength: 255
+          description: Company Name
+        company_type:
+          type: string
+          maxLength: 50
+          description: Company Type
+        company_industry:
+          type: string
+          maxLength: 100
+          description: Company Industry
+      
+
     JobInput:
       type: object
       required:

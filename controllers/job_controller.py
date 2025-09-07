@@ -72,4 +72,39 @@ class JobController(BaseController):
         Retrieves filtered jobs from the MySQL database.
         Corresponds to: POST /api/v1/jobs/search
         """
-        pass
+        try:
+            filter_key_val = [key + " = " + str(val) for key, val in body.items()]
+
+            sql_condition = " AND ".join(filter_key_val).strip(" AND ")
+            
+            print(sql_condition)
+
+            jobs_query = f"""
+                SELECT Job.*, Company.*
+                FROM Job
+                LEFT JOIN Company ON Job.company_id = Company.id
+                ;
+            """
+            job_rows = self.execute_query(jobs_query, fetchall=True)
+
+
+            skills_query = """
+                SELECT js.job_id, t.id, t.name, t.type
+                FROM Job_skills js
+                JOIN Terms t ON js.skill_id = t.id;
+            """
+            skills_rows = self.execute_query(skills_query, fetchall=True)
+
+
+            tags_query = """
+                SELECT jt.job_id, t.id, t.name
+                FROM Job_Tag jt
+                JOIN Tags t ON jt.tag_id = t.id;
+            """
+            tags_rows = self.execute_query(tags_query, fetchall=True)
+
+
+            return sql_condition
+
+        except Exception as e:
+            return [{"error": str(e)}]
