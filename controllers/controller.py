@@ -2,7 +2,7 @@
 
 from .task_controller import TaskController
 from .job_controller import JobController
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 
 task_manager = TaskController()
@@ -36,6 +36,10 @@ def delete_task(task_id: str):
 job_manager = JobController()
 
 
-def get_all_jobs():
+def get_all_jobs() -> List[Dict]:
     """Return all Jobs."""
     return job_manager.get_all_jobs()
+
+def get_filtered_jobs(body: Dict) -> List[Dict]:
+    """Return filtered Jobs."""
+    return job_manager.get_filtered_job(body)
