@@ -185,29 +185,29 @@ class AuthenticationController(BaseController):
 
         query = f"""
                 INSERT INTO users (username, password, user_type) 
-                VALUES ('{credentials['username']}',
-                        '{credentials['password']}',
-                        '{credentials['user_type']}');
+                VALUES ('{credentials["username"]}',
+                        '{credentials["password"]}',
+                        '{credentials["user_type"]}');
                 """
         self.execute_query(query, commit=True)
 
         query = f"""
                 SELECT * FROM users WHERE 
-                username = '{credentials['username']}' AND
-                password = '{credentials['password']}' AND
-                user_type = '{credentials['user_type']}';
+                username = '{credentials["username"]}' AND
+                password = '{credentials["password"]}' AND
+                user_type = '{credentials["user_type"]}';
                 """
         user = self.execute_query(query, fetchone=True)
 
         query = f"""
                 INSERT INTO user_google_auth_info 
                 (user_id, google_uid, email, picture, first_name, last_name) 
-                VALUES ({user['id']},
-                        '{id_info['sub']}',
-                        '{id_info['email']}',
-                        '{id_info['picture']}',
-                        '{id_info['given_name']}',
-                        '{id_info['family_name']}');
+                VALUES ({user["id"]},
+                        '{id_info["sub"]}',
+                        '{id_info["email"]}',
+                        '{id_info["picture"]}',
+                        '{id_info["given_name"]}',
+                        '{id_info["family_name"]}');
                 """
         self.execute_query(query, commit=True)
         return user["id"]
