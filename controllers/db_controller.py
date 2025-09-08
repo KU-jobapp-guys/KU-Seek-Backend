@@ -1,8 +1,7 @@
 """Module containing the base class for all controllers."""
 
 import sys
-import pymysql
-from dbutils.pooled_db import PooledDB
+from sqlalchemy import create_engine, text
 from decouple import config
 
 
@@ -19,33 +18,28 @@ class BaseController:
         self.pool = self.__get_database()
 
     def __get_database(self):
-        """Get a database instace."""
-        pool = PooledDB(
-            creator=pymysql,
-            host=config("DB_HOST", default="127.0.0.1"),
-            port=config("DB_PORT", cast=int, default="1234"),
-            user=config("DB_USER", default="root"),
-            password=config("DB_PASSWORD", default="mysecrtpw123"),
-            database=config("DB_NAME", default="defaultdb"),
-            maxconnections=1,
-            connect_timeout=10,
-            blocking=True,
-        )
-        try:
-            with pool.connection() as conn:
-                with conn.cursor() as cursor:
-                    cursor.execute("""
-                        CREATE TABLE IF NOT EXISTS tasks (
-                            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                            name VARCHAR(255) NOT NULL,
-                            completed BOOLEAN DEFAULT FALSE
-                        );
-                    """)
-                    conn.commit()
-            print("Database initialized")
-            return pool
+        """Get a database instance."""
+        host=config("DB_HOST", default="127.0.0.1")
+        port=config("DB_PORT", cast=int, default="1234")
+        user=config("DB_USER", default="root")
+        password=config("DB_PASSWORD", default="mysecrtpw123")
+        database=config("DB_NAME", default="defaultdb")
+
+        connection_url = f"mysql+pymysql://{user}:{password}@{host}:{port}/{database}"
+
+        db_engine = create_engine(connection_url,
+                            pool_size=1,
+                            max_overflow=0,
+                            pool_timeout=10,
+                        )
+        
+        try: 
+            with db_engine.connect() as pool:
+                pool.execute(text("SELECT * FROM users"))
+                print("Database initialization sucessful.")
+            return db_engine
         except Exception as e:
-            print(f"Error initializing database pool: {e}")
+            raise ConnectionRefusedError("Could not connect to database,", e)
 
     def execute_query(
         self,
@@ -76,16 +70,15 @@ class BaseController:
         conn = None
         cursor = None
         try:
-            conn = self.pool.connection()
-            cursor = conn.cursor(pymysql.cursors.DictCursor)
-            cursor.execute(query, params)
+            conn = self.pool.connect()
+            res = conn.execute(text(query), params)
             if commit:
                 conn.commit()
 
             if fetchone:
-                return cursor.fetchone()
+                return dict(res.fetchone()._mapping)
             elif fetchall:
-                return cursor.fetchall()
+                return [dict(row._mapping) for row in res.fetchall()]
             return {"message": "Query executed"}
         except Exception as e:
             print(f"Database error during query execution: {e}")
