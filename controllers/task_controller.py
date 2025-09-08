@@ -2,6 +2,7 @@
 
 from typing import List, Dict, Optional
 from .db_controller import BaseController
+from .models.task_model import Task
 
 
 class TaskController(BaseController):
@@ -18,8 +19,10 @@ class TaskController(BaseController):
         Retrieves all tasks from the MySQL database.
         Corresponds to: GET /api/v1/test/tasks
         """
-        query = "SELECT * FROM tasks;"
-        return self.execute_query(query, fetchall=True)
+        session = self.get_session()
+        tasks = session.query(Task).all()
+        session.close()
+        return [task.to_dict() for task in tasks]
 
     def create_task(self, body: Dict) -> Dict:
         """
@@ -40,10 +43,15 @@ class TaskController(BaseController):
             raise ValueError("Task data must contain a 'name' field.")
 
         name = body["name"]
-        completed = False
 
-        query = f"INSERT INTO tasks (name, completed) VALUES ('{name}', {completed});"
-        return self.execute_query(query, commit=True)
+        session = self.get_session()
+        task = Task(name=name)
+        # add the task and commit to save to db
+        session.add(task)
+        session.commit()
+        new_task = task.to_dict()
+        session.close()
+        return new_task
 
     def get_task_by_id(self, task_id: str) -> Optional[Dict]:
         """
@@ -57,8 +65,14 @@ class TaskController(BaseController):
 
         Returns: The task dictionary if found, otherwise None.
         """
-        query = f"SELECT * FROM tasks WHERE id = {task_id};"
-        return self.execute_query(query, fetchone=True)
+        session = self.get_session()
+        task = session.query(Task).where(Task.id == task_id).one_or_none()
+        if not task:
+            session.close()
+            return
+        task = task.to_dict()
+        session.close()
+        return task
 
     def update_task(self, task_id: str, body: Dict) -> Optional[Dict]:
         """
@@ -84,9 +98,17 @@ class TaskController(BaseController):
         if not update_fields:
             return self.get_task_by_id(task_id)
 
-        query = f"UPDATE tasks SET {', '.join(update_fields)} WHERE id = {task_id};"
+        session = self.get_session()
+        task = session.query(Task).where(Task.id == task_id).one()
 
-        self.execute_query(query, commit=True)
+        if "name" in body:
+            task.name = body['name']
+        if "completed" in body:
+            task.completed = body['completed']
+
+        session.commit()
+        session.close()
+            
         return self.get_task_by_id(task_id)
 
     def delete_task(self, task_id: str) -> bool:
@@ -105,6 +127,10 @@ class TaskController(BaseController):
         if not existing_task:
             return False
 
-        query = f"DELETE FROM tasks WHERE id = {task_id};"
-        self.execute_query(query, commit=True)
+        session = self.get_session()
+        task = session.query(Task).where(Task.id == task_id).one()
+        session.delete(task)
+        session.commit()
+        session.close()
+
         return existing_task

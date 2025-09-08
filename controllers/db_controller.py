@@ -2,6 +2,7 @@
 
 import sys
 from sqlalchemy import create_engine, text
+from sqlalchemy.orm import Session
 from decouple import config
 
 
@@ -40,6 +41,10 @@ class BaseController:
             return db_engine
         except Exception as e:
             raise ConnectionRefusedError("Could not connect to database,", e)
+        
+    def get_session(self):
+        """Return a session object for ORM usage."""
+        return Session(self.pool)
 
     def execute_query(
         self,
