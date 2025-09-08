@@ -215,7 +215,6 @@ components:
             type: string
             maxLength: 40
             description: Type of employment
-            enum: ["full-time", "part-time", "internship", "contract", "freelance"]
             example: "full-time"
           status:
             type: string
@@ -286,7 +285,6 @@ components:
           type: string
           maxLength: 40
           description: Type of employment
-          enum: ["full-time", "part-time", "internship", "contract", "freelance"]
         capacity:
           type: integer
           description: Number of positions available
@@ -341,7 +339,6 @@ components:
           type: string
           maxLength: 40
           description: Type of employment
-          enum: ["full-time", "part-time", "internship", "contract", "freelance"]
         visibility:
           type: boolean
           description: Whether the job is visible to students
