@@ -102,13 +102,13 @@ class TaskController(BaseController):
         task = session.query(Task).where(Task.id == task_id).one()
 
         if "name" in body:
-            task.name = body['name']
+            task.name = body["name"]
         if "completed" in body:
-            task.completed = body['completed']
+            task.completed = body["completed"]
 
         session.commit()
         session.close()
-            
+
         return self.get_task_by_id(task_id)
 
     def delete_task(self, task_id: str) -> bool:

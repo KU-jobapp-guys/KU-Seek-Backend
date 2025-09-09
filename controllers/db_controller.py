@@ -20,28 +20,29 @@ class BaseController:
 
     def __get_database(self):
         """Get a database instance."""
-        host=config("DB_HOST", default="127.0.0.1")
-        port=config("DB_PORT", cast=int, default="1234")
-        user=config("DB_USER", default="root")
-        password=config("DB_PASSWORD", default="mysecrtpw123")
-        database=config("DB_NAME", default="defaultdb")
+        host = config("DB_HOST", default="127.0.0.1")
+        port = config("DB_PORT", cast=int, default="1234")
+        user = config("DB_USER", default="root")
+        password = config("DB_PASSWORD", default="mysecrtpw123")
+        database = config("DB_NAME", default="defaultdb")
 
         connection_url = f"mysql+pymysql://{user}:{password}@{host}:{port}/{database}"
 
-        db_engine = create_engine(connection_url,
-                            pool_size=1,
-                            max_overflow=0,
-                            pool_timeout=10,
-                        )
-        
-        try: 
+        db_engine = create_engine(
+            connection_url,
+            pool_size=1,
+            max_overflow=0,
+            pool_timeout=10,
+        )
+
+        try:
             with db_engine.connect() as pool:
                 pool.execute(text("SELECT * FROM users"))
                 print("Database initialization sucessful.")
             return db_engine
         except Exception as e:
             raise ConnectionRefusedError("Could not connect to database,", e)
-        
+
     def get_session(self):
         """Return a session object for ORM usage."""
         return Session(self.pool)
