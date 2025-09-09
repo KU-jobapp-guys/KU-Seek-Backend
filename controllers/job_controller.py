@@ -19,6 +19,23 @@ class JobController(BaseController):
         """
         return self._get_jobs_with_filters({})
 
+    
+    def get_applied_jobs(self) -> List[Dict]:
+        """
+        Return applied jobs from the JobApplication table.
+        Corresponds to: POST /api/v1/applications
+        """
+        try:
+            query = """
+                SELECT *
+                FROM JobApplication ja
+                WHERE ja.student_id;
+            """
+
+            return self.execute_query(query, fetchall=True)  
+
+        except Exception as e:
+            return [{"error": str(e)}]
 
     def get_filtered_job(self, body: Dict) -> List[Dict]:
         """
