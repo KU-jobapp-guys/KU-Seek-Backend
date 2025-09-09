@@ -285,6 +285,14 @@ components:
           type: string
           maxLength: 40
           description: Type of employment
+        term_name:
+          type: string
+          maxLength: 40
+          description: Skill Name
+        tag_name:
+          type: string
+          maxLength: 40
+          description: Tag Name
         capacity:
           type: integer
           description: Number of positions available

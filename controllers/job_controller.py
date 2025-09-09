@@ -34,20 +34,24 @@ class JobController(BaseController):
         For both get_all_jobs and get_filtered_job.
         """
         try:
-            jobs_query, job_params = self._build_jobs_query(filters)
+            job_filters = {key: val for key, val in filters.items() if key not in ['term_name', 'tag_name']}
+            
+            jobs_query, job_params = self._build_jobs_query(job_filters)
             job_rows = self.execute_query(jobs_query, job_params, fetchall=True)
 
             if not job_rows:
                 return [{"message": "No jobs found."}]
 
-            # Get job IDs for filtering skills and tags
             job_ids = [row['id'] for row in job_rows]
             
+            skills_data = self._get_skills_for_jobs(job_ids)
+            tags_data = self._get_tags_for_jobs(job_ids)
 
-            skills_data = self._get_skills_for_jobs(job_ids, filters)
-            tags_data = self._get_tags_for_jobs(job_ids, filters)
+            jobs = self._assemble_job_results(job_rows, skills_data, tags_data)
+            
+            filtered_jobs = self._filter_jobs_by_skills_and_tags(jobs, filters)
 
-            return self._assemble_job_results(job_rows, skills_data, tags_data)
+            return filtered_jobs if filtered_jobs else [{"message": "No jobs found."}]
 
         except Exception as e:
             return [{"error": str(e)}]
@@ -67,9 +71,7 @@ class JobController(BaseController):
         where_conditions = []
         params = []
         
-
         for key, val in filters.items():
-
             if key == 'salary_min':
                 where_conditions.append("Job.salary_min >= %s")
                 params.append(float(val))
@@ -86,10 +88,8 @@ class JobController(BaseController):
                 where_conditions.append(f"Company.{key} = %s")
                 params.append(str(val))
 
-            elif key in ["tag_name", "term_name"]:
-                # We have seperate method to handle this. UwU
-                continue
             else:
+                # Assume it's a Job table column
                 where_conditions.append(f"Job.{key} = %s")
                 params.append(str(val))
         
@@ -101,30 +101,23 @@ class JobController(BaseController):
         return query, params
 
 
-    def _get_skills_for_jobs(self, job_ids: List[int], filters: Dict) -> Dict[int, List[Dict]]:
+    def _get_skills_for_jobs(self, job_ids: List[int]) -> Dict[int, List[Dict]]:
         """
-        Get skills for specific job IDs, optionally filtered by term_name.
+        Get ALL skills for specific job IDs (no filtering).
         Returns dict mapping job_id to list of skills.
         """
         if not job_ids:
             return {}
             
         placeholders = ','.join(['%s'] * len(job_ids))
-        base_query = f"""
+        query = f"""
             SELECT js.job_id, t.id, t.name, t.type
             FROM Job_skills js
             JOIN Terms t ON js.skill_id = t.id
             WHERE js.job_id IN ({placeholders})
         """
         
-        params = job_ids.copy()
-        
-
-        if 'term_name' in filters:
-            base_query += " AND t.name = %s"
-            params.append(str(filters['term_name']))
-        
-        skills_rows = self.execute_query(base_query, params, fetchall=True)
+        skills_rows = self.execute_query(query, job_ids, fetchall=True)
         
         # Group by job_id
         skills_by_job = {}
@@ -141,30 +134,23 @@ class JobController(BaseController):
         return skills_by_job
 
 
-    def _get_tags_for_jobs(self, job_ids: List[int], filters: Dict) -> Dict[int, List[Dict]]:
+    def _get_tags_for_jobs(self, job_ids: List[int]) -> Dict[int, List[Dict]]:
         """
-        Get tags for specific job IDs, optionally filtered by tag_name.
+        Get ALL tags for specific job IDs (no filtering).
         Returns dict mapping job_id to list of tags.
         """
         if not job_ids:
             return {}
             
         placeholders = ','.join(['%s'] * len(job_ids))
-        base_query = f"""
+        query = f"""
             SELECT jt.job_id, t.id, t.name
             FROM Job_Tag jt
             JOIN Tags t ON jt.tag_id = t.id
             WHERE jt.job_id IN ({placeholders})
         """
         
-        params = job_ids.copy()
-        
-
-        if 'tag_name' in filters:
-            base_query += " AND t.name = %s"
-            params.append(str(filters['tag_name']))
-        
-        tags_rows = self.execute_query(base_query, params, fetchall=True)
+        tags_rows = self.execute_query(query, job_ids, fetchall=True)
         
         # Group by job_id
         tags_by_job = {}
@@ -192,16 +178,50 @@ class JobController(BaseController):
         for row in job_rows:
             job = dict(row)
             job_id = job['id']
-            
-            # Extract company data
+    
+
             company = {col.replace('Company.', ''): job.pop(col, None) 
                     for col in company_columns if col in job}
             job['company'] = company
             
-            # Add skills and tags for this job
+
             job['skills'] = skills_data.get(job_id, [])
             job['tags'] = tags_data.get(job_id, [])
             
             jobs.append(job)
         
         return jobs
+
+
+    def _filter_jobs_by_skills_and_tags(self, jobs: List[Dict], filters: Dict) -> List[Dict]:
+        """
+        Filter jobs based on term_name (skills) and tag_name after retrieving all data.
+        Removes entire jobs that don't have matching skills or tags.
+        """
+        filtered_jobs = []
+        
+        for job in jobs:
+            should_include = True
+            
+
+            if 'term_name' in filters:
+                term_name = filters['term_name']
+                skill_names = [skill['name'] for skill in job.get('skills', [])]
+                
+
+                if term_name not in skill_names:
+                    should_include = False
+            
+
+            if 'tag_name' in filters and should_include:  
+                tag_name = filters['tag_name']
+                tag_names = [tag['name'] for tag in job.get('tags', [])]
+                
+                if tag_name not in tag_names:
+                    should_include = False
+            
+            if should_include:
+                filtered_jobs.append(job)
+        
+        return filtered_jobs
+
