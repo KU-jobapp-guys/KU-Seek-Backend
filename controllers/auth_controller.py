@@ -145,7 +145,7 @@ class AuthenticationController(BaseController):
         iat = (datetime.now(UTC).isoformat(),)
         exp = ((datetime.now(UTC) + timedelta(hours=1)).isoformat(),)
 
-        payload = {"uid": uid, "iat": iat, "exp": exp}
+        payload = {"uid": str(uid), "iat": iat, "exp": exp}
 
         auth_token = encode(payload, SECRET_KEY, algorithm="HS512")
 
@@ -154,7 +154,7 @@ class AuthenticationController(BaseController):
         iat = (datetime.now(UTC).isoformat(),)
         exp = ((datetime.now(UTC) + timedelta(days=30)).isoformat(),)
 
-        payload = {"uid": uid, "refresh": refresh_id, "iat": iat, "exp": exp}
+        payload = {"uid": str(uid), "refresh": refresh_id, "iat": iat, "exp": exp}
 
         refresh_token = encode(payload, SECRET_KEY, algorithm="HS512")
 
@@ -195,7 +195,7 @@ class AuthenticationController(BaseController):
 
         session = self.get_session()
         user = User(
-            google_uid=id_info,
+            google_uid=id_info['sub'],
             email=credentials["username"],
             password=credentials["password"],
         )
@@ -205,4 +205,4 @@ class AuthenticationController(BaseController):
         user_id = user.id
         session.close()
 
-        return user_id
+        return str(user_id)
