@@ -10,7 +10,7 @@ class User(BaseModel):
     """Base user model."""
 
     __tablename__ = "User"
-    id: Mapped[uuid.UUID] = MappedColumn(primary_key=True)
+    id: Mapped[uuid.UUID] = MappedColumn(primary_key=True, default=uuid.uuid4)
     google_uid: Mapped[str] = MappedColumn(String(100), nullable=False)
     email: Mapped[str] = MappedColumn(String(100), nullable=False)
     password: Mapped[str] = MappedColumn(String(100))
