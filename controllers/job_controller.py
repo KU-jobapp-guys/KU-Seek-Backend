@@ -2,6 +2,7 @@
 
 from typing import List, Dict, Optional
 from .db_controller import BaseController
+from flask import jsonify
 
 
 class JobController(BaseController):
@@ -20,22 +21,23 @@ class JobController(BaseController):
         return self._get_jobs_with_filters({})
 
     
-    def get_applied_jobs(self) -> List[Dict]:
+    def get_applied_jobs(self, user_id: str) -> List[Dict]:
         """
         Return applied jobs from the JobApplication table.
         Corresponds to: POST /api/v1/applications
         """
         try:
-            query = """
+            query = f"""
                 SELECT *
                 FROM JobApplication ja
-                WHERE ja.student_id;
+                WHERE ja.student_id={user_id};
             """
 
-            return self.execute_query(query, fetchall=True)  
+            return jsonify(self.execute_query(query, fetchall=True)), 200  
 
         except Exception as e:
             return [{"error": str(e)}]
+
 
     def get_filtered_job(self, body: Dict) -> List[Dict]:
         """

@@ -85,6 +85,26 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Job'
+  
+  /applications:
+    get:
+      summary: Get all applied jobs in the database
+      operationId: controllers.controller.get_applied_jobs
+      parameters:
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        200:
+          description: A list of applied jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Job'
 
   /test/tasks:
     get:

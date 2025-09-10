@@ -5,6 +5,7 @@ from .job_controller import JobController
 from typing import Dict, Optional, List
 
 
+
 task_manager = TaskController()
 
 
@@ -43,3 +44,10 @@ def get_all_jobs() -> List[Dict]:
 def get_filtered_jobs(body: Dict) -> List[Dict]:
     """Return filtered Jobs."""
     return job_manager.get_filtered_job(body)
+
+
+def get_applied_jobs(user_id: str) -> List[Dict]:
+    """Return applied Jobs."""  
+    return job_manager.get_applied_jobs(user_id)
+
+
