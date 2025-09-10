@@ -13,11 +13,13 @@ class JobController(BaseController):
         super().__init__()
     
 
-    def get_all_jobs(self) -> List[Dict]:
+    def get_all_jobs(self, job_id: str) -> List[Dict]:
         """
         Return all jobs in the jobs table.
         Corresponds to: GET /api/v1/jobs
         """
+        if job_id:
+            return self._get_jobs_with_filters({"id": job_id})
         return self._get_jobs_with_filters({})
 
     

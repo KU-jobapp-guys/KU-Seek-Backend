@@ -37,9 +37,9 @@ def delete_task(task_id: str):
 job_manager = JobController()
 
 
-def get_all_jobs() -> List[Dict]:
+def get_all_jobs(job_id: str = "") -> List[Dict]:
     """Return all Jobs."""
-    return job_manager.get_all_jobs()
+    return job_manager.get_all_jobs(job_id)
 
 def get_filtered_jobs(body: Dict) -> List[Dict]:
     """Return filtered Jobs."""
