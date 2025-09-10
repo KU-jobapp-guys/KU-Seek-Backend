@@ -24,13 +24,31 @@ class JobController(BaseController):
     def get_applied_jobs(self, user_id: str) -> List[Dict]:
         """
         Return applied jobs from the JobApplication table.
-        Corresponds to: POST /api/v1/applications
+        Corresponds to: GET /api/v1/applications
         """
         try:
             query = f"""
                 SELECT *
                 FROM JobApplication ja
                 WHERE ja.student_id={user_id};
+            """
+
+            return jsonify(self.execute_query(query, fetchall=True)), 200  
+
+        except Exception as e:
+            return [{"error": str(e)}]
+    
+
+    def get_bookmark_jobs(self, user_id: str) -> List[Dict]:
+        """
+        Return applied jobs from the Bookmarked table.
+        Corresponds to: GET /api/v1/bookmarks
+        """
+        try:
+            query = f"""
+                SELECT *
+                FROM Bookmark b
+                WHERE b.student_id={user_id};
             """
 
             return jsonify(self.execute_query(query, fetchall=True)), 200  
