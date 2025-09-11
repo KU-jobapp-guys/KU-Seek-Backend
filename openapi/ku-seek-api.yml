@@ -216,7 +216,7 @@ components:
         required:
           - id
           - company_id
-          - role
+          - title
           - status
           - created_at
         properties:
@@ -232,10 +232,10 @@ components:
             type: string
             description: Detailed description of the job
             example: "We are looking for a passionate software developer to join our team (Just Kidding)..."
-          role:
+          title:
             type: string
             maxLength: 50
-            description: The job role/position title
+            description: The job title/position title
             example: "Software Developer"
           salary_min:
             type: number
@@ -262,6 +262,11 @@ components:
             maxLength: 40
             description: Type of employment
             example: "full-time"
+          job_level:
+            type: string
+            maxLength: 40
+            description: Type of Job Level. 
+            example: "internship, entry-level, mid-level, Senior-level"
           status:
             type: string
             maxLength: 20
@@ -307,10 +312,10 @@ components:
     JobFilter:
       type: object
       properties:
-        role:
+        title:
           type: string
           maxLength: 50
-          description: The job role/position title
+          description: The job title/position title
         salary_min:
           type: number
           format: float
@@ -331,7 +336,12 @@ components:
           type: string
           maxLength: 40
           description: Type of employment
-        term_name:
+        job_level:
+            type: string
+            maxLength: 40
+            description: Type of Job Level. 
+            example: "internship, entry-level, mid-level, Senior-level"
+        skill_name:
           type: string
           maxLength: 40
           description: Skill Name
@@ -342,6 +352,11 @@ components:
         capacity:
           type: integer
           description: Number of positions available
+        end_date:
+            type: string
+            format: date-time
+            description: Application deadline
+            example: "2025-12-31T23:59:59Z"
         company_name:
           type: string
           maxLength: 255
@@ -360,7 +375,7 @@ components:
       type: object
       required:
         - company_id
-        - role
+        - title
       properties:
         company_id:
           type: integer
@@ -369,10 +384,10 @@ components:
         description:
           type: string
           description: Detailed description of the job
-        role:
+        title:
           type: string
           maxLength: 50
-          description: The job role/position title
+          description: The job title/position title
         salary_min:
           type: number
           format: float
@@ -393,6 +408,11 @@ components:
           type: string
           maxLength: 40
           description: Type of employment
+        job_level:
+            type: string
+            maxLength: 40
+            description: Type of Job Level. 
+            example: "internship, entry-level, mid-level, Senior-level"
         visibility:
           type: boolean
           description: Whether the job is visible to students
@@ -404,6 +424,8 @@ components:
           type: string
           format: date-time
           description: Application deadline
+          example: "2025-12-31T23:59:59Z"
+
         skill_ids:
           type: array
           description: Array of skill IDs required for this job

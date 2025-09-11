@@ -2,6 +2,7 @@
 
 from typing import List, Dict, Optional
 from .db_controller import BaseController
+from datetime import datetime
 from flask import jsonify
 
 
@@ -73,7 +74,7 @@ class JobController(BaseController):
         For both get_all_jobs and get_filtered_job.
         """
         try:
-            job_filters = {key: val for key, val in filters.items() if key not in ['term_name', 'tag_name']}
+            job_filters = {key: val for key, val in filters.items() if key not in ['skill_name', 'tag_name']}
             
             jobs_query, job_params = self._build_jobs_query(job_filters)
             job_rows = self.execute_query(jobs_query, job_params, fetchall=True)
@@ -122,6 +123,10 @@ class JobController(BaseController):
             elif key == 'capacity':
                 where_conditions.append("Job.capacity = %s")
                 params.append(int(val))
+
+            elif key == 'end_date':
+                where_conditions.append("Job.end_date > %s")
+                params.append(val)
 
             elif key in ["company_name", "company_industry", "company_type"]:
                 where_conditions.append(f"Company.{key} = %s")
@@ -234,7 +239,7 @@ class JobController(BaseController):
 
     def _filter_jobs_by_skills_and_tags(self, jobs: List[Dict], filters: Dict) -> List[Dict]:
         """
-        Filter jobs based on term_name (skills) and tag_name after retrieving all data.
+        Filter jobs based on skill_name (skills) and tag_name after retrieving all data.
         Removes entire jobs that don't have matching skills or tags.
         """
         filtered_jobs = []
@@ -243,12 +248,12 @@ class JobController(BaseController):
             should_include = True
             
 
-            if 'term_name' in filters:
-                term_name = filters['term_name']
+            if 'skill_name' in filters:
+                skill_name = filters['skill_name']
                 skill_names = [skill['name'] for skill in job.get('skills', [])]
                 
 
-                if term_name not in skill_names:
+                if skill_name not in skill_names:
                     should_include = False
             
 
