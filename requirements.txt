@@ -11,5 +11,7 @@ flask-WTF
 google-api-python-client
 google-auth-oauthlib
 PyJWT
+SQLalchemy
+alembic
 
 -r swagger_server/requirements.txt
