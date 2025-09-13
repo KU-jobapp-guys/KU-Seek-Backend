@@ -91,7 +91,7 @@ class TaskController(BaseController):
         update_fields = []
 
         if "name" in body:
-            update_fields.append(f"""name = '{body['name']}'""")
+            update_fields.append(f"""name = '{body["name"]}'""")
         if "completed" in body:
             update_fields.append(f"completed = {body['completed']}")
 
