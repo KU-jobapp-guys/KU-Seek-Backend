@@ -1,8 +1,9 @@
 """Module for Profile tables."""
 
+from datetime import date
 from .base_model import BaseModel
 from sqlalchemy.orm import Mapped, MappedColumn
-from sqlalchemy import String, Text, Integer, Boolean
+from sqlalchemy import String, Text, Integer, Boolean, Date
 from sqlalchemy import ForeignKey
 from typing import Optional
 
@@ -86,3 +87,61 @@ class Profile(BaseModel):
         nullable=False,
         default=False
     )
+
+
+class ProfileSkills(BaseModel):
+    """Profile skills model."""
+
+    __tablename__ = "profile_skills"
+
+    user_id: Mapped[int] = MappedColumn(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False
+    )
+
+    skill_id: Mapped[int] = MappedColumn(
+        Integer,
+        ForeignKey("terms.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False
+    )
+
+
+class Education(BaseModel):
+    """Education model."""
+
+    __tablename__ = "education"
+
+    id: Mapped[int] = MappedColumn(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
+
+    curriculum_name: Mapped[str] = MappedColumn(
+        String(255),
+        nullable=False
+    )
+
+    university: Mapped[str] = MappedColumn(
+        String(255),
+        nullable=False
+    )
+
+    major: Mapped[str] = MappedColumn(
+        String(100),
+        nullable=False
+    )
+
+    year_of_study: Mapped[date] = MappedColumn(
+        Date,
+        nullable=False
+    )
+
+    graduate_year: Mapped[date] = MappedColumn(
+        Date,
+        nullable=False
+    )
+
