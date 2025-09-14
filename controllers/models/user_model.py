@@ -11,7 +11,7 @@ import uuid
 class User(BaseModel):
     """Base user model."""
 
-    __tablename__ = "User"
+    __tablename__ = "users"
     id: Mapped[uuid.UUID] = MappedColumn(primary_key=True, default=uuid.uuid4)
     google_uid: Mapped[str] = MappedColumn(String(100), nullable=False)
     email: Mapped[str] = MappedColumn(String(100), nullable=False)
@@ -19,10 +19,10 @@ class User(BaseModel):
     is_admin: Mapped[bool] = MappedColumn(default=False)
 
 
-class Education(BaseModel):
-    """Education model."""
+class Student(BaseModel):
+    """Student model."""
 
-    __tablename__ = "education"
+    __tablename__ = "students"
 
     id: Mapped[int] = MappedColumn(
         Integer,
@@ -30,53 +30,21 @@ class Education(BaseModel):
         autoincrement=True
     )
 
-    curriculum_name: Mapped[str] = MappedColumn(
-        String(255),
-        nullable=False
-    )
-
-    university: Mapped[str] = MappedColumn(
-        String(255),
-        nullable=False
-    )
-
-    major: Mapped[str] = MappedColumn(
-        String(100),
-        nullable=False
-    )
-
-    year_of_study: Mapped[date] = MappedColumn(
-        Date,
-        nullable=False
-    )
-
-    graduate_year: Mapped[date] = MappedColumn(
-        Date,
-        nullable=False
-    )
-
-
-class Student(BaseModel):
-    """Student model."""
-
-    __tablename__ = "student"
-
     user_id: Mapped[int] = MappedColumn(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
-        primary_key=True,
         nullable=False
     )
 
     nisit_id: Mapped[str] = MappedColumn(
-        String(10),
+        String(255),
         unique=True,
         nullable=False
     )
 
-    education: Mapped[Optional[int]] = MappedColumn(
+    education_id: Mapped[Optional[int]] = MappedColumn(
         Integer,
-        ForeignKey("education.id", ondelete="SET NULL"),
+        ForeignKey("educations.id", ondelete="SET NULL"),
         nullable=True
     )
 
@@ -94,22 +62,27 @@ class Student(BaseModel):
 class Professor(BaseModel):
     """Professor model."""
 
-    __tablename__ = "professor"
+    __tablename__ = "professors"
+
+    id: Mapped[int] = MappedColumn(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
 
     user_id: Mapped[int] = MappedColumn(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
-        primary_key=True,
         nullable=False
     )
 
     department: Mapped[str] = MappedColumn(
-        String(100),
+        String(255),
         nullable=False
     )
 
     position: Mapped[str] = MappedColumn(
-        String(100),
+        String(255),
         nullable=False
     )
 
@@ -118,10 +91,9 @@ class Professor(BaseModel):
         nullable=False
     )
 
-
-    education: Mapped[Optional[int]] = MappedColumn(
+    education_id: Mapped[Optional[int]] = MappedColumn(
         Integer,
-        ForeignKey("education.id", ondelete="SET NULL"),
+        ForeignKey("educations.id", ondelete="SET NULL"),
         nullable=True
     )
 
@@ -139,7 +111,7 @@ class Professor(BaseModel):
 class Company(BaseModel):
     """Company model."""
 
-    __tablename__ = "company"
+    __tablename__ = "companies"
 
     id: Mapped[int] = MappedColumn(
         Integer,
@@ -159,17 +131,17 @@ class Company(BaseModel):
     )
 
     company_type: Mapped[str] = MappedColumn(
-        String(50),
+        String(255),
         nullable=False
     )
 
     company_industry: Mapped[str] = MappedColumn(
-        String(100),
+        String(255),
         nullable=False
     )
 
     company_size: Mapped[str] = MappedColumn(
-        String(50),
+        String(255),
         nullable=False
     )
 

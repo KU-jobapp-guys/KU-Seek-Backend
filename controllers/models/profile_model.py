@@ -112,7 +112,7 @@ class ProfileSkills(BaseModel):
 class Education(BaseModel):
     """Education model."""
 
-    __tablename__ = "education"
+    __tablename__ = "educations"
 
     id: Mapped[int] = MappedColumn(
         Integer,
@@ -131,7 +131,7 @@ class Education(BaseModel):
     )
 
     major: Mapped[str] = MappedColumn(
-        String(100),
+        String(255),
         nullable=False
     )
 
@@ -146,10 +146,10 @@ class Education(BaseModel):
     )
 
 
-class StudentDocument(BaseModel):
-    """Student document model."""
+class StudentDocuments(BaseModel):
+    """Student documents model."""
 
-    __tablename__ = "student_document"
+    __tablename__ = "student_documents"
 
     id: Mapped[int] = MappedColumn(
         Integer,
@@ -164,7 +164,7 @@ class StudentDocument(BaseModel):
     )
 
     file_path: Mapped[str] = MappedColumn(
-        String(500),
+        String(255),
         nullable=False
     )
 
@@ -180,10 +180,10 @@ class StudentDocument(BaseModel):
     )
 
 
-class StudentHistory(BaseModel):
-    """Student history model."""
+class StudentHistories(BaseModel):
+    """Student histories model."""
 
-    __tablename__ = "student_history"
+    __tablename__ = "student_histories"
 
     job_id: Mapped[int] = MappedColumn(
         Integer,
@@ -206,10 +206,10 @@ class StudentHistory(BaseModel):
     )
 
 
-class ProfessorConnection(BaseModel):
-    """Professor connection model."""
+class ProfessorConnections(BaseModel):
+    """Professor connections model."""
 
-    __tablename__ = "professor_connection"
+    __tablename__ = "professor_connections"
 
     id: Mapped[int] = MappedColumn(
         Integer,
@@ -236,10 +236,10 @@ class ProfessorConnection(BaseModel):
     )
 
 
-class Announcement(BaseModel):
-    """Announcement model."""
+class Announcements(BaseModel):
+    """Announcements model."""
 
-    __tablename__ = "announcement"
+    __tablename__ = "announcements"
 
     id: Mapped[int] = MappedColumn(
         Integer,
@@ -268,3 +268,4 @@ class Announcement(BaseModel):
         default=func.now(),
         nullable=False
     )
+    
