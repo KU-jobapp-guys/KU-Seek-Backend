@@ -1,5 +1,6 @@
 """Module for sending csrf-tokens."""
 
+import random
 from typing import Dict, TypedDict
 from flask import jsonify
 from flask_wtf.csrf import generate_csrf
@@ -9,7 +10,10 @@ from google.auth.transport import requests
 from decouple import config
 from .db_controller import BaseController
 from jwt import encode
+from swagger_server.openapi_server import models
 from datetime import datetime, timedelta, UTC
+from .models.user_model import User
+from .models.token_model import Token
 
 
 SECRET_KEY = config("SECRET_KEY", default="good-key123")
@@ -52,18 +56,26 @@ def handle_authentication(body: Dict):
     redirect_uri = config("REDIRECT_URI", default="http://localhost:5173/login")
 
     # Create the OAuth flow
-    flow = Flow.from_client_secrets_file(
-        client_secrets_file,
-        scopes=[
-            "openid",
-            "https://www.googleapis.com/auth/userinfo.email",
-            "https://www.googleapis.com/auth/userinfo.profile",
-        ],
-        redirect_uri=redirect_uri,
-    )
+    try:
+        flow = Flow.from_client_secrets_file(
+            client_secrets_file,
+            scopes=[
+                "openid",
+                "https://www.googleapis.com/auth/userinfo.email",
+                "https://www.googleapis.com/auth/userinfo.profile",
+            ],
+            redirect_uri=redirect_uri,
+        )
+    except Exception as e:
+        return models.ErrorMessage(
+            f"Error during flow setup invalid flow credentails, {e}"
+        ), 400
 
     # Exchange the authorization code for tokens
-    flow.fetch_token(code=body["code"])
+    try:
+        flow.fetch_token(code=body["code"])
+    except Exception as e:
+        return models.ErrorMessage(f"Invalid authorization code, {e}"), 400
 
     credentials = flow.credentials
 
@@ -77,25 +89,35 @@ def handle_authentication(body: Dict):
 
     auth_controller = AuthenticationController()
 
-    is_registered = auth_controller.check_users(id_info["sub"])
+    try:
+        is_registered = auth_controller.check_users(id_info["sub"])
+    except Exception as e:
+        return models.ErrorMessage(f"Database error occured, {e}"), 400
 
     user_jwt = {}
-    if is_registered:
-        user = auth_controller.get_user(id_info["sub"])
-        user_jwt = auth_controller.login_user(user)
-    else:
-        # hardcoding to company for now, since KU auth is not created
-        user = auth_controller.register_user(
-            {
-                "username": id_info["email"],
-                "password": id_info["at_hash"],
-                "user_type": "company",
-            },
-            id_info,
-        )
-        user_jwt = auth_controller.login_user(user)
+    try:
+        if is_registered:
+            user = auth_controller.get_user(id_info["sub"])
+            if user is None:
+                raise ValueError("User was not found")
+            user_jwt, refresh = auth_controller.login_user(user)
+        else:
+            # hardcoding to company for now, since KU auth is not created
+            user = auth_controller.register_user(
+                {
+                    "username": id_info["email"],
+                    "password": id_info["at_hash"],
+                    "user_type": "company",
+                },
+                id_info,
+            )
+            user_jwt, refresh = auth_controller.login_user(user)
 
-    return user_jwt
+        return models.Token(user_jwt, refresh)
+    except Exception as e:
+        return models.ErrorMessage(
+            f"Database error occured during authentication, {e}"
+        ), 400
 
 
 class AuthenticationController(BaseController):
@@ -107,33 +129,53 @@ class AuthenticationController(BaseController):
 
     def check_users(self, google_id: str):
         """Check if the user is in the users table."""
-        query = "SELECT * FROM user_google_auth_info;"
-        result = self.execute_query(query, fetchall=True)
+        session = self.get_session()
+        users = session.query(User).all()
 
-        if google_id in [row["google_uid"] for row in result]:
+        if google_id in [user.google_uid for user in users]:
+            session.close()
             return True
+
+        session.close()
         return False
 
     def login_user(self, uid: str) -> Dict[str, str]:
         """Return a JTW for authorization."""
-        refresh = {
-            "iat": datetime.now(UTC).isoformat(),
-            "exp": (datetime.now(UTC) + timedelta(hours=1)).isoformat(),
-        }
+        # access token generation
+        iat = (datetime.now(UTC).isoformat(),)
+        exp = ((datetime.now(UTC) + timedelta(hours=1)).isoformat(),)
 
-        payload = {"uid": uid, "refresh_token": refresh}
+        payload = {"uid": str(uid), "iat": iat, "exp": exp}
 
         auth_token = encode(payload, SECRET_KEY, algorithm="HS512")
 
-        return {"user_token": auth_token}
+        # refresh token generation
+        refresh_id = random.getrandbits(32)
+        iat = (datetime.now(UTC).isoformat(),)
+        exp = ((datetime.now(UTC) + timedelta(days=30)).isoformat(),)
+
+        payload = {"uid": str(uid), "refresh": refresh_id, "iat": iat, "exp": exp}
+
+        refresh_token = encode(payload, SECRET_KEY, algorithm="HS512")
+
+        session = self.get_session()
+        token = Token(uid=uid, refresh_id=refresh_id)
+        session.add(token)
+        session.commit()
+        session.close()
+
+        return auth_token, refresh_token
 
     def get_user(self, google_uid):
         """Return the user id with the matching google_uid."""
-        query = f"""
-                SELECT * FROM user_google_auth_info WHERE google_uid = '{google_uid}'
-                """
-        user = self.execute_query(query, fetchone=True)
-        return user["user_id"]
+        session = self.get_session()
+        user = session.query(User).where(User.google_uid == google_uid).one_or_none()
+        if not user:
+            session.close()
+            return
+        uid = user.id
+        session.close()
+        return uid
 
     def register_user(self, credentials: UserCredentials, id_info: any) -> str:
         """Register a new user using the provided credentials.
@@ -150,32 +192,17 @@ class AuthenticationController(BaseController):
         valid_keys = all(key in credentials for key in keys)
         if not valid_keys:
             raise TypeError("Invalid credentials.")
+       
+        session = self.get_session()
+        user = User(
+            google_uid=id_info['sub'],
+            email=credentials["username"],
+            password=credentials["password"],
+        )
+        session.add(user)
+        session.commit()
+        session.refresh()
+        user_id = user.id
+        session.close()
 
-        query = f"""
-                INSERT INTO users (username, password, user_type) 
-                VALUES ('{credentials["username"]}',
-                        '{credentials["password"]}',
-                        '{credentials["user_type"]}');
-                """
-        self.execute_query(query, commit=True)
-
-        query = f"""
-                SELECT * FROM users WHERE 
-                username = '{credentials["username"]}' AND
-                password = '{credentials["password"]}' AND
-                user_type = '{credentials["user_type"]}';
-                """
-        user = self.execute_query(query, fetchone=True)
-
-        query = f"""
-                INSERT INTO user_google_auth_info 
-                (user_id, google_uid, email, picture, first_name, last_name) 
-                VALUES ({user["id"]},
-                        '{id_info["sub"]}',
-                        '{id_info["email"]}',
-                        '{id_info["picture"]}',
-                        '{id_info["given_name"]}',
-                        '{id_info["family_name"]}');
-                """
-        self.execute_query(query, commit=True)
-        return user["id"]
+        return str(user_id)

@@ -4,7 +4,6 @@ import sys
 import os
 from decouple import config, Csv
 from flask_cors import CORS
-from flask_wtf import CSRFProtect
 
 
 if not os.path.exists(".env"):

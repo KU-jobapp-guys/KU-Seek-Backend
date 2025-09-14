@@ -1,7 +1,8 @@
 # exclude swagger server-generated files
 extend-exclude = [
   "/swagger_server/*",
-  "*/alembic/*"
+  "*/alembic/*",
+  "**/__init__.py"
 ]
 
 # Set python target version to 3.11
