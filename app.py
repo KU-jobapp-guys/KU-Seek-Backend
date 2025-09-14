@@ -8,7 +8,7 @@ from flask_wtf import CSRFProtect
 
 
 if not os.path.exists(".env"):
-    print(".env file not found." "You may create one from 'sample-env.txt'.")
+    print(".env file not found.You may create one from 'sample-env.txt'.")
     sys.exit(1)
 
 OPENAPI_STUB_DIR = config("OPENAPI_STUB_DIR", default="swagger_server")
@@ -54,7 +54,7 @@ def create_app():
                 )
             }
         },
-        supports_credentials=True
+        supports_credentials=True,
     )
     # setup CSRF (disabling for now)
     app.app.secret_key = config("SECRET_KEY", default="very-secure-secret-key")
