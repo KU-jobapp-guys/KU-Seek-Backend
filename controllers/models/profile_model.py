@@ -204,3 +204,67 @@ class StudentHistory(BaseModel):
         default=func.now(),
         nullable=False
     )
+
+
+class ProfessorConnection(BaseModel):
+    """Professor connection model."""
+
+    __tablename__ = "professor_connection"
+
+    id: Mapped[int] = MappedColumn(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
+
+    professor_id: Mapped[int] = MappedColumn(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    company_id: Mapped[int] = MappedColumn(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    created_at: Mapped[datetime] = MappedColumn(
+        DateTime,
+        default=func.now(),
+        nullable=False
+    )
+
+
+class Announcement(BaseModel):
+    """Announcement model."""
+
+    __tablename__ = "announcement"
+
+    id: Mapped[int] = MappedColumn(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
+
+    professor_id: Mapped[int] = MappedColumn(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    title: Mapped[str] = MappedColumn(
+        String(255),
+        nullable=False
+    )
+
+    content: Mapped[str] = MappedColumn(
+        Text,
+        nullable=False
+    )
+
+    created_at: Mapped[datetime] = MappedColumn(
+        DateTime,
+        default=func.now(),
+        nullable=False
+    )
