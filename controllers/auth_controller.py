@@ -1,7 +1,7 @@
 """Module for sending csrf-tokens."""
 
 import random
-from flask import make_response
+from flask import make_response, request
 from typing import Dict, TypedDict
 from flask import jsonify
 from flask_wtf.csrf import generate_csrf
@@ -10,7 +10,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from decouple import config
 from .db_controller import BaseController
-from jwt import encode
+from jwt import encode, decode
 from swagger_server.openapi_server import models
 from datetime import datetime, timedelta, UTC
 from .models.user_model import User
@@ -37,6 +37,13 @@ def get_csrf_token():
     Returns: A JSON with the csrf-token field.
     """
     return jsonify(csrf_token=generate_csrf())
+
+
+def get_new_access_token():
+    """Return a new access token for authorizaation."""
+    refresh_token = request.cookies.get("refresh_token")
+    auth_controller = AuthenticationController()
+    return auth_controller.refresh_access_token(refresh_token)
 
 
 def handle_authentication(body: Dict):
@@ -201,7 +208,7 @@ class AuthenticationController(BaseController):
         valid_keys = all(key in credentials for key in keys)
         if not valid_keys:
             raise TypeError("Invalid credentials.")
-       
+
         session = self.get_session()
         user = User(
             google_uid=id_info["sub"],
@@ -216,3 +223,38 @@ class AuthenticationController(BaseController):
 
         return str(user_id)
 
+    def refresh_access_token(self, refresh_token: str):
+        """
+        Return a new access token for authorization.
+
+        Validates the refresh token in the request header and
+        returns a new access and refresh token pair for user authentication
+        and authorization. The new refresh token is returned in the header.
+
+        Returns: A new access token and refresh token cookie.
+        """
+        try:
+            refresh_id = decode(jwt=refresh_token, key=SECRET_KEY, algorithms=["HS512"])
+        except Exception as e:
+            return models.ErrorMessage("Could not decode JWT", e), 400
+
+        session = self.get_session()
+        valid_token = (
+            session.query(Token).where(Token.refresh_id == refresh_id).one_or_none()
+        )
+
+        if not valid_token:
+            return models.ErrorMessage("Invalid refresh token"), 400
+
+        user_id = valid_token.uid
+        session.close()
+
+        access, refresh = self.login_user(user_id)
+
+        response = make_response(access, 200)
+        # set the refresh token as a HttpOnly cookie
+        response.set_cookie(
+            "refresh_token", refresh, max_age=timedelta(days=30), httponly=True
+        )
+
+        return response
