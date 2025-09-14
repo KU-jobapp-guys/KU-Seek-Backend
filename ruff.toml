@@ -1,6 +1,7 @@
-# exclude swagger server-generated files
+# exclude swagger server-generated files and alembic generated files
 extend-exclude = [
   "/swagger_server/*",
+  "/alembic/**",
   "**/__init__.py"
 ]
 
