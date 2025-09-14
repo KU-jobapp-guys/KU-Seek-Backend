@@ -1,3 +1,5 @@
+"""Use for config connectection between backend and database."""
+
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
