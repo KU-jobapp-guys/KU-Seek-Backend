@@ -1,10 +1,9 @@
 """Module for User tables."""
 
-from datetime import date
 from typing import Optional
 from .base_model import BaseModel
 from sqlalchemy.orm import Mapped, MappedColumn
-from sqlalchemy import String, Integer, Date, ForeignKey, DECIMAL, Text
+from sqlalchemy import String, Integer, ForeignKey, DECIMAL, Text
 import uuid
 
 
