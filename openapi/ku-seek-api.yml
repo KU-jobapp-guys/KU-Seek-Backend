@@ -24,6 +24,28 @@ paths:
                   csrf_token: 
                     type: string
 
+  /refresh:
+    get:
+      summary: Get a new access token from a refesh token
+      operationId: controllers.auth_controller.get_new_access_token
+      parameters:
+        - in: cookie
+          name: refresh_token
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: Return a new access token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token: 
+                    type: string
+        400:
+          description: Invalid refresh token provided in header
 
   /auth/oauth:
     post:
