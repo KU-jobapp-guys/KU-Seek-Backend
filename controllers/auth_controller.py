@@ -1,6 +1,7 @@
 """Module for sending csrf-tokens."""
 
 import random
+from flask import make_response
 from typing import Dict, TypedDict
 from flask import jsonify
 from flask_wtf.csrf import generate_csrf
@@ -113,7 +114,15 @@ def handle_authentication(body: Dict):
             )
             user_jwt, refresh = auth_controller.login_user(user)
 
-        return models.Token(user_jwt, refresh)
+        response = make_response(
+            models.UserCredentials(user_jwt, id_info["email"]).to_dict(), 200
+        )
+        # set the refresh token as a HttpOnly cookie
+        response.set_cookie(
+            "refresh_token", refresh, max_age=timedelta(days=30), httponly=True
+        )
+
+        return response
     except Exception as e:
         return models.ErrorMessage(
             f"Database error occured during authentication, {e}"
@@ -195,7 +204,7 @@ class AuthenticationController(BaseController):
        
         session = self.get_session()
         user = User(
-            google_uid=id_info['sub'],
+            google_uid=id_info["sub"],
             email=credentials["username"],
             password=credentials["password"],
         )

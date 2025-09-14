@@ -162,31 +162,15 @@ components:
     UserCredentials:
       type: object
       required:
-        - uid
         - access_token
-        - refresh_token
       properties:
-        uid:
-          type: string
-          description: The user's uid
         access_token:
-          $ref: '#/components/schemas/token'
-        refresh_token:
-          $ref: '#/components/schemas/token'
+          type: string
+          description: The access token
+        email:
+          description: The account email
     error_message:
       type: object
       properties:
         message:
           type: string
-    token:
-      type: object
-      required:
-        - access_token
-        - refresh_token
-      properties:
-        access_token:
-          type: string
-          description: The access token
-        refresh_token:
-          type: string
-          description: The refresh token
