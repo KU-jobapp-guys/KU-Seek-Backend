@@ -22,7 +22,7 @@ class Job(BaseModel):
     company_id: Mapped[Optional[int]] = MappedColumn(
         Integer,
         ForeignKey("companies.id", ondelete="CASCADE"),
-        nullable=True
+        nullable=False
     )
     
     description: Mapped[Optional[str]] = MappedColumn(
@@ -32,37 +32,37 @@ class Job(BaseModel):
     
     title: Mapped[Optional[str]] = MappedColumn(
         String(50), 
-        nullable=True
+        nullable=False
     )
     
     salary_min: Mapped[Optional[float]] = MappedColumn(
         Float, 
-        nullable=True
+        nullable=False
     )
     
     salary_max: Mapped[Optional[float]] = MappedColumn(
         Float, 
-        nullable=True
+        nullable=False
     )
     
     location: Mapped[Optional[str]] = MappedColumn(
         String(255), 
-        nullable=True
+        nullable=False
     )
     
     work_hours: Mapped[Optional[str]] = MappedColumn(
         String(20), 
-        nullable=True
+        nullable=False
     )
     
     job_type: Mapped[Optional[str]] = MappedColumn(
         String(40), 
-        nullable=True
+        nullable=False
     )
     
     job_level: Mapped[Optional[str]] = MappedColumn(
         String(40), 
-        nullable=True
+        nullable=False
     )
     
     status: Mapped[str] = MappedColumn(
@@ -73,18 +73,19 @@ class Job(BaseModel):
     )
     
     visibility: Mapped[Optional[bool]] = MappedColumn(
-        Boolean, 
-        nullable=True
+        Boolean,
+        default=False,
+        nullable=False
     )
     
     capacity: Mapped[Optional[int]] = MappedColumn(
         Integer, 
-        nullable=True
+        nullable=False
     )
     
     end_date: Mapped[Optional[datetime]] = MappedColumn(
         DateTime, 
-        nullable=True
+        nullable=False
     )
     
     created_at: Mapped[datetime] = MappedColumn(
@@ -96,7 +97,7 @@ class Job(BaseModel):
     approved_by: Mapped[Optional[int]] = MappedColumn(
         Integer,
         ForeignKey("users.id", ondelete="SET NULL"),
-        nullable=True
+        nullable=False
     )
 
 
@@ -196,6 +197,7 @@ class JobApplication(BaseModel):
 
 
 class Bookmark(BaseModel):
+    """Model for Bookmark Table."""
 
     __tablename__ = "bookmarks"
 
