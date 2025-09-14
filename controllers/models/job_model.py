@@ -22,7 +22,6 @@ class Job(BaseModel):
     )
     
     company_id: Mapped[Optional[int]] = MappedColumn(
-        Integer,
         ForeignKey("companies.id", ondelete="CASCADE"),
         nullable=False
     )
@@ -97,9 +96,8 @@ class Job(BaseModel):
     )
     
     approved_by: Mapped[Optional[uuid.UUID]] = MappedColumn(
-        Integer,
         ForeignKey("users.id", ondelete="SET NULL"),
-        nullable=False
+        nullable=True
     )
 
 
@@ -159,7 +157,6 @@ class JobApplication(BaseModel):
     )
 
     student_id: Mapped[int] = MappedColumn(
-        Integer, 
         ForeignKey("students.id", ondelete="CASCADE"), 
         nullable=False
     )
@@ -221,7 +218,6 @@ class Bookmark(BaseModel):
     )
 
     student_id: Mapped[int] = MappedColumn(
-        Integer,
         ForeignKey("students.id", ondelete="CASCADE"),
         nullable=False
     )

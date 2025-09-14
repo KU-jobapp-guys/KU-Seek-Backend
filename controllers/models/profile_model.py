@@ -16,7 +16,6 @@ class Profile(BaseModel):
     __tablename__ = "profiles"
 
     user_id: Mapped[uuid.UUID] = MappedColumn(
-        Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         primary_key=True,
         nullable=False
@@ -97,7 +96,6 @@ class ProfileSkills(BaseModel):
     __tablename__ = "profile_skills"
 
     user_id: Mapped[uuid.UUID] = MappedColumn(
-        Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         primary_key=True,
         nullable=False
@@ -160,7 +158,6 @@ class StudentDocuments(BaseModel):
     )
 
     student_id: Mapped[uuid.UUID] = MappedColumn(
-        Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
     )
@@ -195,7 +192,6 @@ class StudentHistories(BaseModel):
     )
 
     student_id: Mapped[uuid.UUID] = MappedColumn(
-        Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         primary_key=True,
         nullable=False
@@ -220,13 +216,11 @@ class ProfessorConnections(BaseModel):
     )
 
     professor_id: Mapped[uuid.UUID] = MappedColumn(
-        Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
     )
 
     company_id: Mapped[uuid.UUID] = MappedColumn(
-        Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
     )
@@ -250,7 +244,6 @@ class Announcements(BaseModel):
     )
 
     professor_id: Mapped[uuid.UUID] = MappedColumn(
-        Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
     )

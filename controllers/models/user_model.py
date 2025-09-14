@@ -30,7 +30,6 @@ class Student(BaseModel):
     )
 
     user_id: Mapped[uuid.UUID] = MappedColumn(
-        Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
     )
@@ -70,7 +69,6 @@ class Professor(BaseModel):
     )
 
     user_id: Mapped[uuid.UUID] = MappedColumn(
-        Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
     )
@@ -119,7 +117,6 @@ class Company(BaseModel):
     )
 
     user_id: Mapped[uuid.UUID] = MappedColumn(
-        Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
     )
