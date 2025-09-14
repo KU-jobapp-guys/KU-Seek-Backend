@@ -3,7 +3,8 @@
 from datetime import datetime
 from .base_model import BaseModel
 from sqlalchemy.orm import Mapped, MappedColumn
-from sqlalchemy import String, Text, Float, Integer, DateTime, Boolean, ForeignKey, func
+from sqlalchemy import String, Text, Float, Integer, DateTime, Boolean
+from sqlalchemy import ForeignKey, func, UniqueConstraint
 from typing import Optional
 
 
@@ -140,7 +141,7 @@ class JobTags(BaseModel):
 class JobApplication(BaseModel):
     """Job application model."""
 
-    __tablename__ = "job_application"
+    __tablename__ = "job_applications"
 
     id: Mapped[int] = MappedColumn(
         Integer, 
@@ -188,6 +189,40 @@ class JobApplication(BaseModel):
     )
 
     applied_at: Mapped[datetime] = MappedColumn(
+        DateTime,
+        default=func.now(),
+        nullable=False
+    )
+
+
+class Bookmark(BaseModel):
+
+    __tablename__ = "bookmarks"
+
+    
+    __table_args__ = (
+        UniqueConstraint('student_id', 'job_id', name='unique_student_job'),
+    )
+
+    id: Mapped[int] = MappedColumn(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
+
+    job_id: Mapped[int] = MappedColumn(
+        Integer,
+        ForeignKey("jobs.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    student_id: Mapped[int] = MappedColumn(
+        Integer,
+        ForeignKey("students.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    created_at: Mapped[datetime] = MappedColumn(
         DateTime,
         default=func.now(),
         nullable=False
