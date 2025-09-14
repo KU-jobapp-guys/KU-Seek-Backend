@@ -1,8 +1,7 @@
 """Module for handing Job API path logic."""
 
-from typing import List, Dict, Optional
+from typing import List, Dict
 from .db_controller import BaseController
-from datetime import datetime
 from flask import jsonify
 
 
@@ -17,6 +16,7 @@ class JobController(BaseController):
     def get_all_jobs(self, job_id: str) -> List[Dict]:
         """
         Return all jobs in the jobs table.
+
         Corresponds to: GET /api/v1/jobs
         """
         if job_id:
@@ -27,6 +27,7 @@ class JobController(BaseController):
     def get_applied_jobs(self, user_id: str) -> List[Dict]:
         """
         Return applied jobs from the JobApplication table.
+
         Corresponds to: GET /api/v1/applications
         """
         try:
@@ -45,6 +46,7 @@ class JobController(BaseController):
     def get_bookmark_jobs(self, user_id: str) -> List[Dict]:
         """
         Return applied jobs from the Bookmarked table.
+
         Corresponds to: GET /api/v1/bookmarks
         """
         try:
@@ -63,6 +65,7 @@ class JobController(BaseController):
     def get_filtered_job(self, body: Dict) -> List[Dict]:
         """
         Return filtered jobs from the jobs table.
+
         Corresponds to: POST /api/v1/jobs/search
         """
         return self._get_jobs_with_filters(body)
@@ -71,10 +74,12 @@ class JobController(BaseController):
     def _get_jobs_with_filters(self, filters: Dict) -> List[Dict]:
         """
         Private method to get jobs with optional filters.
+
         For both get_all_jobs and get_filtered_job.
         """
         try:
-            job_filters = {key: val for key, val in filters.items() if key not in ['skill_name', 'tag_name']}
+            job_filters = {key: val for key, val in filters.items()
+                            if key not in ['skill_name', 'tag_name']}
             
             jobs_query, job_params = self._build_jobs_query(job_filters)
             job_rows = self.execute_query(jobs_query, job_params, fetchall=True)
@@ -100,6 +105,7 @@ class JobController(BaseController):
     def _build_jobs_query(self, filters: Dict) -> tuple:
         """
         Build the main jobs query with WHERE conditions based on filters.
+
         Returns (query_string, parameters_list)
         """
         base_query = """
@@ -148,6 +154,7 @@ class JobController(BaseController):
     def _get_skills_for_jobs(self, job_ids: List[int]) -> Dict[int, List[Dict]]:
         """
         Get ALL skills for specific job IDs (no filtering).
+
         Returns dict mapping job_id to list of skills.
         """
         if not job_ids:
@@ -181,6 +188,7 @@ class JobController(BaseController):
     def _get_tags_for_jobs(self, job_ids: List[int]) -> Dict[int, List[Dict]]:
         """
         Get ALL tags for specific job IDs (no filtering).
+        
         Returns dict mapping job_id to list of tags.
         """
         if not job_ids:
@@ -210,10 +218,9 @@ class JobController(BaseController):
         return tags_by_job
 
 
-    def _assemble_job_results(self, job_rows: List[Dict], skills_data: Dict, tags_data: Dict) -> List[Dict]:
-        """
-        Assemble the final job results with company, skills, and tags data.
-        """
+    def _assemble_job_results(self, job_rows: List[Dict],
+                               skills_data: Dict, tags_data: Dict) -> List[Dict]:
+        """Assemble the final job results with company, skills, and tags data."""
         company_columns = ['Company.id', 'user_id', 'company_name', 'company_type',
                         'company_industry', 'company_size', 'company_website',
                         'full_location']
@@ -240,6 +247,7 @@ class JobController(BaseController):
     def _filter_jobs_by_skills_and_tags(self, jobs: List[Dict], filters: Dict) -> List[Dict]:
         """
         Filter jobs based on skill_name (skills) and tag_name after retrieving all data.
+        
         Removes entire jobs that don't have matching skills or tags.
         """
         filtered_jobs = []
