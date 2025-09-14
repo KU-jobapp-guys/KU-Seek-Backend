@@ -37,3 +37,41 @@ class Job(BaseModel):
                                                        ForeignKey("users.id",
                                                                    ondelete="SET NULL"),
                                                                      nullable=True)
+
+
+class JobSkills(BaseModel):
+    """job skills model."""
+
+    __tablename__ = "job_skills"
+
+    job_id: Mapped[int] = MappedColumn(
+        Integer, 
+        ForeignKey("jobs.id", ondelete="CASCADE"), 
+        primary_key=True,
+        nullable=False
+    )
+    skill_id: Mapped[int] = MappedColumn(
+        Integer, 
+        ForeignKey("terms.id", ondelete="CASCADE"), 
+        primary_key=True,
+        nullable=False
+    )
+
+
+class JobTags(BaseModel):
+    """job tags model."""
+
+    __tablename__ = "job_tags"
+
+    job_id: Mapped[int] = MappedColumn(
+        Integer, 
+        ForeignKey("jobs.id", ondelete="CASCADE"), 
+        primary_key=True,
+        nullable=False
+    )
+    tag_id: Mapped[int] = MappedColumn(
+        Integer, 
+        ForeignKey("tags.id", ondelete="CASCADE"), 
+        primary_key=True,
+        nullable=False
+    )
