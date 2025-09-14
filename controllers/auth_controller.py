@@ -192,10 +192,10 @@ class AuthenticationController(BaseController):
         valid_keys = all(key in credentials for key in keys)
         if not valid_keys:
             raise TypeError("Invalid credentials.")
-       
+
         session = self.get_session()
         user = User(
-            google_uid=id_info['sub'],
+            google_uid=id_info["sub"],
             email=credentials["username"],
             password=credentials["password"],
         )
@@ -206,4 +206,3 @@ class AuthenticationController(BaseController):
         session.close()
 
         return str(user_id)
-

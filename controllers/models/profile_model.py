@@ -16,78 +16,36 @@ class Profile(BaseModel):
     __tablename__ = "profiles"
 
     user_id: Mapped[uuid.UUID] = MappedColumn(
-        ForeignKey("users.id", ondelete="CASCADE"),
-        primary_key=True,
-        nullable=False
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True, nullable=False
     )
 
-    first_name: Mapped[Optional[str]] = MappedColumn(
-        String(100),
-        nullable=True
-    )
+    first_name: Mapped[Optional[str]] = MappedColumn(String(100), nullable=True)
 
-    last_name: Mapped[Optional[str]] = MappedColumn(
-        String(100),
-        nullable=True
-    )
+    last_name: Mapped[Optional[str]] = MappedColumn(String(100), nullable=True)
 
-    about: Mapped[Optional[str]] = MappedColumn(
-        Text,
-        nullable=True
-    )
+    about: Mapped[Optional[str]] = MappedColumn(Text, nullable=True)
 
-    location: Mapped[Optional[str]] = MappedColumn(
-        String(100),
-        nullable=True
-    )
+    location: Mapped[Optional[str]] = MappedColumn(String(100), nullable=True)
 
-    email: Mapped[Optional[str]] = MappedColumn(
-        String(255),
-        unique=True, 
-        nullable=True
-    )
+    email: Mapped[Optional[str]] = MappedColumn(String(255), unique=True, nullable=True)
 
-    contact_email: Mapped[Optional[str]] = MappedColumn(
-        String(255),
-        nullable=True
-    )
+    contact_email: Mapped[Optional[str]] = MappedColumn(String(255), nullable=True)
 
-    gender: Mapped[Optional[str]] = MappedColumn(
-        String(1),
-        nullable=True
-    )
+    gender: Mapped[Optional[str]] = MappedColumn(String(1), nullable=True)
 
-    age: Mapped[Optional[int]] = MappedColumn(
-        Integer,
-        nullable=True
-    )
+    age: Mapped[Optional[int]] = MappedColumn(Integer, nullable=True)
 
     user_type: Mapped[Optional[str]] = MappedColumn(
-        String(20),
-        nullable=True,
-        comment="student, company, professor, admin"
+        String(20), nullable=True, comment="student, company, professor, admin"
     )
 
-    profile_img: Mapped[Optional[str]] = MappedColumn(
-        String(100),
-        nullable=True
-    )
+    profile_img: Mapped[Optional[str]] = MappedColumn(String(100), nullable=True)
 
-    banner_img: Mapped[Optional[str]] = MappedColumn(
-        String(100),
-        nullable=True
-    )
+    banner_img: Mapped[Optional[str]] = MappedColumn(String(100), nullable=True)
 
-    phone_number: Mapped[Optional[str]] = MappedColumn(
-        String(20),
-        nullable=True
-    )
+    phone_number: Mapped[Optional[str]] = MappedColumn(String(20), nullable=True)
 
-    is_verified: Mapped[bool] = MappedColumn(
-        Boolean,
-        nullable=False,
-        default=False
-    )
+    is_verified: Mapped[bool] = MappedColumn(Boolean, nullable=False, default=False)
 
 
 class ProfileSkills(BaseModel):
@@ -96,16 +54,14 @@ class ProfileSkills(BaseModel):
     __tablename__ = "profile_skills"
 
     user_id: Mapped[uuid.UUID] = MappedColumn(
-        ForeignKey("users.id", ondelete="CASCADE"),
-        primary_key=True,
-        nullable=False
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True, nullable=False
     )
 
     skill_id: Mapped[int] = MappedColumn(
         Integer,
         ForeignKey("terms.id", ondelete="CASCADE"),
         primary_key=True,
-        nullable=False
+        nullable=False,
     )
 
 
@@ -114,36 +70,17 @@ class Education(BaseModel):
 
     __tablename__ = "educations"
 
-    id: Mapped[int] = MappedColumn(
-        Integer,
-        primary_key=True,
-        autoincrement=True
-    )
+    id: Mapped[int] = MappedColumn(Integer, primary_key=True, autoincrement=True)
 
-    curriculum_name: Mapped[str] = MappedColumn(
-        String(255),
-        nullable=False
-    )
+    curriculum_name: Mapped[str] = MappedColumn(String(255), nullable=False)
 
-    university: Mapped[str] = MappedColumn(
-        String(255),
-        nullable=False
-    )
+    university: Mapped[str] = MappedColumn(String(255), nullable=False)
 
-    major: Mapped[str] = MappedColumn(
-        String(255),
-        nullable=False
-    )
+    major: Mapped[str] = MappedColumn(String(255), nullable=False)
 
-    year_of_study: Mapped[date] = MappedColumn(
-        Date,
-        nullable=False
-    )
+    year_of_study: Mapped[date] = MappedColumn(Date, nullable=False)
 
-    graduate_year: Mapped[date] = MappedColumn(
-        Date,
-        nullable=False
-    )
+    graduate_year: Mapped[date] = MappedColumn(Date, nullable=False)
 
 
 class StudentDocuments(BaseModel):
@@ -151,31 +88,18 @@ class StudentDocuments(BaseModel):
 
     __tablename__ = "student_documents"
 
-    id: Mapped[int] = MappedColumn(
-        Integer,
-        primary_key=True,
-        autoincrement=True
-    )
+    id: Mapped[int] = MappedColumn(Integer, primary_key=True, autoincrement=True)
 
     student_id: Mapped[uuid.UUID] = MappedColumn(
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
-    file_path: Mapped[str] = MappedColumn(
-        String(255),
-        nullable=False
-    )
+    file_path: Mapped[str] = MappedColumn(String(255), nullable=False)
 
-    original_filename: Mapped[str] = MappedColumn(
-        String(255),
-        nullable=False
-    )
+    original_filename: Mapped[str] = MappedColumn(String(255), nullable=False)
 
     uploaded_at: Mapped[datetime] = MappedColumn(
-        DateTime,
-        default=func.now(),
-        nullable=False
+        DateTime, default=func.now(), nullable=False
     )
 
 
@@ -188,19 +112,15 @@ class StudentHistories(BaseModel):
         Integer,
         ForeignKey("jobs.id", ondelete="CASCADE"),
         primary_key=True,
-        nullable=False
+        nullable=False,
     )
 
     student_id: Mapped[uuid.UUID] = MappedColumn(
-        ForeignKey("users.id", ondelete="CASCADE"),
-        primary_key=True,
-        nullable=False
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True, nullable=False
     )
 
     viewed_at: Mapped[datetime] = MappedColumn(
-        DateTime,
-        default=func.now(),
-        nullable=False
+        DateTime, default=func.now(), nullable=False
     )
 
 
@@ -209,26 +129,18 @@ class ProfessorConnections(BaseModel):
 
     __tablename__ = "professor_connections"
 
-    id: Mapped[int] = MappedColumn(
-        Integer,
-        primary_key=True,
-        autoincrement=True
-    )
+    id: Mapped[int] = MappedColumn(Integer, primary_key=True, autoincrement=True)
 
     professor_id: Mapped[uuid.UUID] = MappedColumn(
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
     company_id: Mapped[uuid.UUID] = MappedColumn(
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
     created_at: Mapped[datetime] = MappedColumn(
-        DateTime,
-        default=func.now(),
-        nullable=False
+        DateTime, default=func.now(), nullable=False
     )
 
 
@@ -237,30 +149,16 @@ class Announcements(BaseModel):
 
     __tablename__ = "announcements"
 
-    id: Mapped[int] = MappedColumn(
-        Integer,
-        primary_key=True,
-        autoincrement=True
-    )
+    id: Mapped[int] = MappedColumn(Integer, primary_key=True, autoincrement=True)
 
     professor_id: Mapped[uuid.UUID] = MappedColumn(
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
-    title: Mapped[str] = MappedColumn(
-        String(255),
-        nullable=False
-    )
+    title: Mapped[str] = MappedColumn(String(255), nullable=False)
 
-    content: Mapped[str] = MappedColumn(
-        Text,
-        nullable=False
-    )
+    content: Mapped[str] = MappedColumn(Text, nullable=False)
 
     created_at: Mapped[datetime] = MappedColumn(
-        DateTime,
-        default=func.now(),
-        nullable=False
+        DateTime, default=func.now(), nullable=False
     )
-    
