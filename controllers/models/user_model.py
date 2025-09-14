@@ -29,7 +29,7 @@ class Student(BaseModel):
         autoincrement=True
     )
 
-    user_id: Mapped[int] = MappedColumn(
+    user_id: Mapped[uuid.UUID] = MappedColumn(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
@@ -69,7 +69,7 @@ class Professor(BaseModel):
         autoincrement=True
     )
 
-    user_id: Mapped[int] = MappedColumn(
+    user_id: Mapped[uuid.UUID] = MappedColumn(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
@@ -118,7 +118,7 @@ class Company(BaseModel):
         autoincrement=True
     )
 
-    user_id: Mapped[int] = MappedColumn(
+    user_id: Mapped[uuid.UUID] = MappedColumn(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False

@@ -1,5 +1,7 @@
 """Module for Job tables."""
 
+import uuid
+
 from datetime import datetime
 from .base_model import BaseModel
 from sqlalchemy.orm import Mapped, MappedColumn
@@ -94,7 +96,7 @@ class Job(BaseModel):
         nullable=False
     )
     
-    approved_by: Mapped[Optional[int]] = MappedColumn(
+    approved_by: Mapped[Optional[uuid.UUID]] = MappedColumn(
         Integer,
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=False

@@ -1,5 +1,7 @@
 """Module for Profile tables."""
 
+import uuid
+
 from datetime import date, datetime
 from .base_model import BaseModel
 from sqlalchemy.orm import Mapped, MappedColumn
@@ -13,7 +15,7 @@ class Profile(BaseModel):
 
     __tablename__ = "profiles"
 
-    user_id: Mapped[int] = MappedColumn(
+    user_id: Mapped[uuid.UUID] = MappedColumn(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         primary_key=True,
@@ -94,7 +96,7 @@ class ProfileSkills(BaseModel):
 
     __tablename__ = "profile_skills"
 
-    user_id: Mapped[int] = MappedColumn(
+    user_id: Mapped[uuid.UUID] = MappedColumn(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         primary_key=True,
@@ -157,7 +159,7 @@ class StudentDocuments(BaseModel):
         autoincrement=True
     )
 
-    student_id: Mapped[int] = MappedColumn(
+    student_id: Mapped[uuid.UUID] = MappedColumn(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
@@ -192,7 +194,7 @@ class StudentHistories(BaseModel):
         nullable=False
     )
 
-    student_id: Mapped[int] = MappedColumn(
+    student_id: Mapped[uuid.UUID] = MappedColumn(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         primary_key=True,
@@ -217,13 +219,13 @@ class ProfessorConnections(BaseModel):
         autoincrement=True
     )
 
-    professor_id: Mapped[int] = MappedColumn(
+    professor_id: Mapped[uuid.UUID] = MappedColumn(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
     )
 
-    company_id: Mapped[int] = MappedColumn(
+    company_id: Mapped[uuid.UUID] = MappedColumn(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
@@ -247,7 +249,7 @@ class Announcements(BaseModel):
         autoincrement=True
     )
 
-    professor_id: Mapped[int] = MappedColumn(
+    professor_id: Mapped[uuid.UUID] = MappedColumn(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
