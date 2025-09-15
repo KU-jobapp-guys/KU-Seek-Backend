@@ -37,7 +37,7 @@ class BaseController:
 
         try:
             with db_engine.connect() as pool:
-                pool.execute(text("SELECT * FROM User"))
+                pool.execute(text("SELECT * FROM users"))
                 print("Database initialization sucessful.")
             return db_engine
         except Exception as e:
