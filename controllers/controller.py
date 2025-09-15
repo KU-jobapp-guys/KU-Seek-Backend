@@ -1,6 +1,7 @@
 """Module containing endpoints for operations."""
 
 from .task_controller import TaskController
+from .user_profile_controller import ProfileController
 from typing import Dict, Optional
 
 
@@ -30,3 +31,11 @@ def update_task(task_id: str, body: Dict) -> Optional[Dict]:
 def delete_task(task_id: str):
     """Return Placeholder."""
     return task_manager.delete_task(task_id)
+
+
+profile_manager = ProfileController()
+
+
+def update_profile(user_id:str, body: Dict) -> Optional[Dict]:
+    """Update User Profile data."""
+    return profile_manager.update_profile(user_id, body)
