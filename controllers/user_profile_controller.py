@@ -5,6 +5,7 @@ from connexion.exceptions import ProblemException
 from .db_controller import BaseController
 from .models.profile_model import Profile
 
+
 class ProfileController(BaseController):
     """Controller to use CRUD operations for UserProfile."""
 
@@ -50,10 +51,22 @@ class ProfileController(BaseController):
 
         session = self.get_session()
         try:
+            existing_profile = session.query(Profile).where(Profile.user_id == user_id).one_or_none()
+            if existing_profile:
+                raise ProblemException(
+                    status=409,
+                    title="Conflict",
+                    detail=f"Profile already exists for user '{user_id}'"
+                )
+            
             profile = Profile()
-
+            profile.user_id = user_id
+            
+            for key, value in body.items():
+                if hasattr(profile, key):
+                    setattr(profile, key, value)
+            
             session.add(profile)
-
             session.commit()
 
         except ProblemException:
