@@ -130,6 +130,38 @@ paths:
           description: Task not found
 
   /users/{user_id}/profile:
+    post:
+      summary: Create an user profile
+      operationId: controllers.controller.create_profile
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user whose profile to created
+          schema:
+            type: string
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileInput'
+      
+      responses:
+        200:
+          description: User profile created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        
+        400:
+          description: Error BAD REQUEST
+        
+        409:
+          description: Profile already exists for user
+
     patch:
       summary: Update an existing user profile
       operationId: controllers.controller.update_profile
@@ -155,6 +187,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserProfile'
+        
+        400:
+          description: Error BAD REQUEST
+
         404:
           description: user profile not found
 
