@@ -34,6 +34,44 @@ class ProfileController(BaseController):
         return profile
     
 
+    def create_profile(self, user_id: str, body:Dict) -> Optional[Dict]:
+        """
+        Create new component in the UserProfile table.
+
+        POST /users/{user_id}/profile
+        """
+        if not body:
+            raise ProblemException(
+                status=400,
+                title="Invalid Request",
+                detail="Request body cannot be empty."
+            )
+        
+
+        session = self.get_session()
+        try:
+            profile = Profile()
+
+            session.add(profile)
+
+            session.commit()
+
+        except ProblemException:
+            session.rollback()
+            raise
+        except Exception as e:
+            session.rollback()
+            raise ProblemException(
+                status=500,
+                title="Database Error",
+                detail=str(e)
+            )
+        finally:
+            session.close()
+
+        return self.get_profile_by_uid(user_id)
+
+
     def update_profile(self, user_id: str, body: Dict) -> Optional[Dict]:
         """
         Update fields in the UserProfile table dynamically.
