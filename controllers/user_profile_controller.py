@@ -33,7 +33,9 @@ class ProfileController(BaseController):
         try:
             user_uuid = UUID(user_id)
 
-            profile = session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
+            profile = session.query(Profile).where(
+                Profile.user_id == user_uuid
+            ).one_or_none()
             if not profile:
                 return None
 
@@ -119,7 +121,9 @@ class ProfileController(BaseController):
 
         session = self.get_session()
         try:
-            profile = session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
+            profile = session.query(Profile).where(
+                Profile.user_id == user_uuid
+            ).one_or_none()
             if not profile:
                 raise ProblemException(
                     status=404,
