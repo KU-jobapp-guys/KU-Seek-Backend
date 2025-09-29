@@ -130,6 +130,25 @@ paths:
           description: Task not found
 
   /users/{user_id}/profile:
+    get:
+      summary: Get the user profile data
+      operationId: controllers.controller.get_user_profile
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user whose profile to created
+          schema:
+            type: string
+      
+      responses:
+        200:
+          description: Return the user profile data created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+                
     post:
       summary: Create an user profile
       operationId: controllers.controller.create_profile

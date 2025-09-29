@@ -4,6 +4,9 @@ from typing import Optional, Dict
 from connexion.exceptions import ProblemException
 from .db_controller import BaseController
 from .models.profile_model import Profile
+from uuid import UUID
+from sqlalchemy.exc import SQLAlchemyError
+
 
 
 class ProfileController(BaseController):
@@ -21,19 +24,28 @@ class ProfileController(BaseController):
         Retrieves a single user profile by user id from the MySQL database.
 
         Args:
-            user_id: The unique ID of the user.
+            user_id: The unique ID of the user (string format).
 
-        Returns: The user profile dictionary if found, otherwise None.
+        Returns:
+            The user profile dictionary if found, otherwise None.
         """
         session = self.get_session()
-        profile = session.query(Profile).where(Profile.user_id == user_id).one_or_none()
-        if not profile:
+        try:
+            user_uuid = UUID(user_id)
+
+            profile = session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
+            if not profile:
+                return None
+
+            return profile.to_dict()
+
+        except (ValueError, SQLAlchemyError) as e:
+            print(f"Error fetching profile for user_id={user_id}: {e}")
+            return None
+
+        finally:
             session.close()
-            return
-        profile = profile.to_dict()
-        session.close()
-        return profile
-    
+        
 
     def create_profile(self, user_id: str, body:Dict) -> Optional[Dict]:
         """
@@ -41,6 +53,8 @@ class ProfileController(BaseController):
 
         POST /users/{user_id}/profile
         """
+        user_uuid = UUID(user_id)
+
         if not body:
             raise ProblemException(
                 status=400,
@@ -51,7 +65,7 @@ class ProfileController(BaseController):
 
         session = self.get_session()
         try:
-            existing_profile = session.query(Profile).where(Profile.user_id == user_id).one_or_none()
+            existing_profile = session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
             if existing_profile:
                 raise ProblemException(
                     status=409,
@@ -91,6 +105,8 @@ class ProfileController(BaseController):
 
         PATCH /users/{user_id}/profile
         """
+        user_uuid = UUID(user_id)
+
         if not body:
             raise ProblemException(
                 status=400,
@@ -100,7 +116,7 @@ class ProfileController(BaseController):
 
         session = self.get_session()
         try:
-            profile = session.query(Profile).where(Profile.user_id == user_id).one_or_none()
+            profile = session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
             if not profile:
                 raise ProblemException(
                     status=404,
