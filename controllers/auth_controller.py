@@ -23,8 +23,8 @@ SECRET_KEY = config("SECRET_KEY", default="good-key123")
 class UserCredentials(TypedDict):
     """Schema for user credentials."""
 
-    username: str
-    password: str
+    google_uid: str
+    email: str
     user_type: str
 
 
@@ -113,11 +113,10 @@ def handle_authentication(body: Dict):
             # hardcoding to company for now, since KU auth is not created
             user = auth_controller.register_user(
                 {
-                    "username": id_info["email"],
-                    "password": id_info["at_hash"],
+                    "google_uid": id_info["sub"],
+                    "email": id_info["email"],
                     "user_type": "company",
                 },
-                id_info,
             )
             user_jwt, refresh = auth_controller.login_user(user)
 
@@ -193,27 +192,26 @@ class AuthenticationController(BaseController):
         session.close()
         return uid
 
-    def register_user(self, credentials: UserCredentials, id_info: any) -> str:
+    def register_user(self, credentials: UserCredentials) -> str:
         """Register a new user using the provided credentials.
 
         Create a new credentials in the database based on the provided credentials.
 
         Args:
             credentials: The account's credentials
-            id_info: (optional) The account's Google information
 
         Returns: The user's id in the database
         """
-        keys = ["username", "password", "user_type"]
+        keys = UserCredentials.keys()
         valid_keys = all(key in credentials for key in keys)
         if not valid_keys:
             raise TypeError("Invalid credentials.")
 
         session = self.get_session()
         user = User(
-            google_uid=id_info["sub"],
+            google_uid=credentials["google_uid"],
             email=credentials["username"],
-            password=credentials["password"],
+            type=credentials["user_type"],
         )
         session.add(user)
         session.commit()
