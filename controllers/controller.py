@@ -39,7 +39,7 @@ def delete_task(task_id: str):
 profile_manager = ProfileController()
 
 
-def get_user_profile(user_id:str) -> Dict:
+def get_user_profile(user_id: str) -> Dict:
     """GET UserProfile from the database."""
     return profile_manager.get_profile_by_uid(user_id)
 
@@ -48,7 +48,7 @@ def create_profile(body: Dict) -> Optional[Dict]:
     """Add UserProfile to the database."""
     return profile_manager.create_profile(get_auth_user_id(request), body)
 
-    
+
 def update_profile(body: Dict) -> Optional[Dict]:
     """Update User Profile data."""
     return profile_manager.update_profile(get_auth_user_id(request), body)

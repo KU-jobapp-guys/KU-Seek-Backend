@@ -8,14 +8,12 @@ from uuid import UUID
 from sqlalchemy.exc import SQLAlchemyError
 
 
-
 class ProfileController(BaseController):
     """Controller to use CRUD operations for UserProfile."""
 
     def __init__(self):
         """Initialize the class."""
         super().__init__()
-    
 
     def get_profile_by_uid(self, user_id: str) -> Optional[Dict]:
         """
@@ -33,9 +31,9 @@ class ProfileController(BaseController):
         try:
             user_uuid = UUID(user_id)
 
-            profile = session.query(Profile).where(
-                Profile.user_id == user_uuid
-            ).one_or_none()
+            profile = (
+                session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
+            )
             if not profile:
                 return None
 
@@ -47,9 +45,8 @@ class ProfileController(BaseController):
 
         finally:
             session.close()
-        
 
-    def create_profile(self, user_id: str, body:Dict) -> Optional[Dict]:
+    def create_profile(self, user_id: str, body: Dict) -> Optional[Dict]:
         """
         Create new component in the UserProfile table.
 
@@ -61,30 +58,29 @@ class ProfileController(BaseController):
             raise ProblemException(
                 status=400,
                 title="Invalid Request",
-                detail="Request body cannot be empty."
+                detail="Request body cannot be empty.",
             )
-        
 
         session = self.get_session()
         try:
-            existing_profile = session.query(Profile).where(
-                Profile.user_id == user_uuid
-            ).one_or_none()
-            
+            existing_profile = (
+                session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
+            )
+
             if existing_profile:
                 raise ProblemException(
                     status=409,
                     title="Conflict",
-                    detail=f"Profile already exists for user '{user_id}'"
+                    detail=f"Profile already exists for user '{user_id}'",
                 )
-            
+
             profile = Profile()
             profile.user_id = user_uuid
-            
+
             for key, value in body.items():
                 if hasattr(profile, key):
                     setattr(profile, key, value)
-            
+
             session.add(profile)
             session.commit()
 
@@ -93,16 +89,11 @@ class ProfileController(BaseController):
             raise
         except Exception as e:
             session.rollback()
-            raise ProblemException(
-                status=500,
-                title="Database Error",
-                detail=str(e)
-            )
+            raise ProblemException(status=500, title="Database Error", detail=str(e))
         finally:
             session.close()
 
         return self.get_profile_by_uid(user_id)
-
 
     def update_profile(self, user_id: str, body: Dict) -> Optional[Dict]:
         """
@@ -116,19 +107,19 @@ class ProfileController(BaseController):
             raise ProblemException(
                 status=400,
                 title="Invalid Request",
-                detail="Request body cannot be empty."
+                detail="Request body cannot be empty.",
             )
 
         session = self.get_session()
         try:
-            profile = session.query(Profile).where(
-                Profile.user_id == user_uuid
-            ).one_or_none()
+            profile = (
+                session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
+            )
             if not profile:
                 raise ProblemException(
                     status=404,
                     title="Not Found",
-                    detail=f"User profile with id '{user_id}' not found."
+                    detail=f"User profile with id '{user_id}' not found.",
                 )
 
             for key, value in body.items():
@@ -142,13 +133,8 @@ class ProfileController(BaseController):
             raise
         except Exception as e:
             session.rollback()
-            raise ProblemException(
-                status=500,
-                title="Database Error",
-                detail=str(e)
-            )
+            raise ProblemException(status=500, title="Database Error", detail=str(e))
         finally:
             session.close()
 
         return self.get_profile_by_uid(user_id)
-    

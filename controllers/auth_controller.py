@@ -23,21 +23,22 @@ SECRET_KEY = config("SECRET_KEY", default="good-key123")
 
 ALGORITHM = "HS512"
 
+
 def get_auth_user_id(request):
     """Get the authenticated user ID to verify the user's identity for the operation."""
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         raise ProblemException(status=401, title="Unauthorized", detail="Missing token")
-    
+
     token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload.get("uid")  
+        return payload.get("uid")
     except jwt.ExpiredSignatureError:
         raise ProblemException(status=401, title="Unauthorized", detail="Token expired")
     except jwt.InvalidTokenError:
         raise ProblemException(status=401, title="Unauthorized", detail="Invalid token")
-    
+
 
 class UserCredentials(TypedDict):
     """Schema for user credentials."""
@@ -168,7 +169,7 @@ class AuthenticationController(BaseController):
         access_payload = {
             "uid": str(uid),
             "iat": int(now.timestamp()),  # integer timestamp
-            "exp": int((now + timedelta(hours=1)).timestamp())  # integer timestamp
+            "exp": int((now + timedelta(hours=1)).timestamp()),  # integer timestamp
         }
         auth_token = encode(access_payload, SECRET_KEY, algorithm="HS512")
 
@@ -178,7 +179,7 @@ class AuthenticationController(BaseController):
             "uid": str(uid),
             "refresh": refresh_id,
             "iat": int(now.timestamp()),
-            "exp": int((now + timedelta(days=30)).timestamp())
+            "exp": int((now + timedelta(days=30)).timestamp()),
         }
         refresh_token = encode(refresh_payload, SECRET_KEY, algorithm="HS512")
 
