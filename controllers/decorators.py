@@ -1,7 +1,7 @@
 """Module for API decorators."""
 
 from functools import wraps
-from flask import request, jsonify
+from flask import request
 from swagger_server.openapi_server import models
 from jwt import decode
 from decouple import config
@@ -18,7 +18,7 @@ def login_required(func):
 
     @wraps(func)
     def run_function(*args, **kwargs):
-        jwt_auth_token = request.cookies.get("refresh_token")
+        jwt_auth_token = request.headers.get("access_token")
 
         if not jwt_auth_token:
             return models.ErrorMessage("User is not authenticated."), 401
@@ -27,7 +27,7 @@ def login_required(func):
             token_info = decode(
                 jwt=jwt_auth_token, key=SECRET_KEY, algorithms=["HS512"]
             )
-            if datetime.fromisoformat(token_info["exp"]) <= datetime.now():
+            if datetime.fromtimestamp(token_info["exp"]) <= datetime.now():
                 return models.ErrorMessage("Expired authentication token."), 403
 
         except Exception as e:
@@ -45,12 +45,13 @@ def role_required(func, roles: list[str] = []):
 
     Args:
         roles: A list of roles that are allowed to use the API.
+               An empty list will allow access for all roles.
     """
 
     def decorator(func):
         @wraps(func)
         def run_function(*args, **kwargs):
-            jwt_auth_token = request.cookies.get("refresh_token")
+            jwt_auth_token = request.headers.get("access_token")
 
             if not jwt_auth_token:
                 return models.ErrorMessage("User is not authenticated."), 401
@@ -59,7 +60,7 @@ def role_required(func, roles: list[str] = []):
                 token_info = decode(
                     jwt=jwt_auth_token, key=SECRET_KEY, algorithms=["HS512"]
                 )
-                if datetime.fromisoformat(token_info["exp"]) <= datetime.now():
+                if datetime.fromtimestamp(token_info["exp"]) <= datetime.now():
                     return models.ErrorMessage("Expired authentication token."), 403
 
             except Exception as e:
@@ -72,11 +73,12 @@ def role_required(func, roles: list[str] = []):
             if not user:
                 session.close()
                 return models.ErrorMessage("Invalid user."), 403
-            
-            if user.type not in roles:
-                session.close()
-                return models.ErrorMessage("User does not have authorization."), 403
-            
+
+            if roles:
+                if user.type not in roles:
+                    session.close()
+                    return models.ErrorMessage("User does not have authorization."), 403
+
             # authorization successful, serve the API.
             return func(*args, **kwargs)
 
