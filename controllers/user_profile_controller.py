@@ -74,7 +74,7 @@ class ProfileController(BaseController):
                 )
             
             profile = Profile()
-            profile.user_id = user_id
+            profile.user_id = user_uuid
             
             for key, value in body.items():
                 if hasattr(profile, key):
