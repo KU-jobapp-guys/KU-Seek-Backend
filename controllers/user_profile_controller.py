@@ -51,7 +51,7 @@ class ProfileController(BaseController):
         """
         Create new component in the UserProfile table.
 
-        POST /users/{user_id}/profile
+        POST /users/profile
         """
         user_uuid = UUID(user_id)
 
@@ -65,7 +65,10 @@ class ProfileController(BaseController):
 
         session = self.get_session()
         try:
-            existing_profile = session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
+            existing_profile = session.query(Profile).where(
+                Profile.user_id == user_uuid
+            ).one_or_none()
+            
             if existing_profile:
                 raise ProblemException(
                     status=409,
@@ -103,7 +106,7 @@ class ProfileController(BaseController):
         """
         Update fields in the UserProfile table dynamically.
 
-        PATCH /users/{user_id}/profile
+        PATCH /users/profile
         """
         user_uuid = UUID(user_id)
 

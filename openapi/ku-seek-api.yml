@@ -148,18 +148,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserProfile'
-                
+  
+  /users/profile:
+        
     post:
       summary: Create an user profile
       operationId: controllers.controller.create_profile
-      parameters:
-        - name: user_id
-          in: path
-          required: true
-          description: The ID of the user whose profile to created
-          schema:
-            type: string
-
+ 
       requestBody:
         required: true
         content:
@@ -184,14 +179,7 @@ paths:
     patch:
       summary: Update an existing user profile
       operationId: controllers.controller.update_profile
-      parameters:
-        - name: user_id
-          in: path
-          required: true
-          description: The ID of the user whose profile to update
-          schema:
-            type: string
-
+      
       requestBody:
         required: true
         content:
@@ -214,6 +202,12 @@ paths:
           description: user profile not found
 
 components:
+  securitySchemes:
+      BearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
+
   schemas:
     Task:
       type: object

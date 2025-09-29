@@ -1,7 +1,10 @@
 """Module containing endpoints for operations."""
 
+from flask import request
 from .task_controller import TaskController
 from .user_profile_controller import ProfileController
+from .auth_controller import get_auth_user_id
+
 from typing import Dict, Optional
 
 
@@ -41,11 +44,11 @@ def get_user_profile(user_id:str) -> Dict:
     return profile_manager.get_profile_by_uid(user_id)
 
 
-def create_profile(user_id:str, body: Dict) -> Optional[Dict]:
+def create_profile(body: Dict) -> Optional[Dict]:
     """Add UserProfile to the database."""
-    return profile_manager.create_profile(user_id, body)
+    return profile_manager.create_profile(get_auth_user_id(request), body)
 
     
-def update_profile(user_id:str, body: Dict) -> Optional[Dict]:
+def update_profile(body: Dict) -> Optional[Dict]:
     """Update User Profile data."""
-    return profile_manager.update_profile(user_id, body)
+    return profile_manager.update_profile(get_auth_user_id(request), body)
