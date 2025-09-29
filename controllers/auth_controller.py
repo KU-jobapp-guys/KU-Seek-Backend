@@ -236,7 +236,7 @@ class AuthenticationController(BaseController):
         try:
             refresh_id = decode(jwt=refresh_token, key=SECRET_KEY, algorithms=["HS512"])
         except Exception as e:
-            return models.ErrorMessage("Could not decode JWT", e), 400
+            return models.ErrorMessage(f"Could not decode JWT, {e}"), 400
 
         session = self.get_session()
         valid_token = (
