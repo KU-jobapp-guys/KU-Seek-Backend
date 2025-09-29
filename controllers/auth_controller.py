@@ -1,6 +1,9 @@
 """Module for sending csrf-tokens."""
 
 import random
+import jwt
+
+from connexion.exceptions import ProblemException
 from typing import Dict, TypedDict
 from flask import jsonify
 from flask_wtf.csrf import generate_csrf
@@ -17,7 +20,6 @@ from .models.token_model import Token
 
 
 SECRET_KEY = config("SECRET_KEY", default="good-key123")
-
 
 class UserCredentials(TypedDict):
     """Schema for user credentials."""
@@ -101,6 +103,7 @@ def handle_authentication(body: Dict):
             if user is None:
                 raise ValueError("User was not found")
             user_jwt, refresh = auth_controller.login_user(user)
+
         else:
             # hardcoding to company for now, since KU auth is not created
             user = auth_controller.register_user(
@@ -140,23 +143,26 @@ class AuthenticationController(BaseController):
         return False
 
     def login_user(self, uid: str) -> Dict[str, str]:
-        """Return a JTW for authorization."""
-        # access token generation
-        iat = (datetime.now(UTC).isoformat(),)
-        exp = ((datetime.now(UTC) + timedelta(hours=1)).isoformat(),)
+        """Return a JWT for authorization."""
+        now = datetime.now(UTC)
 
-        payload = {"uid": str(uid), "iat": iat, "exp": exp}
+        # Access token payload
+        access_payload = {
+            "uid": str(uid),
+            "iat": int(now.timestamp()),  # integer timestamp
+            "exp": int((now + timedelta(hours=1)).timestamp())  # integer timestamp
+        }
+        auth_token = encode(access_payload, SECRET_KEY, algorithm="HS512")
 
-        auth_token = encode(payload, SECRET_KEY, algorithm="HS512")
-
-        # refresh token generation
+        # Refresh token payload
         refresh_id = random.getrandbits(32)
-        iat = (datetime.now(UTC).isoformat(),)
-        exp = ((datetime.now(UTC) + timedelta(days=30)).isoformat(),)
-
-        payload = {"uid": str(uid), "refresh": refresh_id, "iat": iat, "exp": exp}
-
-        refresh_token = encode(payload, SECRET_KEY, algorithm="HS512")
+        refresh_payload = {
+            "uid": str(uid),
+            "refresh": refresh_id,
+            "iat": int(now.timestamp()),
+            "exp": int((now + timedelta(days=30)).timestamp())
+        }
+        refresh_token = encode(refresh_payload, SECRET_KEY, algorithm="HS512")
 
         session = self.get_session()
         token = Token(uid=uid, refresh_id=refresh_id)
