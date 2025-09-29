@@ -158,8 +158,8 @@ class AuthenticationController(BaseController):
     def login_user(self, uid: str) -> Dict[str, str]:
         """Return a JTW for authorization."""
         # access token generation
-        iat = (datetime.now(UTC).isoformat(),)
-        exp = ((datetime.now(UTC) + timedelta(hours=1)).isoformat(),)
+        iat = int(datetime.now(UTC).timestamp())
+        exp = int((datetime.now(UTC) + timedelta(hours=1)).timestamp())
 
         payload = {"uid": str(uid), "iat": iat, "exp": exp}
 
@@ -167,8 +167,8 @@ class AuthenticationController(BaseController):
 
         # refresh token generation
         refresh_id = random.getrandbits(32)
-        iat = (datetime.now(UTC).isoformat(),)
-        exp = ((datetime.now(UTC) + timedelta(days=30)).isoformat(),)
+        iat = int(datetime.now(UTC).timestamp())
+        exp = int((datetime.now(UTC) + timedelta(days=30)).timestamp())
 
         payload = {"uid": str(uid), "refresh": refresh_id, "iat": iat, "exp": exp}
 
