@@ -104,7 +104,7 @@ def handle_authentication(body: Dict):
     user_jwt = {}
     try:
         if is_registered:
-            user = auth_controller.db.get_user(id_info["sub"])
+            user = auth_controller.get_user(id_info["sub"])
             if user is None:
                 raise ValueError("User was not found")
             user_jwt, refresh = auth_controller.login_user(user)
