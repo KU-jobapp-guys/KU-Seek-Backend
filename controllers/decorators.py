@@ -42,7 +42,7 @@ def login_required(func):
     return run_function
 
 
-def role_required(func, roles: list[str] = []):
+def role_required(roles: list[str] = []):
     """
     Check if the user has a valid role to use the API.
 
@@ -80,10 +80,9 @@ def role_required(func, roles: list[str] = []):
                 session.close()
                 return models.ErrorMessage("Invalid user."), 403
 
-            if roles:
-                if user.type not in roles:
-                    session.close()
-                    return models.ErrorMessage("User does not have authorization."), 403
+            if user.type.value not in roles:
+                session.close()
+                return models.ErrorMessage("User does not have authorization."), 403
                 
             session.close()
             # authorization successful, serve the API.
