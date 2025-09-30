@@ -4,6 +4,7 @@ import unittest
 from controllers.db_controller import BaseController
 from sqlalchemy import create_engine, text
 from controllers.models import BaseModel
+from app import create_app
 from decouple import config
 
 
@@ -30,16 +31,17 @@ class TestingController(BaseController):
             pool_timeout=10,
         )
 
-        testing_db = config('TESTING_DB', default='unittestdb')
+        testing_db = config("TESTING_DB", default="unittestdb")
         try:
             with db_engine.connect() as pool:
-                pool.execute(
-                    text(f"CREATE DATABASE {testing_db}")
-                )
+                pool.execute(text(f"DROP DATABASE IF EXISTS {testing_db}"))
+                pool.execute(text(f"CREATE DATABASE {testing_db}"))
                 print("Testing database initialization sucessful...")
 
             # use the testing db
-            connection_url = f"mysql+pymysql://{user}:{password}@{host}:{port}/{testing_db}"
+            connection_url = (
+                f"mysql+pymysql://{user}:{password}@{host}:{port}/{testing_db}"
+            )
 
             db_engine = create_engine(
                 connection_url,
@@ -78,3 +80,24 @@ class SimpleTestCase(unittest.TestCase):
     def tearDownClass(cls):
         """Destroy the testing database and close the unittest."""
         cls.database._destroy_testing_database()
+
+
+class RoutingTestCase(SimpleTestCase):
+    """Application level test cases."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Set up a test client of the application, along with the database."""
+        super().setUpClass()
+
+        # connexion deprication error, not our problem so ignoring it.
+        import warnings
+
+        warnings.filterwarnings(
+            "ignore",
+            category=DeprecationWarning,
+            message=r"Passing a schema to Validator\.iter_errors is deprecated",
+        )
+
+        cls.app = create_app(cls.database)
+        cls.client = cls.app.app.test_client()

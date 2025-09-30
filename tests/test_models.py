@@ -11,12 +11,12 @@ class ModelTestCase(SimpleTestCase):
     def setUpClass(cls):
         """Set up the database for this test suite."""
         super().setUpClass()
-    
+
     @classmethod
     def tearDownClass(cls):
         """Tear down the database for this test suite."""
         super().tearDownClass()
-    
+
     def test_task_model(self):
         """Test the task ORM model."""
         session = self.database.get_session()

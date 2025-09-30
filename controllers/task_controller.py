@@ -11,7 +11,7 @@ class TaskController:
         """Initialize the class."""
         self.db = database
 
-    @role_required(["Student", "Company"])
+    @role_required(roles=["Student", "Company"])
     def get_all_tasks(self) -> List[Dict]:
         """
         Return all tasks in the tasks table.
