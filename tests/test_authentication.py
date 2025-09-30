@@ -27,7 +27,6 @@ class AuthenticationTestCase(RoutingTestCase):
         cls.user_id = user.id
         session.close()
 
-
     @classmethod
     def tearDownClass(cls):
         """Tear down the database for this test suite."""
@@ -94,7 +93,6 @@ class AuthorizationTestCase(RoutingTestCase):
         res = self.client.get("/api/v1/test/tasks", headers={"access_token": jwt})
         self.assertEqual(res.status_code, 403)
         self.assertIn("User does not have authorization", res.json["message"])
-
 
     def test_authorization(self):
         """Test fetching a protected API with valid credentials."""

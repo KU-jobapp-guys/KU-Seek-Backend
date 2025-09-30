@@ -74,7 +74,11 @@ def role_required(roles: list[str] = []):
             # fetch the user's role and validate
             session = current_app.config["Database"].get_session()
 
-            user = session.query(User).where(User.id == UUID(token_info["uid"])).one_or_none()
+            user = (
+                session.query(User)
+                .where(User.id == UUID(token_info["uid"]))
+                .one_or_none()
+            )
 
             if not user:
                 session.close()
@@ -83,7 +87,7 @@ def role_required(roles: list[str] = []):
             if user.type.value not in roles:
                 session.close()
                 return models.ErrorMessage("User does not have authorization."), 403
-                
+
             session.close()
             # authorization successful, serve the API.
             return func(*args, **kwargs)

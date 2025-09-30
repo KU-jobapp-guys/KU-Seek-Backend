@@ -4,6 +4,7 @@ from typing import List, Dict, Optional
 from .models.task_model import Task
 from .decorators import role_required
 
+
 class TaskController:
     """Controller to use CRUD operations for tasks."""
 
