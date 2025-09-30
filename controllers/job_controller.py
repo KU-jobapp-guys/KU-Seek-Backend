@@ -29,14 +29,18 @@ class JobController(BaseController):
         Corresponds to: GET /api/v1/applications
         """
         try:
-            query = f"""
-                SELECT *
-                FROM JobApplication ja
-                WHERE ja.student_id={user_id};
-            """
 
-            return jsonify(self.execute_query(query, fetchall=True)), 200
-
+            session = self.get_session()
+            user_jobapplications = session.query(JobApplication).where(
+                JobApplication.student_id == user_id
+            ).all()
+            if not user_jobapplications:
+                session.close()
+                return
+            user_jobapplications = user_jobapplications.to_dict()
+            session.close()
+            return user_jobapplications
+                    
         except Exception as e:
             return [{"error": str(e)}]
 
