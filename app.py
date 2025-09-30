@@ -4,6 +4,7 @@ import sys
 import os
 from decouple import config, Csv
 from flask_cors import CORS
+from flask_wtf import CSRFProtect
 from controllers.db_controller import BaseController
 
 
@@ -38,7 +39,7 @@ from openapi_server import encoder  # noqa: E402
 def create_app(engine=None):
     """
     Setups and configure the application.
-    
+
     Args:
         engine: Optional database engine to use. If None, a new engine will be created.
 
@@ -65,7 +66,7 @@ def create_app(engine=None):
     )
     # setup CSRF (disabling for now)
     app.app.secret_key = config("SECRET_KEY", default="very-secure-secret-key")
-    # CSRFProtect(app.app)
+    CSRFProtect(app.app)
 
     app.app.config["Database"] = BaseController()
     # set database controller if provided
