@@ -4,6 +4,7 @@ from typing import List, Dict
 from .db_controller import BaseController
 from flask import jsonify
 from .models.job_model import Job, JobSkills, JobTags, JobApplication, Bookmark
+from .models.user_model import Company
 
 class JobController(BaseController):
     """Controller to use CRUD operations for Job."""
@@ -20,7 +21,25 @@ class JobController(BaseController):
         """
         if job_id:
             return self._get_jobs_with_filters({"id": job_id})
-        return self._get_jobs_with_filters({})
+        try:
+
+            session = self.get_session()
+            jobs = session.query(Job).where(
+            ).all()
+            if not jobs:
+                session.close()
+                return
+            jobs = jobs.to_dict()
+
+            for job in jobs:
+                company = session.query(Company).where(
+                    Company
+                ).one_or_none()
+            session.close()
+            return jobs
+                    
+        except Exception as e:
+            return [{"error": str(e)}]
 
     def get_applied_jobs(self, user_id: str) -> List[Dict]:
         """
