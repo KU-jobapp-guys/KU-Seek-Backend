@@ -5,9 +5,10 @@ from flask import request
 from swagger_server.openapi_server import models
 from jwt import decode
 from decouple import config
-from datetime import datetime
-from .db_controller import BaseController
+from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
 from .models import User
+from uuid import UUID
+from flask import current_app
 
 
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
@@ -27,11 +28,13 @@ def login_required(func):
             token_info = decode(
                 jwt=jwt_auth_token, key=SECRET_KEY, algorithms=["HS512"]
             )
-            if datetime.fromtimestamp(token_info["exp"]) <= datetime.now():
-                return models.ErrorMessage("Expired authentication token."), 403
 
+        except InvalidSignatureError:
+            return models.ErrorMessage("Invalid authentication token provided"), 403
+        except ExpiredSignatureError:
+            return models.ErrorMessage("Token is expired"), 403
         except Exception as e:
-            return models.ErrorMessage(f"Invalid authentication token., {e}"), 403
+            return models.ErrorMessage(f"Invalid authentication token, {e}"), 403
 
         # authentication successful, serve the API.
         return func(*args, **kwargs)
@@ -60,16 +63,19 @@ def role_required(func, roles: list[str] = []):
                 token_info = decode(
                     jwt=jwt_auth_token, key=SECRET_KEY, algorithms=["HS512"]
                 )
-                if datetime.fromtimestamp(token_info["exp"]) <= datetime.now():
-                    return models.ErrorMessage("Expired authentication token."), 403
 
+            except InvalidSignatureError:
+                return models.ErrorMessage("Invalid authentication token provided"), 403
+            except ExpiredSignatureError:
+                return models.ErrorMessage("Token is expired"), 403
             except Exception as e:
-                return models.ErrorMessage(f"Invalid authentication token., {e}"), 403
+                return models.ErrorMessage(f"Invalid authentication token, {e}"), 403
 
             # fetch the user's role and validate
-            session = BaseController().get_session()
+            session = current_app.config["Database"].get_session()
 
-            user = session.query(User).where(User.id == token_info["uid"]).one_or_none()
+            user = session.query(User).where(User.id == UUID(token_info["uid"])).one_or_none()
+
             if not user:
                 session.close()
                 return models.ErrorMessage("Invalid user."), 403
@@ -78,7 +84,8 @@ def role_required(func, roles: list[str] = []):
                 if user.type not in roles:
                     session.close()
                     return models.ErrorMessage("User does not have authorization."), 403
-
+                
+            session.close()
             # authorization successful, serve the API.
             return func(*args, **kwargs)
 

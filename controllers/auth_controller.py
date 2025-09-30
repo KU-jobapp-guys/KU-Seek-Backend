@@ -3,13 +3,12 @@
 import random
 from flask import make_response, request
 from typing import Dict, TypedDict
-from flask import jsonify
+from flask import jsonify, current_app
 from flask_wtf.csrf import generate_csrf
 from google_auth_oauthlib.flow import Flow
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from decouple import config
-from .db_controller import BaseController
 from jwt import encode, decode
 from swagger_server.openapi_server import models
 from datetime import datetime, timedelta, UTC
@@ -42,7 +41,7 @@ def get_csrf_token():
 def get_new_access_token():
     """Return a new access token for authorizaation."""
     refresh_token = request.cookies.get("refresh_token")
-    auth_controller = AuthenticationController()
+    auth_controller = AuthenticationController(current_app.config["Database"])
     return auth_controller.refresh_access_token(refresh_token)
 
 
@@ -95,7 +94,7 @@ def handle_authentication(body: Dict):
         clock_skew_in_seconds=10,
     )
 
-    auth_controller = AuthenticationController()
+    auth_controller = AuthenticationController(current_app.config["Database"])
 
     try:
         is_registered = auth_controller.check_users(id_info["sub"])
@@ -105,7 +104,7 @@ def handle_authentication(body: Dict):
     user_jwt = {}
     try:
         if is_registered:
-            user = auth_controller.get_user(id_info["sub"])
+            user = auth_controller.db.get_user(id_info["sub"])
             if user is None:
                 raise ValueError("User was not found")
             user_jwt, refresh = auth_controller.login_user(user)
@@ -135,16 +134,16 @@ def handle_authentication(body: Dict):
         ), 400
 
 
-class AuthenticationController(BaseController):
+class AuthenticationController:
     """Controller for fetching database authentication credentials."""
 
-    def __init__(self):
+    def __init__(self, database):
         """Init the class."""
-        super().__init__()
+        self.db = database
 
     def check_users(self, google_id: str):
         """Check if the user is in the users table."""
-        session = self.get_session()
+        session = self.db.get_session()
         users = session.query(User).all()
 
         if google_id in [user.google_uid for user in users]:
@@ -173,7 +172,7 @@ class AuthenticationController(BaseController):
 
         refresh_token = encode(payload, SECRET_KEY, algorithm="HS512")
 
-        session = self.get_session()
+        session = self.db.get_session()
         token = Token(uid=uid, refresh_id=refresh_id)
         session.add(token)
         session.commit()
@@ -183,7 +182,7 @@ class AuthenticationController(BaseController):
 
     def get_user(self, google_uid):
         """Return the user id with the matching google_uid."""
-        session = self.get_session()
+        session = self.db.get_session()
         user = session.query(User).where(User.google_uid == google_uid).one_or_none()
         if not user:
             session.close()
@@ -207,7 +206,7 @@ class AuthenticationController(BaseController):
         if not valid_keys:
             raise TypeError("Invalid credentials.")
 
-        session = self.get_session()
+        session = self.db.get_session()
         user = User(
             google_uid=credentials["google_uid"],
             email=credentials["username"],
@@ -236,7 +235,7 @@ class AuthenticationController(BaseController):
         except Exception as e:
             return models.ErrorMessage(f"Could not decode JWT, {e}"), 400
 
-        session = self.get_session()
+        session = self.db.get_session()
         valid_token = (
             session.query(Token).where(Token.refresh_id == refresh_id).one_or_none()
         )

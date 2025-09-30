@@ -1,17 +1,17 @@
 """Module for handing API path logic."""
 
 from typing import List, Dict, Optional
-from .db_controller import BaseController
 from .models.task_model import Task
+from .decorators import role_required
 
-
-class TaskController(BaseController):
+class TaskController:
     """Controller to use CRUD operations for tasks."""
 
-    def __init__(self):
+    def __init__(self, database):
         """Initialize the class."""
-        super().__init__()
+        self.db = database
 
+    @role_required(["Student", "Company"])
     def get_all_tasks(self) -> List[Dict]:
         """
         Return all tasks in the tasks table.
@@ -19,7 +19,7 @@ class TaskController(BaseController):
         Retrieves all tasks from the MySQL database.
         Corresponds to: GET /api/v1/test/tasks
         """
-        session = self.get_session()
+        session = self.db.get_session()
         tasks = session.query(Task).all()
         session.close()
         return [task.to_dict() for task in tasks]
@@ -44,7 +44,7 @@ class TaskController(BaseController):
 
         name = body["name"]
 
-        session = self.get_session()
+        session = self.db.get_session()
         task = Task(name=name)
         # add the task and commit to save to db
         session.add(task)
@@ -65,7 +65,7 @@ class TaskController(BaseController):
 
         Returns: The task dictionary if found, otherwise None.
         """
-        session = self.get_session()
+        session = self.db.get_session()
         task = session.query(Task).where(Task.id == task_id).one_or_none()
         if not task:
             session.close()
@@ -98,7 +98,7 @@ class TaskController(BaseController):
         if not update_fields:
             return self.get_task_by_id(task_id)
 
-        session = self.get_session()
+        session = self.db.get_session()
         task = session.query(Task).where(Task.id == task_id).one()
 
         if "name" in body:
@@ -127,7 +127,7 @@ class TaskController(BaseController):
         if not existing_task:
             return False
 
-        session = self.get_session()
+        session = self.db.get_session()
         task = session.query(Task).where(Task.id == task_id).one()
         session.delete(task)
         session.commit()
