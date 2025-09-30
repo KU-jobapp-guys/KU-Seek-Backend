@@ -3,7 +3,7 @@
 from typing import List, Dict
 from .db_controller import BaseController
 from flask import jsonify
-
+from .models.job_model import Job, JobSkills, JobTags, JobApplication, Bookmark
 
 class JobController(BaseController):
     """Controller to use CRUD operations for Job."""
@@ -47,13 +47,16 @@ class JobController(BaseController):
         Corresponds to: GET /api/v1/bookmarks
         """
         try:
-            query = f"""
-                SELECT *
-                FROM Bookmark b
-                WHERE b.student_id={user_id};
-            """
-
-            return jsonify(self.execute_query(query, fetchall=True)), 200
+            session = self.get_session()
+            user_bookmarked_jobs = session.query(Bookmark).where(
+                Bookmark.id == user_id
+            ).all()
+            if not user_bookmarked_jobs:
+                session.close()
+                return
+            user_bookmarked_jobs = user_bookmarked_jobs.to_dict()
+            session.close()
+            return user_bookmarked_jobs
 
         except Exception as e:
             return [{"error": str(e)}]
