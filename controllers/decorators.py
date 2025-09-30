@@ -25,9 +25,7 @@ def login_required(func):
             return models.ErrorMessage("User is not authenticated."), 401
 
         try:
-            token_info = decode(
-                jwt=jwt_auth_token, key=SECRET_KEY, algorithms=["HS512"]
-            )
+            decode(jwt=jwt_auth_token, key=SECRET_KEY, algorithms=["HS512"])
 
         except InvalidSignatureError:
             return models.ErrorMessage("Invalid authentication token provided"), 403

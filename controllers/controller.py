@@ -2,7 +2,6 @@
 
 from .task_controller import TaskController
 from typing import Dict, Optional
-from .decorators import login_required
 from flask import current_app
 
 
