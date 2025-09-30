@@ -5,6 +5,7 @@ from .db_controller import BaseController
 from flask import jsonify
 from .models.job_model import Job, JobSkills, JobTags, JobApplication, Bookmark
 from .models.user_model import Company
+from .models.tag_term_model import Tags, Terms
 
 class JobController(BaseController):
     """Controller to use CRUD operations for Job."""
@@ -15,29 +16,71 @@ class JobController(BaseController):
 
     def get_all_jobs(self, job_id: str) -> List[Dict]:
         """
-        Return all jobs in the jobs table.
-
+        Return all jobs in the jobs table if have job_id it will return only one job.
+    
         Corresponds to: GET /api/v1/jobs
-        """
-        if job_id:
-            return self._get_jobs_with_filters({"id": job_id})
-        try:
 
+        Args:
+            job_id: The unique ID of the job (string format).
+        """
+        try:
             session = self.get_session()
-            jobs = session.query(Job).where(
-            ).all()
+            if job_id:
+                jobs = session.query(Job).where(
+                    Job.id == job_id
+                ).one_or_none()
+            
+            else:
+                jobs = session.query(Job).all()
+            
             if not jobs:
                 session.close()
-                return
-            jobs = jobs.to_dict()
-
+                return []
+            
+            result = []
             for job in jobs:
+                job_dict = job.to_dict()  
+                
+                # Get company
                 company = session.query(Company).where(
-                    Company
+                    Company.id == job.company_id
                 ).one_or_none()
+                job_dict["company"] = company.to_dict() if company else None
+                
+                # Get skills
+                job_skills = session.query(JobSkills).where(
+                    JobSkills.job_id == job.id
+                ).all()
+                
+                skills_list = []
+                for job_skill in job_skills:
+                    skill = session.query(Terms).where(
+                        Terms.id == job_skill.skill_id
+                    ).one_or_none()
+                    if skill:
+                        skills_list.append(skill.to_dict())
+                
+                job_dict["skills"] = skills_list
+                
+                # Get tags
+                job_tags = session.query(JobTags).where(
+                    JobTags.job_id == job.id
+                ).all()
+                
+                tags_list = []
+                for job_tag in job_tags:
+                    tag = session.query(Tags).where(
+                        Tags.id == job_tag.tag_id
+                    ).one_or_none()
+                    if tag:
+                        tags_list.append(tag.to_dict())
+                
+                job_dict["tags"] = tags_list
+                result.append(job_dict)
+            
             session.close()
-            return jobs
-                    
+            return result
+                        
         except Exception as e:
             return [{"error": str(e)}]
 

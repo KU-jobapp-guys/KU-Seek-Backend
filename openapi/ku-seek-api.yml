@@ -53,7 +53,7 @@ paths:
 
   /jobs:
     get:
-      summary: Get all jobs in the database
+      summary: Get all jobs in the database if have job_id it will return only one job.
       operationId: controllers.controller.get_all_jobs
       parameters:
         - name: job_id
