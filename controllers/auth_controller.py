@@ -33,9 +33,13 @@ def get_csrf_token():
 
     Creates a CSRF-token using the flask-WTF library for form validation.
 
-    Returns: A JSON with the csrf-token field.
+    Returns: A response object with a CSRF-token in the body and cookie.
     """
-    return jsonify(csrf_token=generate_csrf())
+    token = generate_csrf()
+    response = make_response(jsonify(csrf_token=token))
+    # set the csrf_token as a cookie
+    response.set_cookie("csrf_token", token, httponly=False)
+    return response
 
 
 def get_new_access_token():
@@ -211,7 +215,7 @@ class AuthenticationController:
 
         Returns: The user's id in the database
         """
-        keys = UserCredentials.keys()
+        keys = list(UserCredentials.__annotations__.keys())
         valid_keys = all(key in credentials for key in keys)
         if not valid_keys:
             raise TypeError("Invalid credentials.")
@@ -219,12 +223,12 @@ class AuthenticationController:
         session = self.db.get_session()
         user = User(
             google_uid=credentials["google_uid"],
-            email=credentials["username"],
+            email=credentials["email"],
             type=credentials["user_type"],
         )
         session.add(user)
         session.commit()
-        session.refresh()
+        session.refresh(user)
         user_id = user.id
         session.close()
 
