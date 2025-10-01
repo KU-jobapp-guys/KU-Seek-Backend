@@ -154,7 +154,17 @@ class AuthenticationController:
         return False
 
     def login_user(self, uid: str) -> Dict[str, str]:
-        """Return a JTW for authorization."""
+        """
+        Login a user into the system.
+
+        Login the use with the provided user id,
+        then return access and refresh tokens for proof of authentication.
+
+        Args:
+            uid: The user's user id in UUID4 format
+
+        Returns: A tuple containing access and refresh tokens
+        """
         # access token generation
         iat = int(datetime.now(UTC).timestamp())
         exp = int((datetime.now(UTC) + timedelta(hours=1)).timestamp())
