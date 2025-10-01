@@ -2,7 +2,8 @@
 
 from typing import List, Dict
 from .db_controller import BaseController
-from flask import jsonify
+from datetime import datetime
+from sqlalchemy.exc import IntegrityError
 from .models.job_model import Job, JobSkills, JobTags, JobApplication, Bookmark
 from .models.user_model import Company
 from .models.tag_term_model import Tags, Terms
@@ -48,6 +49,101 @@ class JobController(BaseController):
                         
         except Exception as e:
             return [{"error": str(e)}]
+    
+    def post_job(self, body: Dict) -> Dict:
+        """
+        Create a new Job from the request body.
+
+        Creates a new job and inserts it into the MySQL database.
+        Corresponds to: POST /api/v1/jobs
+
+        Args:
+            body: A request body containing job information with required fields:
+                - company_id (int): ID of the company posting the job
+                - title (str): Job title
+                - salary_min (float): Minimum salary
+                - salary_max (float): Maximum salary
+                - location (str): Job location
+                - work_hours (str): Working hours
+                - job_type (str): Type of job
+                - job_level (str): Level of job
+                - capacity (int): Number of positions
+                - end_date (str): Application deadline (ISO format)
+                
+            Optional fields:
+                - description (str): Job description
+                - visibility (bool): Whether job is visible
+                - skills (list[int]): List of skill IDs
+                - tags (list[int]): List of tag IDs
+
+        Returns:
+            Dict: The created job data
+
+        Raises:
+            ValueError: If required fields are missing or invalid
+        """
+        required_fields = [
+            "company_id", "title", "salary_min", "salary_max",
+            "location", "work_hours", "job_type", "job_level",
+            "capacity", "end_date"
+        ]
+        
+        missing_fields = [field for field in required_fields if field not in body]
+        if missing_fields:
+            raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
+
+        session = self.get_session()
+        
+        try:
+            end_date = body["end_date"]
+            if isinstance(end_date, str):
+                end_date = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            
+            job = Job(
+                company_id=body["company_id"],
+                title=body["title"],
+                description=body.get("description"),
+                salary_min=body["salary_min"],
+                salary_max=body["salary_max"],
+                location=body["location"],
+                work_hours=body["work_hours"],
+                job_type=body["job_type"],
+                job_level=body["job_level"],
+                capacity=body["capacity"],
+                end_date=end_date,
+                visibility=body.get("visibility", False),
+                status="pending"  
+            )
+            
+            session.add(job)
+            session.flush()  # Get the job.id before commit
+            
+            # Add skills if provided
+            if "skills" in body and body["skills"]:
+                for skill_id in body["skills"]:
+                    job_skill = JobSkills(job_id=job.id, skill_id=skill_id)
+                    session.add(job_skill)
+            
+            # Add tags if provided
+            if "tags" in body and body["tags"]:
+                for tag_id in body["tags"]:
+                    job_tag = JobTags(job_id=job.id, tag_id=tag_id)
+                    session.add(job_tag)
+            
+            session.commit()
+            
+            new_job = job.to_dict()
+            
+            return new_job
+            
+        except IntegrityError as e:
+            session.rollback()
+            raise ValueError(f"Invalid foreign key reference: {str(e)}")
+        except Exception as e:
+            session.rollback()
+            raise ValueError(f"Error creating job: {str(e)}")
+        finally:
+            session.close()
 
     def get_applied_jobs(self, user_id: str) -> List[Dict]:
         """
