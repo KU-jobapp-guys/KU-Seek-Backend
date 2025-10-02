@@ -151,7 +151,85 @@ paths:
         404:
           description: Task not found
 
+  /users/{user_id}/profile:
+    get:
+      summary: Get the user profile data
+      operationId: controllers.controller.get_user_profile
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user whose profile to created
+          schema:
+            type: string
+      
+      responses:
+        200:
+          description: Return the user profile data created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+  
+  /users/profile:
+        
+    post:
+      summary: Create an user profile
+      operationId: controllers.controller.create_profile
+ 
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileInput'
+      
+      responses:
+        200:
+          description: User profile created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        
+        400:
+          description: Error BAD REQUEST
+        
+        409:
+          description: Profile already exists for user
+
+    patch:
+      summary: Update an existing user profile
+      operationId: controllers.controller.update_profile
+      
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileInput'
+
+      responses:
+        200:
+          description: User profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        
+        400:
+          description: Error BAD REQUEST
+
+        404:
+          description: user profile not found
+
 components:
+  securitySchemes:
+      BearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
+
   schemas:
     Task:
       type: object
@@ -196,3 +274,151 @@ components:
       properties:
         message:
           type: string
+    token:
+      type: object
+      required:
+        - access_token
+        - refresh_token
+      properties:
+        access_token:
+          type: string
+          description: The access token
+        refresh_token:
+          type: string
+          description: The refresh token
+    
+    UserProfileInput:
+      type: object
+      properties:
+        first_name:
+          type: string
+          description: The first name of the user
+          example: "Hu"
+        last_name:
+          type: string
+          description: The last name of the user
+          example: "Tao"
+        about:
+          type: string
+          description: A brief description or bio of the user
+          example: "Computer Science student interested in web development"
+        location:
+          type: string
+          description: The location or address of the user
+          example: "Bangkok, Thailand"
+        contact_email:
+          type: string
+          format: email
+          description: The contact email address of the user
+          example: "hutao@ku.th"
+        gender:
+          type: string
+          description: The gender of the user
+          enum: ["M", "F"]
+          example: "M"
+        age:
+          type: integer 
+          description: The age of the user
+          example: 22
+        user_type:
+          type: string
+          description: The type of user
+          enum: ["student", "company", "professor", "admin"]
+          example: "student"
+        profile_img:
+          type: string
+          format: uri
+          description: URL or path to the user's profile image
+        banner_img:
+          type: string
+          format: uri
+          description: URL or path to the user's banner/cover image
+        phone_number:
+          type: string
+          description: The phone number of the user
+          example: "0812345678"
+      
+    UserProfile:
+      type: object
+      required:
+        - user_id
+        - first_name
+        - last_name
+        - user_type
+        - is_verified
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: The unique identifier for the user (foreign key to User table)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        first_name:
+          type: string
+          maxLength: 100
+          description: The first name of the user
+          example: "Sweet"
+        last_name:
+          type: string
+          maxLength: 100
+          description: The last name of the user
+          example: "Nature"
+        about:
+          type: string
+          nullable: true
+          description: A brief description or bio of the user
+          example: "Computer Science student interested in web development"
+        location:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: The location or address of the user
+          example: "Bangkok, Thailand"
+        contact_email:
+          type: string
+          format: email
+          maxLength: 255
+          nullable: true
+          description: The contact email address of the user
+          example: "sweet_nature@ku.th"
+        gender:
+          type: string
+          maxLength: 1
+          nullable: true
+          description: The gender of the user (single character)
+          enum: ["M", "F"]  
+          example: "M"
+        age:
+          type: integer
+          nullable: true
+          description: The age of the user
+          example: 22
+        user_type:
+          type: string
+          maxLength: 20
+          description: The type of user
+          enum: ["student", "company", "professor", "admin"]
+          example: "student"
+        profile_img:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Path or filename of the user's profile image
+          example: "profile_123456.jpg"
+        banner_img:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Path or filename of the user's banner/cover image
+          example: "banner_123456.jpg"
+        phone_number:
+          type: string
+          maxLength: 20
+          nullable: true
+          description: The phone number of the user
+          example: "0967983241"
+        is_verified:
+          type: boolean
+          description: Whether the user profile is verified
+          default: false
+          example: false
+

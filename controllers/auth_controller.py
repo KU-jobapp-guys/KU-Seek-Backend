@@ -1,7 +1,10 @@
 """Module for sending csrf-tokens."""
 
 import random
+import jwt
+
 from flask import make_response, request
+from connexion.exceptions import ProblemException
 from typing import Dict, TypedDict
 from flask import jsonify, current_app
 from flask_wtf.csrf import generate_csrf
@@ -17,6 +20,24 @@ from .models.token_model import Token
 
 
 SECRET_KEY = config("SECRET_KEY", default="good-key123")
+
+ALGORITHM = "HS512"
+
+
+def get_auth_user_id(request):
+    """Get the authenticated user ID to verify the user's identity for the operation."""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise ProblemException(status=401, title="Unauthorized", detail="Missing token")
+
+    token = auth_header.split(" ")[1]
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload.get("uid")
+    except jwt.ExpiredSignatureError:
+        raise ProblemException(status=401, title="Unauthorized", detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise ProblemException(status=401, title="Unauthorized", detail="Invalid token")
 
 
 class UserCredentials(TypedDict):
@@ -112,6 +133,7 @@ def handle_authentication(body: Dict):
             if user is None:
                 raise ValueError("User was not found")
             user_jwt, refresh = auth_controller.login_user(user)
+
         else:
             # hardcoding to company for now, since KU auth is not created
             user = auth_controller.register_user(
@@ -177,7 +199,7 @@ class AuthenticationController:
 
         auth_token = encode(payload, SECRET_KEY, algorithm="HS512")
 
-        # refresh token generation
+        # Refresh token payload
         refresh_id = random.getrandbits(32)
         iat = int(datetime.now(UTC).timestamp())
         exp = int((datetime.now(UTC) + timedelta(days=30)).timestamp())
