@@ -40,16 +40,17 @@ def get_all_jobs(job_id: str = "") -> List[Dict]:
     """Return all Jobs."""
     return job_manager.get_all_jobs(job_id)
 
+def post_job(body: Dict) -> Dict:
+    """Add new Job."""
+    return job_manager.post_job(body)
 
 def get_filtered_jobs(body: Dict) -> List[Dict]:
     """Return filtered Jobs."""
     return job_manager.get_filtered_job(body)
 
-
 def get_applied_jobs(user_id: str) -> List[Dict]:
     """Return applied Jobs."""
     return job_manager.get_applied_jobs(user_id)
-
 
 def get_bookmark_jobs(user_id: str) -> List[Dict]:
     """Return bookmark Jobs."""
