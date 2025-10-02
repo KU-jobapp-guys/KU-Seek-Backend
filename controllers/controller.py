@@ -6,33 +6,36 @@ from .user_profile_controller import ProfileController
 from .auth_controller import get_auth_user_id
 
 from typing import Dict, Optional
-
-
-task_manager = TaskController()
+from flask import current_app
 
 
 def get_all_tasks():
     """Return Placeholder."""
+    task_manager = TaskController(current_app.config["Database"])
     return task_manager.get_all_tasks()
 
 
 def create_task(body: Dict):
     """Return Placeholder."""
+    task_manager = TaskController(current_app.config["Database"])
     return task_manager.create_task(body)
 
 
 def get_task_by_id(task_id: str) -> Optional[Dict]:
     """Return Placeholder."""
+    task_manager = TaskController(current_app.config["Database"])
     return task_manager.get_task_by_id(task_id)
 
 
 def update_task(task_id: str, body: Dict) -> Optional[Dict]:
     """Return Placeholder."""
+    task_manager = TaskController(current_app.config["Database"])
     return task_manager.update_task(task_id, body)
 
 
 def delete_task(task_id: str):
     """Return Placeholder."""
+    task_manager = TaskController(current_app.config["Database"])
     return task_manager.delete_task(task_id)
 
 

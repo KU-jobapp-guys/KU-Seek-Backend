@@ -24,6 +24,28 @@ paths:
                   csrf_token: 
                     type: string
 
+  /refresh:
+    get:
+      summary: Get a new access token from a refesh token
+      operationId: controllers.auth_controller.get_new_access_token
+      parameters:
+        - in: cookie
+          name: refresh_token
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: Return a new access token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token: 
+                    type: string
+        400:
+          description: Invalid refresh token provided in header
 
   /auth/oauth:
     post:
@@ -240,17 +262,13 @@ components:
     UserCredentials:
       type: object
       required:
-        - uid
         - access_token
-        - refresh_token
       properties:
-        uid:
-          type: string
-          description: The user's uid
         access_token:
-          $ref: '#/components/schemas/token'
-        refresh_token:
-          $ref: '#/components/schemas/token'
+          type: string
+          description: The access token
+        email:
+          description: The account email
     error_message:
       type: object
       properties:

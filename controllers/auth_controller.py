@@ -3,16 +3,16 @@
 import random
 import jwt
 
+from flask import make_response, request
 from connexion.exceptions import ProblemException
 from typing import Dict, TypedDict
-from flask import jsonify
+from flask import jsonify, current_app
 from flask_wtf.csrf import generate_csrf
 from google_auth_oauthlib.flow import Flow
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from decouple import config
-from .db_controller import BaseController
-from jwt import encode
+from jwt import encode, decode
 from swagger_server.openapi_server import models
 from datetime import datetime, timedelta, UTC
 from .models.user_model import User
@@ -43,8 +43,8 @@ def get_auth_user_id(request):
 class UserCredentials(TypedDict):
     """Schema for user credentials."""
 
-    username: str
-    password: str
+    google_uid: str
+    email: str
     user_type: str
 
 
@@ -54,9 +54,20 @@ def get_csrf_token():
 
     Creates a CSRF-token using the flask-WTF library for form validation.
 
-    Returns: A JSON with the csrf-token field.
+    Returns: A response object with a CSRF-token in the body and cookie.
     """
-    return jsonify(csrf_token=generate_csrf())
+    token = generate_csrf()
+    response = make_response(jsonify(csrf_token=token))
+    # set the csrf_token as a cookie
+    response.set_cookie("csrf_token", token, httponly=False)
+    return response
+
+
+def get_new_access_token():
+    """Return a new access token for authorizaation."""
+    refresh_token = request.cookies.get("refresh_token")
+    auth_controller = AuthenticationController(current_app.config["Database"])
+    return auth_controller.refresh_access_token(refresh_token)
 
 
 def handle_authentication(body: Dict):
@@ -108,7 +119,7 @@ def handle_authentication(body: Dict):
         clock_skew_in_seconds=10,
     )
 
-    auth_controller = AuthenticationController()
+    auth_controller = AuthenticationController(current_app.config["Database"])
 
     try:
         is_registered = auth_controller.check_users(id_info["sub"])
@@ -127,31 +138,38 @@ def handle_authentication(body: Dict):
             # hardcoding to company for now, since KU auth is not created
             user = auth_controller.register_user(
                 {
-                    "username": id_info["email"],
-                    "password": id_info["at_hash"],
+                    "google_uid": id_info["sub"],
+                    "email": id_info["email"],
                     "user_type": "company",
                 },
-                id_info,
             )
             user_jwt, refresh = auth_controller.login_user(user)
 
-        return models.Token(user_jwt, refresh)
+        response = make_response(
+            models.UserCredentials(user_jwt, id_info["email"]).to_dict(), 200
+        )
+        # set the refresh token as a HttpOnly cookie
+        response.set_cookie(
+            "refresh_token", refresh, max_age=timedelta(days=30), httponly=True
+        )
+
+        return response
     except Exception as e:
         return models.ErrorMessage(
             f"Database error occured during authentication, {e}"
         ), 400
 
 
-class AuthenticationController(BaseController):
+class AuthenticationController:
     """Controller for fetching database authentication credentials."""
 
-    def __init__(self):
+    def __init__(self, database):
         """Init the class."""
-        super().__init__()
+        self.db = database
 
     def check_users(self, google_id: str):
         """Check if the user is in the users table."""
-        session = self.get_session()
+        session = self.db.get_session()
         users = session.query(User).all()
 
         if google_id in [user.google_uid for user in users]:
@@ -162,28 +180,35 @@ class AuthenticationController(BaseController):
         return False
 
     def login_user(self, uid: str) -> Dict[str, str]:
-        """Return a JWT for authorization."""
-        now = datetime.now(UTC)
+        """
+        Login a user into the system.
 
-        # Access token payload
-        access_payload = {
-            "uid": str(uid),
-            "iat": int(now.timestamp()),  # integer timestamp
-            "exp": int((now + timedelta(hours=1)).timestamp()),  # integer timestamp
-        }
-        auth_token = encode(access_payload, SECRET_KEY, algorithm="HS512")
+        Login the use with the provided user id,
+        then return access and refresh tokens for proof of authentication.
+
+        Args:
+            uid: The user's user id in UUID4 format
+
+        Returns: A tuple containing access and refresh tokens
+        """
+        # access token generation
+        iat = int(datetime.now(UTC).timestamp())
+        exp = int((datetime.now(UTC) + timedelta(hours=1)).timestamp())
+
+        payload = {"uid": str(uid), "iat": iat, "exp": exp}
+
+        auth_token = encode(payload, SECRET_KEY, algorithm="HS512")
 
         # Refresh token payload
         refresh_id = random.getrandbits(32)
-        refresh_payload = {
-            "uid": str(uid),
-            "refresh": refresh_id,
-            "iat": int(now.timestamp()),
-            "exp": int((now + timedelta(days=30)).timestamp()),
-        }
-        refresh_token = encode(refresh_payload, SECRET_KEY, algorithm="HS512")
+        iat = int(datetime.now(UTC).timestamp())
+        exp = int((datetime.now(UTC) + timedelta(days=30)).timestamp())
 
-        session = self.get_session()
+        payload = {"uid": str(uid), "refresh": refresh_id, "iat": iat, "exp": exp}
+
+        refresh_token = encode(payload, SECRET_KEY, algorithm="HS512")
+
+        session = self.db.get_session()
         token = Token(uid=uid, refresh_id=refresh_id)
         session.add(token)
         session.commit()
@@ -193,7 +218,7 @@ class AuthenticationController(BaseController):
 
     def get_user(self, google_uid):
         """Return the user id with the matching google_uid."""
-        session = self.get_session()
+        session = self.db.get_session()
         user = session.query(User).where(User.google_uid == google_uid).one_or_none()
         if not user:
             session.close()
@@ -202,32 +227,67 @@ class AuthenticationController(BaseController):
         session.close()
         return uid
 
-    def register_user(self, credentials: UserCredentials, id_info: any) -> str:
+    def register_user(self, credentials: UserCredentials) -> str:
         """Register a new user using the provided credentials.
 
         Create a new credentials in the database based on the provided credentials.
 
         Args:
             credentials: The account's credentials
-            id_info: (optional) The account's Google information
 
         Returns: The user's id in the database
         """
-        keys = ["username", "password", "user_type"]
+        keys = list(UserCredentials.__annotations__.keys())
         valid_keys = all(key in credentials for key in keys)
         if not valid_keys:
             raise TypeError("Invalid credentials.")
 
-        session = self.get_session()
+        session = self.db.get_session()
         user = User(
-            google_uid=id_info["sub"],
-            email=credentials["username"],
-            password=credentials["password"],
+            google_uid=credentials["google_uid"],
+            email=credentials["email"],
+            type=credentials["user_type"],
         )
         session.add(user)
         session.commit()
-        session.refresh()
+        session.refresh(user)
         user_id = user.id
         session.close()
 
         return str(user_id)
+
+    def refresh_access_token(self, refresh_token: str):
+        """
+        Return a new access token for authorization.
+
+        Validates the refresh token in the request header and
+        returns a new access and refresh token pair for user authentication
+        and authorization. The new refresh token is returned in the header.
+
+        Returns: A new access token and refresh token cookie.
+        """
+        try:
+            refresh_id = decode(jwt=refresh_token, key=SECRET_KEY, algorithms=["HS512"])
+        except Exception as e:
+            return models.ErrorMessage(f"Could not decode JWT, {e}"), 400
+
+        session = self.db.get_session()
+        valid_token = (
+            session.query(Token).where(Token.refresh_id == refresh_id).one_or_none()
+        )
+
+        if not valid_token:
+            return models.ErrorMessage("Invalid refresh token"), 400
+
+        user_id = valid_token.uid
+        session.close()
+
+        access, refresh = self.login_user(user_id)
+
+        response = make_response(access, 200)
+        # set the refresh token as a HttpOnly cookie
+        response.set_cookie(
+            "refresh_token", refresh, max_age=timedelta(days=30), httponly=True
+        )
+
+        return response
