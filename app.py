@@ -4,6 +4,8 @@ import sys
 import os
 from decouple import config, Csv
 from flask_cors import CORS
+from flask_wtf import CSRFProtect
+from controllers.db_controller import BaseController
 
 
 if not os.path.exists(".env"):
@@ -34,8 +36,15 @@ except ModuleNotFoundError:
 from openapi_server import encoder  # noqa: E402
 
 
-def create_app():
-    """Setups and configure the application."""
+def create_app(engine=None):
+    """
+    Setups and configure the application.
+
+    Args:
+        engine: Optional database engine to use. If None, a new engine will be created.
+
+    Returns: A configured connexion app.
+    """
     app = connexion.App(__name__, specification_dir="./openapi/")
     app.app.json_encoder = encoder.JSONEncoder
     app.add_api(
@@ -57,7 +66,13 @@ def create_app():
     )
     # setup CSRF (disabling for now)
     app.app.secret_key = config("SECRET_KEY", default="very-secure-secret-key")
-    # CSRFProtect(app.app)
+    CSRFProtect(app.app)
+
+    app.app.config["Database"] = BaseController()
+    # set database controller if provided
+    if engine:
+        app.app.config["Database"] = engine
+
     return app
 
 
