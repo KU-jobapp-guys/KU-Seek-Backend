@@ -37,6 +37,9 @@ class JobController(BaseController):
             
                 jobs = [job]
 
+                return self.__job_with_company_terms_tags(session, jobs, single_response=True)
+
+
             else:
                 jobs = session.query(Job).all()
             
@@ -73,8 +76,8 @@ class JobController(BaseController):
             Optional fields:
                 - description (str): Job description
                 - visibility (bool): Whether job is visible
-                - skills (list[int]): List of skill IDs
-                - tags (list[int]): List of tag IDs
+                - skill_ids (list[int]): List of skill IDs
+                - tag_ids (list[int]): List of tag IDs
 
         Returns:
             Dict: The created job data
@@ -119,14 +122,14 @@ class JobController(BaseController):
             session.flush()  # Get the job.id before commit
             
             # Add skills if provided
-            if "skills" in body and body["skills"]:
-                for skill_id in body["skills"]:
+            if "skill_ids" in body and body["skill_ids"]:
+                for skill_id in body["skill_ids"]:
                     job_skill = JobSkills(job_id=job.id, skill_id=skill_id)
                     session.add(job_skill)
             
             # Add tags if provided
-            if "tags" in body and body["tags"]:
-                for tag_id in body["tags"]:
+            if "tag_ids" in body and body["tag_ids"]:
+                for tag_id in body["tag_ids"]:
                     job_tag = JobTags(job_id=job.id, tag_id=tag_id)
                     session.add(job_tag)
             
@@ -193,17 +196,23 @@ class JobController(BaseController):
         Return filtered jobs from the jobs table using ORM.
 
         Corresponds to: POST /api/v1/jobs/search
+        
+        Args:
+            body: Filter criteria including:
+                - skill_names (list[str]): List of skill names (e.g., ["React", "Python"])
+                - tag_names (list[str]): List of tag names (e.g., ["Remote Work"])
+                - Other job fields for filtering
         """
         try:
             session = self.get_session()
             
             query = session.query(Job).join(Company, Job.company_id == Company.id)
             
+            skill_names = body.pop("skill_names", None)
+            tag_names = body.pop("tag_names", None)
+            
             for key, val in body.items():
-                if key in ["skill_name", "tag_name"]:
-                    continue
-                
-                elif key == "salary_min":
+                if key == "salary_min":
                     query = query.filter(Job.salary_min >= float(val))
                 
                 elif key == "salary_max":
@@ -213,27 +222,54 @@ class JobController(BaseController):
                     query = query.filter(Job.capacity == int(val))
                 
                 elif key == "end_date":
-                    query = query.filter(Job.end_date > val)
+                    end_date = val
+                    if isinstance(end_date, str):
+                        end_date = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+                    query = query.filter(Job.end_date >= end_date)
                 
                 elif key in ["company_name", "company_industry", "company_type"]:
-                    query = query.filter(getattr(Company, key) == str(val))
+                    query = query.filter(getattr(Company, key).ilike(f"%{val}%"))
                 
                 else:
-                    query = query.filter(getattr(Job, key) == str(val))
+                    if hasattr(Job, key):
+                        query = query.filter(getattr(Job, key).ilike(f"%{val}%"))
+            
+            if skill_names and isinstance(skill_names, list) and len(skill_names) > 0:
+
+                skill_job_ids = (
+                    session.query(JobSkills.job_id)
+                    .join(Terms, JobSkills.skill_id == Terms.id)
+                    .filter(Terms.name.in_(skill_names))
+                    .distinct()
+                )
+                query = query.filter(Job.id.in_(skill_job_ids))
+            
+
+            if tag_names and isinstance(tag_names, list) and len(tag_names) > 0:
+
+                tag_job_ids = (
+                    session.query(JobTags.job_id)
+                    .join(Tags, JobTags.tag_id == Tags.id)
+                    .filter(Tags.name.in_(tag_names))
+                    .distinct()
+                )
+                query = query.filter(Job.id.in_(tag_job_ids))
             
             jobs = query.all()
             
             if not jobs:
                 session.close()
-                return [{"message": "No jobs found."}]
+                return []
             
-            return self.__job_with_company_terms_tags(session, jobs, body)
+            return self.__job_with_company_terms_tags(session, jobs)
             
-                        
         except Exception as e:
+            if session:
+                session.close()
             return [{"error": str(e)}]
 
-    def __job_with_company_terms_tags(self, session, jobs, body=None):
+    def __job_with_company_terms_tags(self, session, jobs,
+                                       single_response=None, body=None):
         """
         Return jobs data with company, terms, and tags.
 
@@ -290,4 +326,10 @@ class JobController(BaseController):
             result.append(job_dict)
         
         session.close()
-        return result if result else [{"message": "No jobs found."}]
+        
+        if result and single_response:
+            return result[0]
+        elif result:
+            return result
+        else:
+            return [{"message": "No jobs found."}]
