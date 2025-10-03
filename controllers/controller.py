@@ -40,43 +40,49 @@ def delete_task(task_id: str):
     return task_manager.delete_task(task_id)
 
 
-profile_manager = ProfileController()
-
-
 def get_user_profile(user_id: str) -> Dict:
     """GET UserProfile from the database."""
+    profile_manager = ProfileController(current_app.config["Database"])
     return profile_manager.get_profile_by_uid(user_id)
 
 
 def create_profile(body: Dict) -> Optional[Dict]:
     """Add UserProfile to the database."""
+    profile_manager = ProfileController(current_app.config["Database"])
     return profile_manager.create_profile(get_auth_user_id(request), body)
 
 
 def update_profile(body: Dict) -> Optional[Dict]:
     """Update User Profile data."""
+    profile_manager = ProfileController(current_app.config["Database"])
     return profile_manager.update_profile(get_auth_user_id(request), body)
-
-
-job_manager = JobController()
 
 
 def get_all_jobs(job_id: str = "") -> List[Dict]:
     """Return all Jobs."""
+    job_manager = JobController(current_app.config["Database"])
     return job_manager.get_all_jobs(job_id)
+
 
 def post_job(body: Dict) -> Dict:
     """Add new Job."""
+    job_manager = JobController(current_app.config["Database"])
     return job_manager.post_job(body)
+
 
 def get_filtered_jobs(body: Dict) -> List[Dict]:
     """Return filtered Jobs."""
+    job_manager = JobController(current_app.config["Database"])
     return job_manager.get_filtered_job(body)
+
 
 def get_applied_jobs(user_id: str) -> List[Dict]:
     """Return applied Jobs."""
+    job_manager = JobController(current_app.config["Database"])
     return job_manager.get_applied_jobs(user_id)
+
 
 def get_bookmark_jobs(user_id: str) -> List[Dict]:
     """Return bookmark Jobs."""
+    job_manager = JobController(current_app.config["Database"])
     return job_manager.get_bookmark_jobs(user_id)
