@@ -154,6 +154,19 @@ class JobTestCase(RoutingTestCase):
         res = self.client.get("/api/v1/jobs")
         self.assertTrue(len(res.get_json()), 2)
 
+    def test_get_one_job_by_id(self):
+        """
+        Test fetching a Job GET API.
+        
+        It should return specific job data.
+        """
+        res = self.client.get("/api/v1/jobs?job_id=1")
+        data = res.json
+
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(len(res.get_json()), 1)
+        self.assertEqual(data["id"], 1)
+
     def test_output_all_field(self):
         """Test that the data have all field base on schema."""
         res = self.client.get("/api/v1/jobs")
