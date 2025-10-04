@@ -491,72 +491,6 @@ components:
           description: Company Industry
       
 
-    JobInput:
-      type: object
-      required:
-        - company_id
-        - title
-      properties:
-        company_id:
-          type: integer
-          description: The ID of the company posting the job
-          example: 5
-        description:
-          type: string
-          description: Detailed description of the job
-        title:
-          type: string
-          maxLength: 50
-          description: The job title/position title
-        salary_min:
-          type: number
-          format: float
-          description: Minimum salary offered
-        salary_max:
-          type: number
-          format: float
-          description: Maximum salary offered
-        location:
-          type: string
-          maxLength: 255
-          description: Job location
-        work_hours:
-          type: string
-          maxLength: 20
-          description: Working hours
-        job_type:
-          type: string
-          maxLength: 40
-          description: Type of employment
-        job_level:
-            type: string
-            maxLength: 40
-            description: Type of Job Level. 
-            example: "internship, entry-level, mid-level, Senior-level"
-        visibility:
-          type: boolean
-          description: Whether the job is visible to students
-          default: true
-        capacity:
-          type: integer
-          description: Number of positions available
-        end_date:
-          type: string
-          format: date-time
-          description: Application deadline
-          example: "2025-12-31T23:59:59Z"
-
-        skill_ids:
-          type: array
-          description: Array of skill IDs required for this job
-          items:
-            type: integer
-        tag_ids:
-          type: array
-          description: Array of tag IDs associated with this job
-          items:
-            type: integer
-
     JobPost:
       type: object
       required:
@@ -614,11 +548,6 @@ components:
           maxLength: 40
           description: Type of Job Level
           example: "Senior-level"
-        visibility:
-          type: boolean
-          description: Whether the job is visible to students
-          default: false
-          example: true
         capacity:
           type: integer
           description: Number of positions available
