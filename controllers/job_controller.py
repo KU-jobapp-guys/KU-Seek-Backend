@@ -1,19 +1,18 @@
 """Module for handing Job API path logic."""
 
 from typing import List, Dict
-from .db_controller import BaseController
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 from .models.job_model import Job, JobSkills, JobTags, JobApplication, Bookmark
 from .models.user_model import Company
 from .models.tag_term_model import Tags, Terms
 
-class JobController(BaseController):
+class JobController:
     """Controller to use CRUD operations for Job."""
 
-    def __init__(self):
+    def __init__(self, database):
         """Initialize the class."""
-        super().__init__()
+        self.db = database
 
     def get_all_jobs(self, job_id: str) -> List[Dict]:
         """
@@ -25,7 +24,7 @@ class JobController(BaseController):
             job_id: The unique ID of the job (string format).
         """
         try:
-            session = self.get_session()
+            session = self.db.get_session()
             if job_id:
                 job = session.query(Job).where(
                     Job.id == job_id
@@ -75,7 +74,6 @@ class JobController(BaseController):
                 
             Optional fields:
                 - description (str): Job description
-                - visibility (bool): Whether job is visible
                 - skill_ids (list[int]): List of skill IDs
                 - tag_ids (list[int]): List of tag IDs
 
@@ -95,7 +93,7 @@ class JobController(BaseController):
         if missing_fields:
             raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
 
-        session = self.get_session()
+        session = self.db.get_session()
         
         try:
             end_date = body["end_date"]
@@ -114,7 +112,6 @@ class JobController(BaseController):
                 job_level=body["job_level"],
                 capacity=body["capacity"],
                 end_date=end_date,
-                visibility=body.get("visibility", False),
                 status="pending"  
             )
             
@@ -156,7 +153,7 @@ class JobController(BaseController):
         """
         try:
 
-            session = self.get_session()
+            session = self.db.get_session()
             user_jobapplications = session.query(JobApplication).where(
                 JobApplication.student_id == user_id
             ).all()
@@ -177,7 +174,7 @@ class JobController(BaseController):
         Corresponds to: GET /api/v1/bookmarks
         """
         try:
-            session = self.get_session()
+            session = self.db.get_session()
             user_bookmarked_jobs = session.query(Bookmark).where(
                 Bookmark.id == user_id
             ).all()
@@ -204,7 +201,7 @@ class JobController(BaseController):
                 - Other job fields for filtering
         """
         try:
-            session = self.get_session()
+            session = self.db.get_session()
             
             query = session.query(Job).join(Company, Job.company_id == Company.id)
             
