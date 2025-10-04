@@ -102,7 +102,7 @@ class JobTestCase(RoutingTestCase):
             capacity=2,
             company_id=1,
             description="Job 1",
-            end_date="2025-12-31T23:59:59Z",
+            end_date="2025-12-31 23:59:59",
             job_level="Senior-level",
             job_type="full-time",
             location="Bangkok, Thailand",
@@ -115,7 +115,7 @@ class JobTestCase(RoutingTestCase):
             capacity=4,
             company_id=2,
             description="Job 2",
-            end_date="2026-08-06T23:59:59Z",
+            end_date="2026-08-06 23:59:59",
             job_level="Junior-level",
             job_type="full-time",
             location="Osaka, Japan",
@@ -139,7 +139,78 @@ class JobTestCase(RoutingTestCase):
         """Test fetching a Job GET API."""
         res = self.client.get("/api/v1/jobs")
         self.assertTrue(isinstance(res.get_json(), list))
+    
+    def test_response_status(self):
+        """Test that it return 200."""
+        res = self.client.get("/api/v1/jobs")
+        self.assertEqual(res.status_code, 200)
         
+    def test_amout_of_data(self):
+        """
+        Test fetching a Job GET API.
+        
+        It should have 2 job datas.
+        """
+        res = self.client.get("/api/v1/jobs")
+        self.assertTrue(len(res.get_json()), 2)
+
+    def test_output_all_field(self):
+        """Test that the data have all field base on schema."""
+        res = self.client.get("/api/v1/jobs")
+
+        data = res.json
+
+        job = data[0]  
+
+        expected_fields = {
+            "approved_by",
+            "capacity",
+            "company",
+            "company_id",
+            "created_at",
+            "description",
+            "end_date",
+            "id",
+            "job_level",
+            "job_type",
+            "location",
+            "salary_max",
+            "salary_min",
+            "skills",
+            "status",
+            "tags",
+            "title",
+            "visibility",
+            "work_hours",
+        }
+
+        for field in expected_fields:
+            self.assertIn(field, job, f"Missing field: {field}")
+
+        expected_company_fields = {
+            "company_industry",
+            "company_name",
+            "company_size",
+            "company_type",
+            "company_website",
+            "full_location",
+            "id",
+            "user_id",
+        }
+        for field in expected_company_fields:
+            self.assertIn(field, job["company"], f"Missing company field: {field}")
+
+        if job["skills"]:
+            skill = job["skills"][0]
+            for field in ("id", "name", "type"):
+                self.assertIn(field, skill, f"Missing skill field: {field}")
+
+        if job["tags"]:
+            tag = job["tags"][0]
+            for field in ("id", "name"):
+                self.assertIn(field, tag, f"Missing tag field: {field}")
+
+
     def test_job_post_status_code(self):
         """Test posting jobs then check the status code."""
         res = self.client.get("/api/v1/csrf-token")
@@ -205,23 +276,4 @@ class JobTestCase(RoutingTestCase):
     
 
 
-    # def test_invalid_csrf_token(self):
-    #     """Test fetching a POST API with an invalid csrf token."""
-    #     res = self.client.post(
-    #         "/api/v1/test/tasks",
-    #         headers={"X-CSRFToken": "legit-token"},
-    #         json={"name": "some task"},
-    #     )
-    #     self.assertEqual(res.status_code, 400)
 
-    # def test_csrf_token(self):
-    #     """Test fetching a POST API with a valid csrf token."""
-    #     res = self.client.get("/api/v1/csrf-token")
-    #     csrf_token = res.json["csrf_token"]
-    #     res = self.client.post(
-    #         "/api/v1/test/tasks",
-    #         headers={"X-CSRFToken": csrf_token},
-    #         json={"name": "some task"},
-    #     )
-    #     self.assertEqual(res.status_code, 200)
-    #     self.assertEqual(res.json, {"name": "some task", "completed": False, "id": 1})
