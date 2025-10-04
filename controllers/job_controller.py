@@ -1,6 +1,5 @@
 """Module for handing Job API path logic."""
 
-from flask import jsonify
 from typing import List, Dict
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
@@ -24,34 +23,25 @@ class JobController:
         Args:
             job_id: The unique ID of the job (string format).
         """
+        session = self.db.get_session()
         try:
-            session = self.db.get_session()
             if job_id:
-                job = session.query(Job).where(
-                    Job.id == job_id
-                ).one_or_none()
-
+                job = session.query(Job).where(Job.id == job_id).one_or_none()
                 if not job:
                     session.close()
                     return []
-            
                 jobs = [job]
-
-                return self.__job_with_company_terms_tags(session, jobs, single_response=True)
-
-
+                return self.__job_with_company_terms_tags(session,
+                                                           jobs, single_response=True)
             else:
                 jobs = session.query(Job).all()
-            
-            if not jobs:
-                session.close()
-                return []
-            
-            return self.__job_with_company_terms_tags(session, jobs)
-
-                        
+                if not jobs:
+                    session.close()
+                    return []
+                return self.__job_with_company_terms_tags(session, jobs)
         except Exception as e:
-            return [{"error": str(e)}]
+            session.close()
+            raise Exception(f"Error retrieving jobs: {str(e)}")
     
     def post_job(self, body: Dict) -> Dict:
         """
@@ -92,7 +82,7 @@ class JobController:
         
         missing_fields = [field for field in required_fields if field not in body]
         if missing_fields:
-            return jsonify({"message": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+            raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
 
         session = self.db.get_session()
         
@@ -117,15 +107,13 @@ class JobController:
             )
             
             session.add(job)
-            session.flush()  # Get the job.id before commit
+            session.flush()
             
-            # Add skills if provided
             if "skill_ids" in body and body["skill_ids"]:
                 for skill_id in body["skill_ids"]:
                     job_skill = JobSkills(job_id=job.id, skill_id=skill_id)
                     session.add(job_skill)
             
-            # Add tags if provided
             if "tag_ids" in body and body["tag_ids"]:
                 for tag_id in body["tag_ids"]:
                     job_tag = JobTags(job_id=job.id, tag_id=tag_id)
@@ -133,19 +121,18 @@ class JobController:
             
             session.commit()
             
-            new_job = job.to_dict()
-            
-            return jsonify(new_job), 201
-
+            # Return the created job with relationships
+            jobs = [job]
+            return self.__job_with_company_terms_tags(session, jobs, single_response=True)
             
         except IntegrityError as e:
             session.rollback()
-            return jsonify({"message": f"Invalid foreign key reference: {str(e)}"}), 400
+            session.close()
+            raise ValueError(f"Invalid foreign key reference: {str(e)}")
         except Exception as e:
             session.rollback()
-            return jsonify({"message": f"Error creating job: {str(e)}"}), 400
-        finally:
             session.close()
+            raise Exception(f"Error creating job: {str(e)}")
 
     def get_applied_jobs(self, user_id: str) -> List[Dict]:
         """
@@ -153,42 +140,45 @@ class JobController:
 
         Corresponds to: GET /api/v1/applications
         """
+        session = self.db.get_session()
         try:
-
-            session = self.db.get_session()
             user_jobapplications = session.query(JobApplication).where(
                 JobApplication.student_id == user_id
             ).all()
+            
             if not user_jobapplications:
                 session.close()
-                return
-            user_jobapplications = user_jobapplications.to_dict()
+                return []
+            
+            result = [app.to_dict() for app in user_jobapplications]
             session.close()
-            return user_jobapplications
-                    
+            return result
         except Exception as e:
-            return [{"error": str(e)}]
+            session.close()
+            raise Exception(f"Error retrieving applied jobs: {str(e)}")
 
     def get_bookmark_jobs(self, user_id: str) -> List[Dict]:
         """
         Return applied jobs from the Bookmarked table.
 
         Corresponds to: GET /api/v1/bookmarks
-        """
+        """        
+        session = self.db.get_session()
         try:
-            session = self.db.get_session()
             user_bookmarked_jobs = session.query(Bookmark).where(
-                Bookmark.id == user_id
+                Bookmark.student_id == user_id
             ).all()
+            
             if not user_bookmarked_jobs:
                 session.close()
-                return
-            user_bookmarked_jobs = user_bookmarked_jobs.to_dict()
+                return []
+            
+            result = [bookmark.to_dict() for bookmark in user_bookmarked_jobs]
             session.close()
-            return user_bookmarked_jobs
-
+            return result
         except Exception as e:
-            return [{"error": str(e)}]
+            session.close()
+            raise Exception(f"Error retrieving bookmarked jobs: {str(e)}")
 
     def get_filtered_job(self, body: Dict) -> List[Dict]:
         """
@@ -202,57 +192,100 @@ class JobController:
                 - tag_names (list[str]): List of tag names (e.g., ["Remote Work"])
                 - Other job fields for filtering
         """
+        allowed_job_fields = {
+            "title", "salary_min", "salary_max", "location", 
+            "work_hours", "job_type", "job_level", "capacity", "end_date"
+        }
+        allowed_company_fields = {"company_name", "company_industry", "company_type"}
+        allowed_special_fields = {"skill_names", "tag_names"}
+        
+        all_allowed_fields = allowed_job_fields | allowed_company_fields | allowed_special_fields
+        
+        session = self.db.get_session()
+        
         try:
-            session = self.db.get_session()
+            # Validate filter keys
+            invalid_keys = [key for key in body.keys() if key not in all_allowed_fields]
+            if invalid_keys:
+                session.close()
+                raise ValueError(f"Cannot filter by these keys: {', '.join(invalid_keys)}")
             
             query = session.query(Job).join(Company, Job.company_id == Company.id)
             
             skill_names = body.pop("skill_names", None)
             tag_names = body.pop("tag_names", None)
             
+            # Apply basic filters
             for key, val in body.items():
+                if val is None or val == "":
+                    continue
+                    
                 if key == "salary_min":
-                    query = query.filter(Job.salary_min >= float(val))
+                    try:
+                        query = query.filter(Job.salary_min >= float(val))
+                    except (ValueError, TypeError):
+                        session.close()
+                        raise ValueError(f"Invalid value for salary_min: {val}")
                 
                 elif key == "salary_max":
-                    query = query.filter(Job.salary_max <= float(val))
+                    try:
+                        query = query.filter(Job.salary_max <= float(val))
+                    except (ValueError, TypeError):
+                        session.close()
+                        raise ValueError(f"Invalid value for salary_max: {val}")
                 
                 elif key == "capacity":
-                    query = query.filter(Job.capacity == int(val))
+                    try:
+                        query = query.filter(Job.capacity == int(val))
+                    except (ValueError, TypeError):
+                        session.close()
+                        raise ValueError(f"Invalid value for capacity: {val}")
                 
                 elif key == "end_date":
-                    end_date = val
-                    if isinstance(end_date, str):
-                        end_date = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
-                    query = query.filter(Job.end_date >= end_date)
+                    try:
+                        end_date = val
+                        if isinstance(end_date, str):
+                            end_date = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+                        query = query.filter(Job.end_date >= end_date)
+                    except (ValueError, TypeError):
+                        session.close()
+                        raise ValueError(f"Invalid date format for end_date: {val}")
                 
-                elif key in ["company_name", "company_industry", "company_type"]:
+                elif key in allowed_company_fields:
                     query = query.filter(getattr(Company, key).ilike(f"%{val}%"))
                 
-                else:
-                    if hasattr(Job, key):
-                        query = query.filter(getattr(Job, key).ilike(f"%{val}%"))
+                elif key in allowed_job_fields:
+                    query = query.filter(getattr(Job, key).ilike(f"%{val}%"))
             
-            if skill_names and isinstance(skill_names, list) and len(skill_names) > 0:
-
-                skill_job_ids = (
-                    session.query(JobSkills.job_id)
-                    .join(Terms, JobSkills.skill_id == Terms.id)
-                    .filter(Terms.name.in_(skill_names))
-                    .distinct()
-                )
-                query = query.filter(Job.id.in_(skill_job_ids))
+            # Filter by skills if provided
+            if skill_names:
+                if not isinstance(skill_names, list):
+                    session.close()
+                    raise ValueError("skill_names must be an array")
+                
+                if len(skill_names) > 0:
+                    skill_job_ids = (
+                        session.query(JobSkills.job_id)
+                        .join(Terms, JobSkills.skill_id == Terms.id)
+                        .filter(Terms.name.in_(skill_names))
+                        .distinct()
+                    )
+                    query = query.filter(Job.id.in_(skill_job_ids))
             
-
-            if tag_names and isinstance(tag_names, list) and len(tag_names) > 0:
-
-                tag_job_ids = (
-                    session.query(JobTags.job_id)
-                    .join(Tags, JobTags.tag_id == Tags.id)
-                    .filter(Tags.name.in_(tag_names))
-                    .distinct()
-                )
-                query = query.filter(Job.id.in_(tag_job_ids))
+            # Filter by tags if provided
+            if tag_names:
+                if not isinstance(tag_names, list):
+                    session.close()
+                    raise ValueError("tag_names must be an array")
+                
+                if len(tag_names) > 0:
+                    tag_job_ids = (
+                        session.query(JobTags.job_id)
+                        .join(Tags, JobTags.tag_id == Tags.id)
+                        .filter(Tags.name.in_(tag_names))
+                        .distinct()
+                    )
+                    query = query.filter(Job.id.in_(tag_job_ids))
             
             jobs = query.all()
             
@@ -262,18 +295,14 @@ class JobController:
             
             return self.__job_with_company_terms_tags(session, jobs)
             
+        except ValueError:
+            raise
         except Exception as e:
-            if session:
-                session.close()
-            return [{"error": str(e)}]
+            session.close()
+            raise Exception(f"Error filtering jobs: {str(e)}")
 
-    def __job_with_company_terms_tags(self, session, jobs,
-                                       single_response=None, body=None):
-        """
-        Return jobs data with company, terms, and tags.
-
-        Corresponds to: The Job schema in the YAML file.
-        """
+    def __job_with_company_terms_tags(self, session, jobs, single_response=None):
+        """Return jobs data with company, terms, and tags."""
         result = []
         for job in jobs:
             job_dict = job.to_dict()
@@ -310,25 +339,10 @@ class JobController:
                     tags_list.append(tag.to_dict())
             
             job_dict["tags"] = tags_list
-            
-            if body:
-                if "skill_name" in body:
-                    skill_names = [skill["name"] for skill in skills_list]
-                    if body["skill_name"] not in skill_names:
-                        continue
-                
-                if "tag_name" in body:
-                    tag_names = [tag["name"] for tag in tags_list]
-                    if body["tag_name"] not in tag_names:
-                        continue
-                
             result.append(job_dict)
         
         session.close()
         
-        if result and single_response:
+        if single_response and result:
             return result[0]
-        elif result:
-            return result
-        else:
-            return [{"message": "No jobs found."}]
+        return result

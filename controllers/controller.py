@@ -1,41 +1,40 @@
 """Module containing endpoints for operations."""
 
-from flask import request
+from flask import request, jsonify
 from .task_controller import TaskController
 from .user_profile_controller import ProfileController
 from .auth_controller import get_auth_user_id
-
 from .job_controller import JobController
 from typing import Dict, Optional, List
 from flask import current_app
 
 
 def get_all_tasks():
-    """Return Placeholder."""
+    """Return all tasks."""
     task_manager = TaskController(current_app.config["Database"])
     return task_manager.get_all_tasks()
 
 
 def create_task(body: Dict):
-    """Return Placeholder."""
+    """Create a new task."""
     task_manager = TaskController(current_app.config["Database"])
     return task_manager.create_task(body)
 
 
 def get_task_by_id(task_id: str) -> Optional[Dict]:
-    """Return Placeholder."""
+    """Get task by ID."""
     task_manager = TaskController(current_app.config["Database"])
     return task_manager.get_task_by_id(task_id)
 
 
 def update_task(task_id: str, body: Dict) -> Optional[Dict]:
-    """Return Placeholder."""
+    """Update task."""
     task_manager = TaskController(current_app.config["Database"])
     return task_manager.update_task(task_id, body)
 
 
 def delete_task(task_id: str):
-    """Return Placeholder."""
+    """Delete task."""
     task_manager = TaskController(current_app.config["Database"])
     return task_manager.delete_task(task_id)
 
@@ -58,31 +57,55 @@ def update_profile(body: Dict) -> Optional[Dict]:
     return profile_manager.update_profile(get_auth_user_id(request), body)
 
 
-def get_all_jobs(job_id: str = "") -> List[Dict]:
+def get_all_jobs(job_id: str = ""):
     """Return all Jobs."""
-    job_manager = JobController(current_app.config["Database"])
-    return job_manager.get_all_jobs(job_id)
+    try:
+        job_manager = JobController(current_app.config["Database"])
+        jobs = job_manager.get_all_jobs(job_id)
+        return jsonify(jobs), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
 
 
-def post_job(body: Dict) -> Dict:
+def post_job(body: Dict):
     """Add new Job."""
-    job_manager = JobController(current_app.config["Database"])
-    return job_manager.post_job(body)
+    try:
+        job_manager = JobController(current_app.config["Database"])
+        new_job = job_manager.post_job(body)
+        return jsonify(new_job), 201
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
 
 
-def get_filtered_jobs(body: Dict) -> List[Dict]:
+def get_filtered_jobs(body: Dict):
     """Return filtered Jobs."""
-    job_manager = JobController(current_app.config["Database"])
-    return job_manager.get_filtered_job(body)
+    try:
+        job_manager = JobController(current_app.config["Database"])
+        filtered_jobs = job_manager.get_filtered_job(body)
+        return jsonify(filtered_jobs), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
 
 
-def get_applied_jobs(user_id: str) -> List[Dict]:
+def get_applied_jobs(user_id: str):
     """Return applied Jobs."""
-    job_manager = JobController(current_app.config["Database"])
-    return job_manager.get_applied_jobs(user_id)
+    try:
+        job_manager = JobController(current_app.config["Database"])
+        applied_jobs = job_manager.get_applied_jobs(user_id)
+        return jsonify(applied_jobs), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
 
 
-def get_bookmark_jobs(user_id: str) -> List[Dict]:
+def get_bookmark_jobs(user_id: str):
     """Return bookmark Jobs."""
-    job_manager = JobController(current_app.config["Database"])
-    return job_manager.get_bookmark_jobs(user_id)
+    try:
+        job_manager = JobController(current_app.config["Database"])
+        bookmarked_jobs = job_manager.get_bookmark_jobs(user_id)
+        return jsonify(bookmarked_jobs), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
