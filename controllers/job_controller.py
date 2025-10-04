@@ -1,5 +1,6 @@
 """Module for handing Job API path logic."""
 
+from flask import jsonify
 from typing import List, Dict
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
@@ -134,7 +135,8 @@ class JobController:
             
             new_job = job.to_dict()
             
-            return new_job
+            return jsonify(new_job), 201
+
             
         except IntegrityError as e:
             session.rollback()
