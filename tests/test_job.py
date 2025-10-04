@@ -311,10 +311,6 @@ class JobTestCase(RoutingTestCase):
             json=invalid_payload,
         )
 
-        print("skibidi")
-        print(res.status_code)
-        print(res.data) 
-        print(res.content_type)
         self.assertEqual(res.status_code, 400)
 
     def test_job_post_invalid_company(self):
@@ -344,8 +340,206 @@ class JobTestCase(RoutingTestCase):
         self.assertEqual(res.status_code, 400)
         self.assertIn("Invalid foreign key reference", res.json["message"])
 
+    def test_filter_job__status_code(self):
+        """Test the status code of filter Job API."""
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
 
-    
+        filter_list = {
+            "capacity": 1,
+            "title": "Ghost Job",
+            "end_date": "2025-12-31T23:59:59Z",
+            "job_level": "Entry-level",
+            "job_type": "full-time",
+            "location": "Nowhere",
+            "salary_min": 10000,
+            "salary_max": 20000,
+            "work_hours": "9:00 AM - 5:00 PM"
+        }
+
+        res = self.client.post(
+            "/api/v1/jobs/search",
+            headers={"X-CSRFToken": csrf_token},
+            json=filter_list,
+        )
+
+        self.assertEqual(res.status_code, 200)
+
+        # weird field name
+        res = self.client.post(
+            "/api/v1/jobs/search",
+            headers={"X-CSRFToken": csrf_token},
+            json={"who_tao?": True},
+        )
+
+        self.assertEqual(res.status_code, 400)
+
+    def test_filter_job_invalid_value(self):
+        """Test filtering jobs with invalid data types should return 400."""
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        # Test invalid salary_min (not a number)
+        res = self.client.post(
+            "/api/v1/jobs/search",
+            headers={"X-CSRFToken": csrf_token},
+            json={"salary_min": "not_a_number"},
+        )
+        self.assertEqual(res.status_code, 400)
+
+        # Test invalid capacity (not an integer)
+        res = self.client.post(
+            "/api/v1/jobs/search",
+            headers={"X-CSRFToken": csrf_token},
+            json={"capacity": "three"},
+        )
+        self.assertEqual(res.status_code, 400)
+
+        # Test invalid end_date format
+        res = self.client.post(
+            "/api/v1/jobs/search",
+            headers={"X-CSRFToken": csrf_token},
+            json={"end_date": "invalid-date"},
+        )
+        self.assertEqual(res.status_code, 400)
+
+        # Test invalid skill_names (not an array)
+        res = self.client.post(
+            "/api/v1/jobs/search",
+            headers={"X-CSRFToken": csrf_token},
+            json={"skill_names": "should_be_array"},
+        )
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("skill_names must be an array", res.json["message"])
+
+        # Test invalid tag_names (not an array)
+        res = self.client.post(
+            "/api/v1/jobs/search",
+            headers={"X-CSRFToken": csrf_token},
+            json={"tag_names": "should_be_array"},
+        )
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("tag_names must be an array", res.json["message"])
 
 
+    def test_filter_job_returns_correct_filtered_data(self):
+        """Test that filtered jobs return the correct matching data."""
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        # Filter by title - should return job with "Senior Python Developer"
+        res = self.client.post(
+            "/api/v1/jobs/search",
+            headers={"X-CSRFToken": csrf_token},
+            json={"title": "Senior Python"},
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json
+        self.assertGreater(len(data), 0)
+        self.assertIn("Senior Python", data[0]["title"])
+
+        # Filter by location - should return job in "Bangkok"
+        res = self.client.post(
+            "/api/v1/jobs/search",
+            headers={"X-CSRFToken": csrf_token},
+            json={"location": "Bangkok"},
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json
+        self.assertGreater(len(data), 0)
+        for job in data:
+            self.assertIn("Bangkok", job["location"])
+
+        # Filter by salary range - should return jobs with salary_min >= 80000
+        res = self.client.post(
+            "/api/v1/jobs/search",
+            headers={"X-CSRFToken": csrf_token},
+            json={"salary_min": 80000},
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json
+        self.assertGreater(len(data), 0)
+        for job in data:
+            self.assertGreaterEqual(job["salary_min"], 80000)
+
+        # Filter by job_level - should return jobs with "Junior-level"
+        res = self.client.post(
+            "/api/v1/jobs/search",
+            headers={"X-CSRFToken": csrf_token},
+            json={"job_level": "Junior-level"},
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json
+        self.assertGreater(len(data), 0)
+        for job in data:
+            self.assertEqual(job["job_level"], "Junior-level")
+
+        # Filter by company_name - should return jobs from "TechCorp"
+        res = self.client.post(
+            "/api/v1/jobs/search",
+            headers={"X-CSRFToken": csrf_token},
+            json={"company_name": "TechCorp"},
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json
+        self.assertGreater(len(data), 0)
+        for job in data:
+            self.assertIn("TechCorp", job["company"]["company_name"])
+
+    def test_filter_by_multiple_cliteria(self):
+        """Test the Job filter api by have multiple value in the body."""
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        res = self.client.post(
+            "/api/v1/jobs/search",
+            headers={"X-CSRFToken": csrf_token},
+            json={
+                "job_type": "full-time",
+                "location": "Bangkok"
+            },
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json
+        self.assertGreater(len(data), 0)
+        for job in data:
+            self.assertEqual(job["job_type"], "full-time")
+            self.assertIn("Bangkok", job["location"])
+
+    def test_filter_with_no_match_data(self):
+        """Test filter API by give non exist job title to the body."""
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        res = self.client.post(
+            "/api/v1/jobs/search",
+            headers={"X-CSRFToken": csrf_token},
+            json={"title": "NonExistentJobTitle12345"},
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json
+        self.assertEqual(len(data), 0)
+        
+    def test_filter_with_empty_body_returns_all_jobs(self):
+        """Test that filtering with empty body {} returns all jobs."""
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        res = self.client.post(
+            "/api/v1/jobs/search",
+            headers={"X-CSRFToken": csrf_token},
+            json={},
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json
+        
+        self.assertEqual(len(data), 2)
+        
+        # Verify it returns the same jobs as GET /api/v1/jobs
+        all_jobs_res = self.client.get("/api/v1/jobs")
+        all_jobs_data = all_jobs_res.json
+        
+        self.assertEqual(len(data), len(all_jobs_data))
+        
+        self.assertEqual(data, all_jobs_data)
 

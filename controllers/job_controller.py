@@ -346,3 +346,4 @@ class JobController:
         if single_response and result:
             return result[0]
         return result
+    
