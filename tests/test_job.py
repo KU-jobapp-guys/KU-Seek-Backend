@@ -1,10 +1,6 @@
-"""Module for testing authentication and authorization."""
+"""Module for testing the Job features."""
 
 from base_test import RoutingTestCase
-from util_functions import generate_jwt
-from datetime import datetime, timedelta
-from decouple import config
-from uuid import uuid4
 from controllers.models import User, Company, Tags, Terms, Job
 
 
