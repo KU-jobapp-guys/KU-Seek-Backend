@@ -92,7 +92,7 @@ class JobController:
         
         missing_fields = [field for field in required_fields if field not in body]
         if missing_fields:
-            raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
+            return jsonify({"message": f"Missing required fields: {', '.join(missing_fields)}"}), 400
 
         session = self.db.get_session()
         
@@ -140,10 +140,10 @@ class JobController:
             
         except IntegrityError as e:
             session.rollback()
-            raise ValueError(f"Invalid foreign key reference: {str(e)}")
+            return jsonify({"message": f"Invalid foreign key reference: {str(e)}"}), 400
         except Exception as e:
             session.rollback()
-            raise ValueError(f"Error creating job: {str(e)}")
+            return jsonify({"message": f"Error creating job: {str(e)}"}), 400
         finally:
             session.close()
 

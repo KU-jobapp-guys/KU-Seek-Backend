@@ -251,7 +251,7 @@ class JobTestCase(RoutingTestCase):
 
         self.assertEqual(res.status_code, 201)
 
-    def test_response_data(self):
+    def test_job_post_response_data(self):
         """Test the data that send back to the frontend is the correct data."""
         res = self.client.get("/api/v1/csrf-token")
         csrf_token = res.json["csrf_token"]
@@ -286,6 +286,65 @@ class JobTestCase(RoutingTestCase):
         self.assertEqual(data["company_id"], job_payload["company_id"])
         self.assertEqual(data["salary_min"], job_payload["salary_min"])
         self.assertEqual(data["salary_max"], job_payload["salary_max"])
+    
+    def test_job_post_missing_required_fields(self):
+        """Test posting a job without required fields should fail."""
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        # Missing 'title' and 'salary_min'
+        invalid_payload = {
+            "capacity": 2,
+            "company_id": 1,
+            "description": "This should fail due to missing fields.",
+            "end_date": "2025-12-31T23:59:59Z",
+            "job_level": "Senior-level",
+            "job_type": "full-time",
+            "location": "Bangkok, Thailand",
+            "salary_max": 120000,
+            "work_hours": "9:00 AM - 5:00 PM"
+        }
+
+        res = self.client.post(
+            "/api/v1/jobs",
+            headers={"X-CSRFToken": csrf_token},
+            json=invalid_payload,
+        )
+
+        print("skibidi")
+        print(res.status_code)
+        print(res.data) 
+        print(res.content_type)
+        self.assertEqual(res.status_code, 400)
+
+    def test_job_post_invalid_company(self):
+        """Test posting job with invalid company_id should fail."""
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        invalid_payload = {
+            "capacity": 1,
+            "company_id": 9999,  # non-existent company
+            "title": "Ghost Job",
+            "end_date": "2025-12-31T23:59:59Z",
+            "job_level": "Entry-level",
+            "job_type": "full-time",
+            "location": "Nowhere",
+            "salary_min": 10000,
+            "salary_max": 20000,
+            "work_hours": "9:00 AM - 5:00 PM"
+        }
+
+        res = self.client.post(
+            "/api/v1/jobs",
+            headers={"X-CSRFToken": csrf_token},
+            json=invalid_payload,
+        )
+
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("Invalid foreign key reference", res.json["message"])
+
+
     
 
 
