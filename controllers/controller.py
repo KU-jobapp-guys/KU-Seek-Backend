@@ -109,3 +109,16 @@ def get_bookmark_jobs(user_id: str):
         return jsonify(bookmarked_jobs), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+
+
+def post_bookmark_jobs(body: Dict):
+    """Add new bookmark."""
+    try:
+        job_manager = JobController(current_app.config["Database"])
+        bookmarked_jobs = job_manager.post_bookmark_jobs(body)
+        return jsonify(bookmarked_jobs), 201
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+    

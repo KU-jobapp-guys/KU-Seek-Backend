@@ -173,6 +173,22 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Job'
+    post:
+      summary: Add new bookmarked job to the database
+      operationId: controllers.controller.post_bookmark_jobs 
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookmarkInput'
+      responses:
+        200:
+          description: A new of bookmarked job
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/BookmarkInput'
 
   /test/tasks:
     get:
@@ -699,6 +715,20 @@ components:
         refresh_token:
           type: string
           description: The refresh token
+    
+    BookmarkInput:
+      type: object
+      required:
+        - student_id
+        - job_id
+      properties:
+        student_id:
+          type: integer
+          description: The student_id
+        job_id:
+          type: integer
+          description: The job_id
+    
     
     UserProfileInput:
       type: object

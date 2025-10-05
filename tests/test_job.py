@@ -5,7 +5,7 @@ from controllers.models import User, Company, Tags, Terms, Job
 
 
 class JobTestCase(RoutingTestCase):
-    """Test case for authentication."""
+    """Test case for job."""
 
     @classmethod
     def setUpClass(cls):

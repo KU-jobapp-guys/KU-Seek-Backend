@@ -179,6 +179,34 @@ class JobController:
         except Exception as e:
             session.close()
             raise Exception(f"Error retrieving bookmarked jobs: {str(e)}")
+    
+    def post_bookmark_jobs(self, body: Dict) -> List[Dict]:
+        """
+        Post applied jobs from the Bookmarked table.
+
+        Corresponds to: POST /api/v1/bookmarks
+        """                
+        for key in body.keys():
+            if key not in ["job_id", "student_id"]:
+                raise ValueError(f"Cannot filter by these keys: {key}")
+
+        session = self.db.get_session()
+
+        try:
+            bookmark = Bookmark(
+                job_id=body["job_id"],
+                student_id=body["student_id"]
+            )
+
+            session.add(bookmark)
+
+            session.commit()
+
+            session.close()
+            
+        except Exception as e:
+            session.close()
+            raise Exception(f"Error retrieving bookmarked jobs: {str(e)}")
 
     def get_filtered_job(self, body: Dict) -> List[Dict]:
         """
