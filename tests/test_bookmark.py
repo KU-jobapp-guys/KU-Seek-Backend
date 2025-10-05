@@ -1,3 +1,5 @@
+"""Module for testing the Bookmark features."""
+
 from decouple import config
 from base_test import RoutingTestCase
 from controllers.models import Bookmark
