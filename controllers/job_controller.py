@@ -163,7 +163,7 @@ class JobController:
 
     def get_bookmark_jobs(self, user_id: str) -> List[Dict]:
         """
-        Return applied jobs from the Bookmarked table.
+        Return bookmarked job from the Bookmarked table.
 
         Corresponds to: GET /api/v1/bookmarks
         """        
@@ -196,7 +196,7 @@ class JobController:
     
     def post_bookmark_jobs(self, user_id, body: Dict) -> Dict:
         """
-        Post applied jobs from the Bookmarked table.
+        Post bookmarked job from the Bookmarked table.
 
         Corresponds to: POST /api/v1/bookmarks
         """             
@@ -240,6 +240,59 @@ class JobController:
         except Exception as e:
             session.close()
             raise Exception(f"Error retrieving bookmarked jobs: {str(e)}")
+    
+
+    def delete_bookmark_jobs(self, user_id, body: Dict) -> Dict:
+        """
+        Delete bookmarked job from the Bookmarked table.
+
+        Corresponds to: DELETE /api/v1/bookmarks
+        """             
+        if isinstance(user_id, str):
+            try:
+                user_id = uuid.UUID(user_id)
+            except ValueError:
+                raise ValueError("Invalid user_id format. Expected UUID string.")
+   
+        for key in body.keys():
+            if key != "job_id":
+                raise ValueError(f"Cannot filter by these keys: {key}")
+
+        session = self.db.get_session()
+        
+        student = session.query(Student).where(
+                Student.user_id == user_id
+        ).one_or_none()
+        
+        try:
+            bookmark = session.query(Bookmark).where(
+                Bookmark.job_id == body["job_id"],
+                Bookmark.student_id == student.id
+            ).one_or_none()
+
+            if not bookmark:
+                session.close()
+                raise ValueError("Bookmark not found")
+
+            result = {
+                "id": bookmark.id,
+                "job_id": bookmark.job_id,
+                "student_id": bookmark.student_id,
+                "created_at": bookmark.created_at.isoformat() if bookmark.created_at else None
+            }
+
+            session.delete(bookmark)
+
+            session.commit()            
+
+            session.close()
+
+            return result
+        
+        except Exception as e:
+            session.rollback()
+            session.close()
+            raise Exception(f"Error deleting bookmark: {str(e)}")
 
     def get_filtered_job(self, body: Dict) -> List[Dict]:
         """

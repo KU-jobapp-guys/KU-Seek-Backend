@@ -122,3 +122,14 @@ def post_bookmark_jobs(body: Dict):
     except Exception as e:
         return jsonify({"message": str(e)}), 500
     
+
+def delete_bookmark_jobs(body: Dict):
+    """Delete exist bookmark."""
+    try:
+        job_manager = JobController(current_app.config["Database"])
+        bookmarked_jobs = job_manager.delete_bookmark_jobs(get_auth_user_id(request), body)
+        return jsonify(bookmarked_jobs), 201
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
