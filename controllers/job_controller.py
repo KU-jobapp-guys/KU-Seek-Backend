@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from .models.job_model import Job, JobSkills, JobTags, JobApplication, Bookmark
 from .models.user_model import Company, Student
 from .models.tag_term_model import Tags, Terms
+from flask import jsonify
 
 
 class JobController:
@@ -193,30 +194,49 @@ class JobController:
             session.close()
             raise Exception(f"Error retrieving bookmarked jobs: {str(e)}")
     
-    def post_bookmark_jobs(self, body: Dict) -> List[Dict]:
+    def post_bookmark_jobs(self, user_id, body: Dict) -> Dict:
         """
         Post applied jobs from the Bookmarked table.
 
         Corresponds to: POST /api/v1/bookmarks
-        """                
+        """             
+        if isinstance(user_id, str):
+            try:
+                user_id = uuid.UUID(user_id)
+            except ValueError:
+                raise ValueError("Invalid user_id format. Expected UUID string.")
+   
         for key in body.keys():
-            if key not in ["job_id", "student_id"]:
+            if key != "job_id":
                 raise ValueError(f"Cannot filter by these keys: {key}")
 
         session = self.db.get_session()
-
+        
+        student = session.query(Student).where(
+                Student.user_id == user_id
+        ).one_or_none()
+        
         try:
             bookmark = Bookmark(
                 job_id=body["job_id"],
-                student_id=body["student_id"]
+                student_id=student.id
             )
 
             session.add(bookmark)
 
             session.commit()
 
+            result = {
+                "id": bookmark.id,
+                "job_id": bookmark.job_id,
+                "student_id": bookmark.student_id,
+                "created_at": bookmark.created_at.isoformat() if bookmark.created_at else None
+            }
+
             session.close()
-            
+
+            return result
+        
         except Exception as e:
             session.close()
             raise Exception(f"Error retrieving bookmarked jobs: {str(e)}")

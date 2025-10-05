@@ -188,7 +188,7 @@ paths:
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/BookmarkInput'
+                  $ref: '#/components/schemas/BookmarkPostOutput'
 
   /test/tasks:
     get:
@@ -719,16 +719,23 @@ components:
     BookmarkInput:
       type: object
       required:
-        - student_id
         - job_id
       properties:
-        student_id:
-          type: integer
-          description: The student_id
         job_id:
           type: integer
           description: The job_id
     
+    BookmarkPostOutput:
+      type: object
+      required:
+        - job_id
+      properties:
+        job_id:
+          type: integer
+          description: The job_id
+        student_id:
+          type: integer
+          description: The student_id
     
     UserProfileInput:
       type: object
