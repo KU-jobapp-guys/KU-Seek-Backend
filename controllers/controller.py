@@ -3,6 +3,7 @@
 from flask import request
 from .task_controller import TaskController
 from .user_profile_controller import ProfileController
+from .job_app_controller import JobApplicationController
 from .auth_controller import get_auth_user_id
 
 from typing import Dict, Optional
@@ -55,3 +56,18 @@ def create_profile(body: Dict) -> Optional[Dict]:
 def update_profile(body: Dict) -> Optional[Dict]:
     """Update User Profile data."""
     return profile_manager.update_profile(get_auth_user_id(request), body)
+
+def create_job_application(body: Dict) -> Optional[Dict]:
+    """Create a job application in the database."""
+    app_manager = JobApplicationController(current_app.config["Database"])
+    return app_manager.create_job_application(body)
+
+def fetch_user_job_applications(body: Dict) -> Optional[Dict]:
+    """Fetch all job applications created by the current user."""
+    app_manager = JobApplicationController(current_app.config["Database"])
+    return app_manager.fetch_user_job_applications(body)
+
+def fetch_job_applications_from_job(body: Dict) -> Optional[Dict]:
+    """Fetch all job applications related to a job post."""
+    app_manager = JobApplicationController(current_app.config["Database"])
+    return app_manager.fetch_job_application_from_job_post(body)

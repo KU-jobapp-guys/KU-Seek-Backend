@@ -223,6 +223,59 @@ paths:
         404:
           description: user profile not found
 
+  /application:
+    get:
+      summary: Get user job applications
+      description: Retrieve the user's submitted job applications using the access token.
+      operationId: controllers.controller.fetch_user_job_applications
+      parameters: []
+      responses:
+        200:
+          description: Applications retrieved successfully.
+          content:
+            application/json:
+              schema: {}  # TODO: define schema
+        400:
+          description: Invalid credentials
+
+    post:
+      summary: Create new job application
+      description: Create a new job application.
+      operationId: controllers.controller.create_job_application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {}  # TODO: define schema
+      responses:
+        201:
+          description: Application created successfully.
+          content:
+            application/json:
+              schema: {}  # TODO: define schema
+        400:
+          description: Invalid request body.
+
+  /application/{job_id}:
+    get:
+      summary: Get applications by job ID
+      description: Retrieve all job applications for a specific job.
+      operationId: controllers.controller.fetch_job_applications_from_job
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          description: The ID of the related job post.
+          schema:
+            type: string
+      responses:
+        200:
+          description: Applications retrieved successfully.
+          content:
+            application/json:
+              schema: {}  # TODO: define schema
+    
+
 components:
   securitySchemes:
       BearerAuth:
