@@ -1,11 +1,14 @@
 """Module for handing Job API path logic."""
 
+import uuid
+
 from typing import List, Dict
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 from .models.job_model import Job, JobSkills, JobTags, JobApplication, Bookmark
-from .models.user_model import Company
+from .models.user_model import Company, Student
 from .models.tag_term_model import Tags, Terms
+
 
 class JobController:
     """Controller to use CRUD operations for Job."""
@@ -163,10 +166,20 @@ class JobController:
 
         Corresponds to: GET /api/v1/bookmarks
         """        
+        if isinstance(user_id, str):
+            try:
+                user_id = uuid.UUID(user_id)
+            except ValueError:
+                raise ValueError("Invalid user_id format. Expected UUID string.")
+            
         session = self.db.get_session()
         try:
+            student = session.query(Student).where(
+                Student.user_id == user_id
+            ).one_or_none()
+
             user_bookmarked_jobs = session.query(Bookmark).where(
-                Bookmark.student_id == user_id
+                Bookmark.student_id == student.id
             ).all()
             
             if not user_bookmarked_jobs:

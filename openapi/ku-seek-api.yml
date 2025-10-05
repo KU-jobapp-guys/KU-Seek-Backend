@@ -163,7 +163,7 @@ paths:
           in: query
           required: true
           schema:
-            type: integer
+            type: string
       responses:
         200:
           description: A list of bookmarked jobs
