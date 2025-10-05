@@ -138,29 +138,6 @@ class JobController:
             session.close()
             raise Exception(f"Error creating job: {str(e)}")
 
-    def get_applied_jobs(self, user_id: str) -> List[Dict]:
-        """
-        Return applied jobs from the JobApplication table.
-
-        Corresponds to: GET /api/v1/applications
-        """
-        session = self.db.get_session()
-        try:
-            user_jobapplications = session.query(JobApplication).where(
-                JobApplication.student_id == user_id
-            ).all()
-            
-            if not user_jobapplications:
-                session.close()
-                return []
-            
-            result = [app.to_dict() for app in user_jobapplications]
-            session.close()
-            return result
-        except Exception as e:
-            session.close()
-            raise Exception(f"Error retrieving applied jobs: {str(e)}")
-
     def get_bookmark_jobs(self, user_id: str) -> List[Dict]:
         """
         Return bookmarked job from the Bookmarked table.

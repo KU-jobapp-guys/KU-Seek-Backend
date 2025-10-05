@@ -91,16 +91,6 @@ def get_filtered_jobs(body: Dict):
         return jsonify({"message": str(e)}), 500
 
 
-def get_applied_jobs(user_id: str):
-    """Return applied Jobs."""
-    try:
-        job_manager = JobController(current_app.config["Database"])
-        applied_jobs = job_manager.get_applied_jobs(user_id)
-        return jsonify(applied_jobs), 200
-    except Exception as e:
-        return jsonify({"message": str(e)}), 500
-
-
 def get_bookmark_jobs(user_id: str):
     """Return bookmark Jobs."""
     try:
