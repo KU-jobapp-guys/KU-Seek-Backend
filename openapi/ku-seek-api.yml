@@ -193,19 +193,20 @@ paths:
     delete:
       summary: Delete bookmarked job in the database
       operationId: controllers.controller.delete_bookmark_jobs 
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BookmarkInput'
+      parameters:
+        - name: job_id
+          in: query
+          required: true
+          schema:
+            type: integer
       responses:
         200:
-          description: A new of bookmarked job
+          description: Bookmark deleted
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/BookmarkOutput'
+                $ref: '#/components/schemas/BookmarkOutput'
+
 
   /test/tasks:
     get:
@@ -755,7 +756,7 @@ components:
           type: integer
           description: The student_id
         create_at:
-          type: date
+          type: string
           description: date that this bookmark got created
  
     UserProfileInput:

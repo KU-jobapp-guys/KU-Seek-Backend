@@ -242,7 +242,7 @@ class JobController:
             raise Exception(f"Error retrieving bookmarked jobs: {str(e)}")
     
 
-    def delete_bookmark_jobs(self, user_id, body: Dict) -> Dict:
+    def delete_bookmark_jobs(self, user_id, job_id: int) -> Dict:
         """
         Delete bookmarked job from the Bookmarked table.
 
@@ -254,26 +254,26 @@ class JobController:
             except ValueError:
                 raise ValueError("Invalid user_id format. Expected UUID string.")
    
-        for key in body.keys():
-            if key != "job_id":
-                raise ValueError(f"Cannot filter by these keys: {key}")
 
         session = self.db.get_session()
-        
-        student = session.query(Student).where(
-                Student.user_id == user_id
-        ).one_or_none()
-        
+             
         try:
+            student = session.query(Student).where(
+                Student.user_id == user_id
+            ).one_or_none()
+            
+            if not student:
+                session.close()
+                raise ValueError("Student not found")
+        
             bookmark = session.query(Bookmark).where(
-                Bookmark.job_id == body["job_id"],
+                Bookmark.job_id == job_id,
                 Bookmark.student_id == student.id
             ).one_or_none()
 
             if not bookmark:
                 session.close()
                 raise ValueError("Bookmark not found")
-
             result = {
                 "id": bookmark.id,
                 "job_id": bookmark.job_id,

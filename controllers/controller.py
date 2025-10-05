@@ -5,7 +5,7 @@ from .task_controller import TaskController
 from .user_profile_controller import ProfileController
 from .auth_controller import get_auth_user_id
 from .job_controller import JobController
-from typing import Dict, Optional, List
+from typing import Dict, Optional
 from flask import current_app
 
 
@@ -123,12 +123,13 @@ def post_bookmark_jobs(body: Dict):
         return jsonify({"message": str(e)}), 500
     
 
-def delete_bookmark_jobs(body: Dict):
-    """Delete exist bookmark."""
+def delete_bookmark_jobs(job_id: int):
+    """Delete a bookmark."""
     try:
+        user_id = get_auth_user_id(request) 
         job_manager = JobController(current_app.config["Database"])
-        bookmarked_jobs = job_manager.delete_bookmark_jobs(get_auth_user_id(request), body)
-        return jsonify(bookmarked_jobs), 201
+        deleted_bookmark = job_manager.delete_bookmark_jobs(user_id, job_id)
+        return jsonify(deleted_bookmark), 200
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
     except Exception as e:
