@@ -115,7 +115,7 @@ def post_bookmark_jobs(body: Dict):
     """Add new bookmark."""
     try:
         job_manager = JobController(current_app.config["Database"])
-        bookmarked_jobs = job_manager.post_bookmark_jobs(body)
+        bookmarked_jobs = job_manager.post_bookmark_jobs(get_auth_user_id(request), body)
         return jsonify(bookmarked_jobs), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
