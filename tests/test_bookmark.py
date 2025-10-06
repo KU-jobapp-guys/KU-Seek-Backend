@@ -2,7 +2,6 @@
 
 from decouple import config
 from base_test import RoutingTestCase
-from controllers.models import Bookmark
 from util_functions import add_mockup_data, generate_jwt
 
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")

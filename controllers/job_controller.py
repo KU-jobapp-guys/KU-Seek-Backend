@@ -5,10 +5,9 @@ import uuid
 from typing import List, Dict
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
-from .models.job_model import Job, JobSkills, JobTags, JobApplication, Bookmark
+from .models.job_model import Job, JobSkills, JobTags, Bookmark
 from .models.user_model import Company, Student
 from .models.tag_term_model import Tags, Terms
-from flask import jsonify
 
 
 class JobController:
@@ -287,8 +286,8 @@ class JobController:
 
         Args:
             body: Filter criteria including:
-                - skill_names (list[str]): List of skill names (e.g., ["React", "Python"])
-                - tag_names (list[str]): List of tag names (e.g., ["Remote Work"])
+                - skill_names (list[str]): List of skill names
+                - tag_names (list[str]): List of tag names 
                 - Other job fields for filtering
         """
         allowed_job_fields = {
