@@ -105,18 +105,20 @@ def post_bookmark_jobs(body: Dict):
     """Add new bookmark."""
     try:
         job_manager = JobController(current_app.config["Database"])
-        bookmarked_jobs = job_manager.post_bookmark_jobs(get_auth_user_id(request), body)
+        bookmarked_jobs = job_manager.post_bookmark_jobs(
+            get_auth_user_id(request), body
+        )
         return jsonify(bookmarked_jobs), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
     except Exception as e:
         return jsonify({"message": str(e)}), 500
-    
+
 
 def delete_bookmark_jobs(job_id: int):
     """Delete a bookmark."""
     try:
-        user_id = get_auth_user_id(request) 
+        user_id = get_auth_user_id(request)
         job_manager = JobController(current_app.config["Database"])
         deleted_bookmark = job_manager.delete_bookmark_jobs(user_id, job_id)
         return jsonify(deleted_bookmark), 200

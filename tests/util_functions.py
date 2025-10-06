@@ -17,6 +17,7 @@ def generate_jwt(uid, iat=None, exp=None, secret="KU-Seek"):
 
     return encode(payload, secret, algorithm="HS512")
 
+
 def add_mockup_data(cls):
     """Add mockup data to the test database."""
     # create 2 users in the database
@@ -32,27 +33,18 @@ def add_mockup_data(cls):
     session.commit()
     user = session.query(User).where(User.google_uid == "98765").one()
     cls.user2_id = user.id
-    
-    student_user1 = User(
-        google_uid="55555",
-        email="student1@gmail.com",
-        type="Student"
-    )
+
+    student_user1 = User(google_uid="55555", email="student1@gmail.com", type="Student")
     session.add(student_user1)
     session.commit()
     student_user1 = session.query(User).where(User.google_uid == "55555").one()
     cls.student_user1_id = student_user1.id
 
-    student_user2 = User(
-        google_uid="66666",
-        email="student2@gmail.com",
-        type="Student"
-    )
+    student_user2 = User(google_uid="66666", email="student2@gmail.com", type="Student")
     session.add(student_user2)
     session.commit()
     student_user2 = session.query(User).where(User.google_uid == "66666").one()
     cls.student_user2_id = student_user2.id
-
 
     # Add temporary company data for testing
     company = Company(
@@ -62,7 +54,7 @@ def add_mockup_data(cls):
         company_industry="Software",
         company_size="200-500",
         company_website="https://www.techcorp.com",
-        full_location="Bangkok, Thailand"
+        full_location="Bangkok, Thailand",
     )
 
     company_2 = Company(
@@ -72,20 +64,19 @@ def add_mockup_data(cls):
         company_industry="Bodyguard",
         company_size="20-45",
         company_website="https://www.protect-you.com",
-        full_location="Chiangmai, Thailand"
+        full_location="Chiangmai, Thailand",
     )
-    
+
     session.add(company)
     session.add(company_2)
     session.commit()
-
 
     student1 = Student(
         user_id=cls.student_user1_id,
         nisit_id="6401010101",
         education_id=None,
         gpa=3.75,
-        interests="AI, Machine Learning, Backend Development"
+        interests="AI, Machine Learning, Backend Development",
     )
 
     student2 = Student(
@@ -93,7 +84,7 @@ def add_mockup_data(cls):
         nisit_id="6401010102",
         education_id=None,
         gpa=3.25,
-        interests="Frontend Development, UX Design"
+        interests="Frontend Development, UX Design",
     )
 
     session.add_all([student1, student2])
@@ -101,41 +92,36 @@ def add_mockup_data(cls):
 
     # add tag mock data
     tag_mock_data = [
-        'Artificial Intelligence',
-        'Web Development',
-        'Data Science',
-        'Cybersecurity',
-        'Cloud Computing',
-        'Machine Learning',
-        'Blockchain',
-        'Mobile Apps'
+        "Artificial Intelligence",
+        "Web Development",
+        "Data Science",
+        "Cybersecurity",
+        "Cloud Computing",
+        "Machine Learning",
+        "Blockchain",
+        "Mobile Apps",
     ]
-    
+
     for tag_name in tag_mock_data:
-        tag = Tags(
-            name=tag_name
-        )
+        tag = Tags(name=tag_name)
 
         session.add(tag)
 
     session.commit()
 
     term_mock_data = [
-        ('Internship', 'Opportunity'),
-        ('Scholarship', 'Opportunity'),
-        ('Full-time', 'Job'),
-        ('Part-time', 'Job'),
-        ('Remote', 'WorkType'),
-        ('Onsite', 'WorkType'),
-        ('Research', 'Activity'),
-        ('Workshop', 'Activity')
+        ("Internship", "Opportunity"),
+        ("Scholarship", "Opportunity"),
+        ("Full-time", "Job"),
+        ("Part-time", "Job"),
+        ("Remote", "WorkType"),
+        ("Onsite", "WorkType"),
+        ("Research", "Activity"),
+        ("Workshop", "Activity"),
     ]
 
     for term_data in term_mock_data:
-        tag = Terms(
-            name=term_data[0],
-            type=term_data[1]
-        )
+        tag = Terms(name=term_data[0], type=term_data[1])
 
         session.add(tag)
 
@@ -152,7 +138,7 @@ def add_mockup_data(cls):
         salary_max=120000,
         salary_min=80000,
         title="Senior Python Developer",
-        work_hours="9:00 AM - 5:00 PM"
+        work_hours="9:00 AM - 5:00 PM",
     )
     job2 = Job(
         capacity=4,
@@ -165,7 +151,7 @@ def add_mockup_data(cls):
         salary_max=20000,
         salary_min=15000,
         title="Junior Slave Developer",
-        work_hours="6:00 AM - 8:00 PM"
+        work_hours="6:00 AM - 8:00 PM",
     )
     session.add(job1)
     session.add(job2)

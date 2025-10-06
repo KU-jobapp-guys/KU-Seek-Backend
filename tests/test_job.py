@@ -1,7 +1,6 @@
 """Module for testing the Job features."""
 
 from base_test import RoutingTestCase
-from controllers.models import User, Company, Tags, Terms, Job
 from util_functions import add_mockup_data
 
 
@@ -23,16 +22,16 @@ class JobTestCase(RoutingTestCase):
         """Test fetching a Job GET API."""
         res = self.client.get("/api/v1/jobs")
         self.assertTrue(isinstance(res.get_json(), list))
-    
+
     def test_response_status(self):
         """Test that it return 200."""
         res = self.client.get("/api/v1/jobs")
         self.assertEqual(res.status_code, 200)
-        
+
     def test_amout_of_data(self):
         """
         Test fetching a Job GET API.
-        
+
         It should have 2 job datas.
         """
         res = self.client.get("/api/v1/jobs")
@@ -41,7 +40,7 @@ class JobTestCase(RoutingTestCase):
     def test_get_one_job_by_id(self):
         """
         Test fetching a Job GET API.
-        
+
         It should return specific job data.
         """
         res = self.client.get("/api/v1/jobs?job_id=1")
@@ -57,7 +56,7 @@ class JobTestCase(RoutingTestCase):
 
         data = res.json
 
-        job = data[0]  
+        job = data[0]
 
         expected_fields = {
             "approved_by",
@@ -107,7 +106,6 @@ class JobTestCase(RoutingTestCase):
             for field in ("id", "name"):
                 self.assertIn(field, tag, f"Missing tag field: {field}")
 
-
     def test_job_post_status_code(self):
         """Test posting jobs then check the status code."""
         res = self.client.get("/api/v1/csrf-token")
@@ -128,9 +126,8 @@ class JobTestCase(RoutingTestCase):
                 "skill_ids": [1, 2, 3],
                 "tag_ids": [5, 6],
                 "title": "Senior Python Developer",
-                "work_hours": "9:00 AM - 5:00 PM"
+                "work_hours": "9:00 AM - 5:00 PM",
             },
-
         )
 
         self.assertEqual(res.status_code, 201)
@@ -153,14 +150,13 @@ class JobTestCase(RoutingTestCase):
             "skill_ids": [2],
             "tag_ids": [2, 4],
             "title": "Junior Slave Developer",
-            "work_hours": "6:00 AM - 8:00 PM"
+            "work_hours": "6:00 AM - 8:00 PM",
         }
 
         res = self.client.post(
             "/api/v1/jobs",
             headers={"X-CSRFToken": csrf_token},
             json=job_payload,
-
         )
 
         self.assertEqual(res.status_code, 201)
@@ -170,7 +166,7 @@ class JobTestCase(RoutingTestCase):
         self.assertEqual(data["company_id"], job_payload["company_id"])
         self.assertEqual(data["salary_min"], job_payload["salary_min"])
         self.assertEqual(data["salary_max"], job_payload["salary_max"])
-    
+
     def test_job_post_missing_required_fields(self):
         """Test posting a job without required fields should fail."""
         res = self.client.get("/api/v1/csrf-token")
@@ -186,7 +182,7 @@ class JobTestCase(RoutingTestCase):
             "job_type": "full-time",
             "location": "Bangkok, Thailand",
             "salary_max": 120000,
-            "work_hours": "9:00 AM - 5:00 PM"
+            "work_hours": "9:00 AM - 5:00 PM",
         }
 
         res = self.client.post(
@@ -212,7 +208,7 @@ class JobTestCase(RoutingTestCase):
             "location": "Nowhere",
             "salary_min": 10000,
             "salary_max": 20000,
-            "work_hours": "9:00 AM - 5:00 PM"
+            "work_hours": "9:00 AM - 5:00 PM",
         }
 
         res = self.client.post(
@@ -238,7 +234,7 @@ class JobTestCase(RoutingTestCase):
             "location": "Nowhere",
             "salary_min": 10000,
             "salary_max": 20000,
-            "work_hours": "9:00 AM - 5:00 PM"
+            "work_hours": "9:00 AM - 5:00 PM",
         }
 
         res = self.client.post(
@@ -304,7 +300,6 @@ class JobTestCase(RoutingTestCase):
         )
         self.assertEqual(res.status_code, 400)
         self.assertIn("tag_names must be an array", res.json["message"])
-
 
     def test_filter_job_returns_correct_filtered_data(self):
         """Test that filtered jobs return the correct matching data."""
@@ -378,10 +373,7 @@ class JobTestCase(RoutingTestCase):
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token},
-            json={
-                "job_type": "full-time",
-                "location": "Bangkok"
-            },
+            json={"job_type": "full-time", "location": "Bangkok"},
         )
         self.assertEqual(res.status_code, 200)
         data = res.json
@@ -403,7 +395,7 @@ class JobTestCase(RoutingTestCase):
         self.assertEqual(res.status_code, 200)
         data = res.json
         self.assertEqual(len(data), 0)
-        
+
     def test_filter_with_empty_body_returns_all_jobs(self):
         """Test that filtering with empty body {} returns all jobs."""
         res = self.client.get("/api/v1/csrf-token")
@@ -416,14 +408,13 @@ class JobTestCase(RoutingTestCase):
         )
         self.assertEqual(res.status_code, 200)
         data = res.json
-        
+
         self.assertEqual(len(data), 2)
-        
+
         # Verify it returns the same jobs as GET /api/v1/jobs
         all_jobs_res = self.client.get("/api/v1/jobs")
         all_jobs_data = all_jobs_res.json
-        
-        self.assertEqual(len(data), len(all_jobs_data))
-        
-        self.assertEqual(data, all_jobs_data)
 
+        self.assertEqual(len(data), len(all_jobs_data))
+
+        self.assertEqual(data, all_jobs_data)

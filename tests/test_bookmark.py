@@ -7,6 +7,7 @@ from util_functions import add_mockup_data, generate_jwt
 
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
 
+
 class BookmarkTestCase(RoutingTestCase):
     """Test case for bookmarking the job."""
 
@@ -34,13 +35,8 @@ class BookmarkTestCase(RoutingTestCase):
         jwt = generate_jwt(self.student_user1_id, secret=SECRET_KEY)
         res = self.client.post(
             "/api/v1/bookmarks",
-            headers={
-                "X-CSRFToken": csrf_token,
-                "access_token": jwt
-            },
-            json={
-                "job_id": 1
-            }
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json={"job_id": 1},
         )
 
         data = res.json
@@ -48,79 +44,61 @@ class BookmarkTestCase(RoutingTestCase):
         self.assertEqual(res.status_code, 201)
         self.assertEqual(1, data["job_id"])
         self.assertEqual(1, data["student_id"])
-    
+
     def test_post_then_delete_bookmarked(self):
         """Test creating a bookmark and then deleting it."""
         res = self.client.get("/api/v1/csrf-token")
         csrf_token = res.json["csrf_token"]
         jwt = generate_jwt(self.student_user2_id, secret=SECRET_KEY)
-        
 
         res = self.client.post(
             "/api/v1/bookmarks",
-            headers={
-                "X-CSRFToken": csrf_token,
-                "access_token": jwt
-            },
-            json={
-                "job_id": 1
-            }
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json={"job_id": 1},
         )
-        
+
         self.assertEqual(res.status_code, 201)
         created_data = res.json
         self.assertEqual(1, created_data["job_id"])
-        
+
         res = self.client.delete(
             "/api/v1/bookmarks?job_id=1",
-            headers={
-                "X-CSRFToken": csrf_token,
-                "access_token": jwt
-            },
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
         )
 
-   
         self.assertEqual(res.status_code, 200)
         deleted_data = res.json
         self.assertEqual(1, deleted_data["job_id"])
         self.assertEqual(2, deleted_data["student_id"])
-        
+
         res = self.client.get(f"/api/v1/bookmarks?user_id={self.student_user2_id}")
         self.assertEqual(res.status_code, 200)
         bookmarks = res.json
         self.assertEqual(len(bookmarks), 0)
-
 
     def test_delete_nonexistent_bookmark(self):
         """Test deleting a bookmark that doesn't exist should return 400."""
         res = self.client.get("/api/v1/csrf-token?job")
         csrf_token = res.json["csrf_token"]
         jwt = generate_jwt(self.student_user1_id, secret=SECRET_KEY)
-        
+
         res = self.client.delete(
             "/api/v1/bookmarks?job_id=9999",
-            headers={
-                "X-CSRFToken": csrf_token,
-                "access_token": jwt
-            }
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
         )
-        
+
         self.assertEqual(res.status_code, 500)
         self.assertIn("Bookmark not found", res.json["message"])
-
 
     def test_delete_bookmark_invalid_field(self):
         """Test deleting with invalid field should return 400."""
         res = self.client.get("/api/v1/csrf-token")
         csrf_token = res.json["csrf_token"]
         jwt = generate_jwt(self.student_user1_id, secret=SECRET_KEY)
-        
+
         res = self.client.delete(
             "/api/v1/bookmarks?invalid_field=123",
-            headers={
-                "X-CSRFToken": csrf_token,
-                "access_token": jwt
-            }
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
         )
-        
+
         self.assertEqual(res.status_code, 400)
