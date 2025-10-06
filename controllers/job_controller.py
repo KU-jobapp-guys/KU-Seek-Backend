@@ -287,7 +287,7 @@ class JobController:
         Args:
             body: Filter criteria including:
                 - skill_names (list[str]): List of skill names
-                - tag_names (list[str]): List of tag names 
+                - tag_names (list[str]): List of tag names
                 - Other job fields for filtering
         """
         allowed_job_fields = {
