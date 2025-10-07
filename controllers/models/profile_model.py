@@ -90,7 +90,7 @@ class StudentDocuments(BaseModel):
 
     id: Mapped[int] = MappedColumn(Integer, primary_key=True, autoincrement=True)
 
-    student_id: Mapped[uuid.UUID] = MappedColumn(
+    student_id: Mapped[int] = MappedColumn(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
@@ -115,7 +115,7 @@ class StudentHistories(BaseModel):
         nullable=False,
     )
 
-    student_id: Mapped[uuid.UUID] = MappedColumn(
+    student_id: Mapped[int] = MappedColumn(
         ForeignKey("users.id", ondelete="CASCADE"), primary_key=True, nullable=False
     )
 
@@ -131,11 +131,11 @@ class ProfessorConnections(BaseModel):
 
     id: Mapped[int] = MappedColumn(Integer, primary_key=True, autoincrement=True)
 
-    professor_id: Mapped[uuid.UUID] = MappedColumn(
+    professor_id: Mapped[int] = MappedColumn(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
-    company_id: Mapped[uuid.UUID] = MappedColumn(
+    company_id: Mapped[int] = MappedColumn(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
@@ -151,7 +151,7 @@ class Announcements(BaseModel):
 
     id: Mapped[int] = MappedColumn(Integer, primary_key=True, autoincrement=True)
 
-    professor_id: Mapped[uuid.UUID] = MappedColumn(
+    professor_id: Mapped[int] = MappedColumn(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
