@@ -4,7 +4,7 @@ import uuid
 
 from datetime import datetime
 from .base_model import BaseModel
-from sqlalchemy.orm import Mapped, MappedColumn
+from sqlalchemy.orm import Mapped, MappedColumn, relationship
 from sqlalchemy import String, Text, Float, Integer, DateTime, Boolean
 from sqlalchemy import ForeignKey, func, UniqueConstraint
 from typing import Optional
@@ -60,6 +60,11 @@ class Job(BaseModel):
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
 
+    applications: Mapped[list["JobApplication"]] = relationship(
+        "JobApplication",
+        back_populates="job",
+        cascade="all, delete-orphan",
+    )
 
 class JobSkills(BaseModel):
     """job skills model."""
@@ -114,13 +119,19 @@ class JobApplication(BaseModel):
         ForeignKey("students.id", ondelete="CASCADE"), nullable=False
     )
 
+    first_name: Mapped[Optional[str]] = MappedColumn(String(100), nullable=False)
+
+    last_name: Mapped[Optional[str]] = MappedColumn(String(100), nullable=False)
+
+    contact_email: Mapped[Optional[str]] = MappedColumn(String(255), nullable=False)
+
     resume: Mapped[str] = MappedColumn(String(500), nullable=False)
 
     letter_of_application: Mapped[str] = MappedColumn(String(500), nullable=False)
 
-    additional_document: Mapped[Optional[str]] = MappedColumn(
-        String(500), nullable=True
-    )
+    years_of_experience: Mapped[str] = MappedColumn(String(255), nullable=False)
+
+    expected_salary: Mapped[str] = MappedColumn(String(255), nullable=False)
 
     phone_number: Mapped[str] = MappedColumn(String(12), nullable=False)
 
@@ -135,6 +146,10 @@ class JobApplication(BaseModel):
         DateTime, default=func.now(), nullable=False
     )
 
+    job: Mapped["Job"] = relationship(
+        "Job",
+        back_populates="application",
+    )
 
 class Bookmark(BaseModel):
     """Model for Bookmark Table."""
