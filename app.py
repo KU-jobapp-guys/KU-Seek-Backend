@@ -7,10 +7,15 @@ from flask_cors import CORS
 from flask_wtf import CSRFProtect
 from controllers.db_controller import BaseController
 
+REQUIRED_VARS = ['DB_NAME', 'DB_PASSWORD']
 
 if not os.path.exists(".env"):
-    print(".env file not found.You may create one from 'sample-env.txt'.")
-    sys.exit(1)
+    missing_vars = [var for var in REQUIRED_VARS if not config(var, default=None)]
+    
+    if missing_vars:
+        print(".env file not found and missing required environment variables")
+        print("You may create .env file from 'sample-env.txt'.")
+        sys.exit(1)
 
 OPENAPI_STUB_DIR = config("OPENAPI_STUB_DIR", default="swagger_server")
 
