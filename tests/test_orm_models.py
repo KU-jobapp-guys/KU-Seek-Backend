@@ -31,7 +31,7 @@ SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
 
 
 class ORMTestCase(RoutingTestCase):
-    """Test case for testing the instantiation of the ORM and accessing its attributes."""
+    """Test case for the instantiation of the ORM and accessing its attributes."""
 
     @classmethod
     def setUpClass(cls):
