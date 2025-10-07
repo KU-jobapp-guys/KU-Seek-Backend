@@ -91,7 +91,7 @@ class StudentDocuments(BaseModel):
     id: Mapped[int] = MappedColumn(Integer, primary_key=True, autoincrement=True)
 
     student_id: Mapped[int] = MappedColumn(
-        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("students.id", ondelete="CASCADE"), nullable=False
     )
 
     file_path: Mapped[str] = MappedColumn(String(255), nullable=False)
@@ -116,7 +116,7 @@ class StudentHistories(BaseModel):
     )
 
     student_id: Mapped[int] = MappedColumn(
-        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True, nullable=False
+        ForeignKey("students.id", ondelete="CASCADE"), primary_key=True, nullable=False
     )
 
     viewed_at: Mapped[datetime] = MappedColumn(
@@ -132,11 +132,11 @@ class ProfessorConnections(BaseModel):
     id: Mapped[int] = MappedColumn(Integer, primary_key=True, autoincrement=True)
 
     professor_id: Mapped[int] = MappedColumn(
-        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("professors.id", ondelete="CASCADE"), nullable=False
     )
 
     company_id: Mapped[int] = MappedColumn(
-        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("companies.id", ondelete="CASCADE"), nullable=False
     )
 
     created_at: Mapped[datetime] = MappedColumn(
@@ -152,7 +152,7 @@ class Announcements(BaseModel):
     id: Mapped[int] = MappedColumn(Integer, primary_key=True, autoincrement=True)
 
     professor_id: Mapped[int] = MappedColumn(
-        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("professors.id", ondelete="CASCADE"), nullable=False
     )
 
     title: Mapped[str] = MappedColumn(String(255), nullable=False)
