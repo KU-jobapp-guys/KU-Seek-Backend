@@ -33,9 +33,12 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Generate swagger_server
-        run: |
-          openapi-generator-cli generate -i openapi/ku-seek-api.yml -g python-flask -o swagger_server
+      - name: Generate swagger server
+        uses: OpenAPITools/openapi-generator-action@v2
+        with:
+          generator: python-flask
+          input-spec: openapi/ku-seek-api.yml
+          output: swagger_server
 
       - name: Install dependencies
         run: |
