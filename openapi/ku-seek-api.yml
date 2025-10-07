@@ -233,28 +233,36 @@ paths:
           description: Applications retrieved successfully.
           content:
             application/json:
-              schema: {}  # TODO: define schema
+              schema: 
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobApplication'
         400:
           description: Invalid credentials
 
   /application/{job_id}:
+    parameters:
+      - name: job_id
+        in: path
+        required: true
+        description: The ID of the related job post.
+        schema:
+          type: string
     get:
       summary: Get applications by job ID
       description: Retrieve all job applications for a specific job.
       operationId: controllers.controller.fetch_job_applications_from_job
-      parameters:
-        - name: job_id
-          in: path
-          required: true
-          description: The ID of the related job post.
-          schema:
-            type: string
       responses:
         200:
           description: Applications retrieved successfully.
           content:
             application/json:
-              schema: {}  # TODO: define schema
+              schema: 
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobApplication'
+        400:
+          description: "Invalid job or credentials provided."
 
     post:
       summary: Create new job application
@@ -270,7 +278,8 @@ paths:
           description: Application created successfully.
           content:
             application/json:
-              schema: {}  # TODO: define schema
+              schema: 
+                $ref: '#/components/schemas/JobApplication'
         400:
           description: Invalid request body.
 
@@ -474,3 +483,55 @@ components:
           default: false
           example: false
 
+    JobApplication:
+      type: object
+      properties:
+        applicant:
+          type: object
+          properties:
+            user_id:
+              type: string
+              nullable: false
+            first_name:
+              type: string
+              nullable: false
+              example: "John"
+            last_name:
+              type: string
+              nullable: false
+              example: "Doe"
+            contact_email:
+              type: string
+              nullable: false
+        job_details:
+          type: object
+          properties:
+            job_id:
+              type: string
+              nullable: false
+            job_title:
+              type: string
+              nullable: false
+        resume:
+          type: string
+          nullable: false
+        letter_of_application:
+          type: string
+          nullable: false
+        years_of_experience:
+          type: string
+          nullable: false
+        expected_salary:
+          type: string
+          nullable: false
+        phone_number:
+          type: string
+          nullable: false
+        status:
+          type: string
+          enum: ["pending", "accepted", "rejected"]
+          example: "pending"
+        applied_at:
+          type: string
+          format: date-time
+          example: "2025-10-07T18:30:00Z"
