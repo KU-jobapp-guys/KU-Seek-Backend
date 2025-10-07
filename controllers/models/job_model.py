@@ -66,6 +66,7 @@ class Job(BaseModel):
         cascade="all, delete-orphan",
     )
 
+
 class JobSkills(BaseModel):
     """job skills model."""
 
@@ -150,6 +151,7 @@ class JobApplication(BaseModel):
         "Job",
         back_populates="application",
     )
+
 
 class Bookmark(BaseModel):
     """Model for Bookmark Table."""
