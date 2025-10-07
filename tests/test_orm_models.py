@@ -91,4 +91,78 @@ class ORMTestCase(RoutingTestCase):
         assert bookmark.job_id == 1
         assert bookmark.student_id == 2
 
-   
+    def test_profile_model(self):
+        """Test Profile model instantiation, and access it value."""
+        profile = Profile(
+            user_id=fake_uuid(),
+            first_name="Banana",
+            last_name="Lord",
+            email="banana@example.com",
+            gender="M",
+            age=20,
+            user_type="student",
+            phone_number="0999999999",
+            is_verified=True,
+        )
+        assert profile.first_name == "Banana"
+        assert profile.is_verified is True
+
+    def test_profile_skills_model(self):
+        """Test ProfileSkills model instantiation, and access it value."""
+        ps = ProfileSkills(user_id=fake_uuid(), skill_id=1)
+        assert ps.skill_id == 1
+
+    def test_education_model(self):
+        """Test Education model instantiation, and access it value."""
+        edu = Education(
+            curriculum_name="Computer Engineering",
+            university="Kasetsart University",
+            major="Software Engineering",
+            year_of_study=fake_date(),
+            graduate_year=fake_date(),
+        )
+        assert edu.major == "Software Engineering"
+
+    def test_student_documents_model(self):
+        """Test StudentDocuments model instantiation, and access it value."""
+        doc = StudentDocuments(
+            student_id=fake_uuid(),
+            file_path="/files/resume.pdf",
+            original_filename="resume.pdf",
+        )
+        assert doc.original_filename == "resume.pdf"
+
+    def test_student_histories_model(self):
+        """Test StudentHistories model instantiation, and access it value."""
+        sh = StudentHistories(job_id=1, student_id=fake_uuid())
+        assert sh.job_id == 1
+        assert sh.student_id is not None
+
+    def test_professor_connections_model(self):
+        """Test ProfessorConnections model instantiation, and access it value."""
+        pc = ProfessorConnections(
+            professor_id=fake_uuid(),
+            company_id=fake_uuid("12345678-1234-5678-1234-689723345189"),
+        )
+        assert pc.professor_id != pc.company_id
+
+    def test_announcements_model(self):
+        """Test Annoucements model instantiation, and access it value."""
+        ann = Announcements(
+            professor_id=fake_uuid(),
+            title="Job Fair 2025",
+            content="Join us at the main hall!",
+        )
+        assert "Job Fair" in ann.title
+
+    def test_tags_model(self):
+        """Test Tags model instantiation, and access it value."""
+        tag = Tags(name="Python")
+        assert tag.name == "Python"
+
+    def test_terms_model(self):
+        """Test Terms model instantiation, and access it value."""
+        term = Terms(name="Backend", type="Skill")
+        assert term.type == "Skill"
+
+    
