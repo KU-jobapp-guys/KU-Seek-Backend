@@ -165,4 +165,55 @@ class ORMTestCase(RoutingTestCase):
         term = Terms(name="Backend", type="Skill")
         assert term.type == "Skill"
 
-    
+    def test_token_model(self):
+        """Test Token model instantiation, and access it value."""
+        token = Token(uid=fake_uuid(), refresh_id=1)
+        assert token.refresh_id == 1
+
+    def test_user_model(self):
+        """Test User model instantiation, and access it value."""
+        user = User(
+            google_uid="abc123",
+            email="user@example.com",
+            is_verified=True,
+            type="Student",
+        )
+        assert user.is_verified
+        assert user.email.endswith("@example.com")
+
+    def test_student_model(self):
+        """Test Student model instantiation, and access it value."""
+        student = Student(
+            user_id=fake_uuid(),
+            nisit_id="65123456",
+            education_id=None,
+            gpa=3.75,
+            interests="AI, Backend",
+        )
+        assert float(student.gpa) == 3.75
+
+    def test_professor_model(self):
+        """Test Professor model instantiation, and access it value."""
+        prof = Professor(
+            user_id=fake_uuid(),
+            department="Computer Science",
+            position="Lecturer",
+            office_location="IT Building 3",
+            education_id=None,
+            research_interests="Machine Learning",
+            description="Researcher in ML",
+        )
+        assert "ML" in prof.description
+
+    def test_company_model(self):
+        """Test Company model instantiation, and access it value."""
+        comp = Company(
+            user_id=fake_uuid(),
+            company_name="Banana Corp",
+            company_type="Tech",
+            company_industry="Software",
+            company_size="50-100",
+            company_website="https://banana.example.com",
+            full_location="Bangkok, Thailand",
+        )
+        assert comp.company_name == "Banana Corp"
