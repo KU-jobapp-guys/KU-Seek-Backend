@@ -3,7 +3,7 @@
 from datetime import datetime
 from decouple import config
 from base_test import RoutingTestCase
-from util_functions import fake_uuid, fake_datetime, fake_date
+from util_functions import fake_uuid, fake_datetime, fake_date, add_mockup_data
 from controllers.models import (
     Job,
     JobSkills,
@@ -37,6 +37,7 @@ class ORMTestCase(RoutingTestCase):
     def setUpClass(cls):
         """Set up the database for this test suite."""
         super().setUpClass()
+        add_mockup_data(cls)
 
     @classmethod
     def tearDownClass(cls):
@@ -126,7 +127,7 @@ class ORMTestCase(RoutingTestCase):
     def test_student_documents_model(self):
         """Test StudentDocuments model instantiation, and access it value."""
         doc = StudentDocuments(
-            student_id=fake_uuid(),
+            student_id=1,
             file_path="/files/resume.pdf",
             original_filename="resume.pdf",
         )
@@ -134,22 +135,23 @@ class ORMTestCase(RoutingTestCase):
 
     def test_student_histories_model(self):
         """Test StudentHistories model instantiation, and access it value."""
-        sh = StudentHistories(job_id=1, student_id=fake_uuid())
+        sh = StudentHistories(job_id=1, student_id=1)
         assert sh.job_id == 1
         assert sh.student_id is not None
 
     def test_professor_connections_model(self):
         """Test ProfessorConnections model instantiation, and access it value."""
         pc = ProfessorConnections(
-            professor_id=fake_uuid(),
-            company_id=fake_uuid("12345678-1234-5678-1234-689723345189"),
+            professor_id=1,
+            company_id=2,
         )
-        assert pc.professor_id != pc.company_id
+        assert pc.professor_id == 1
+        assert pc.company_id == 2
 
     def test_announcements_model(self):
         """Test Annoucements model instantiation, and access it value."""
         ann = Announcements(
-            professor_id=fake_uuid(),
+            professor_id=1,
             title="Job Fair 2025",
             content="Join us at the main hall!",
         )
@@ -217,3 +219,46 @@ class ORMTestCase(RoutingTestCase):
             full_location="Bangkok, Thailand",
         )
         assert comp.company_name == "Banana Corp"
+
+    def test_job_application_defaults(self):
+        """Test JobApplication default values."""
+        session = self.database.get_session()
+        try:
+            app = JobApplication(
+            job_id=1,
+            student_id=2,
+            resume="resume.pdf",
+            letter_of_application="cover.pdf",
+            phone_number="0812345678",
+        )
+            session.add(app)
+            session.flush()
+            assert app.status == "pending"  
+            assert app.applied_at is not None 
+        finally:
+            session.rollback()
+            session.close()  
+
+    def test_bookmark_defaults(self):
+        """Test Bookmark default values without committing."""
+        session = self.database.get_session()
+        try:
+            bookmark = Bookmark(job_id=1, student_id=2)
+            session.add(bookmark)
+            session.flush()
+            assert isinstance(bookmark.created_at, datetime) 
+        finally:
+            session.rollback()
+            session.close()
+
+    def test_student_histories_defaults(self):
+        """Test StudentHistories default values without committing."""
+        session = self.database.get_session()
+        try:
+            sh = StudentHistories(job_id=1, student_id=1)
+            session.add(sh)
+            session.flush()
+            assert isinstance(sh.viewed_at, datetime)
+        finally:
+            session.rollback()
+            session.close()
