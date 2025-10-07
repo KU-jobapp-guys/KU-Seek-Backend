@@ -84,7 +84,6 @@ class ORMTestCase(RoutingTestCase):
             phone_number="0812345678",
         )
         assert app.resume.endswith(".pdf")
-   
 
     def test_bookmark_model(self):
         """Test Bookmark model instantiation, and access it value."""
@@ -225,19 +224,19 @@ class ORMTestCase(RoutingTestCase):
         session = self.database.get_session()
         try:
             app = JobApplication(
-            job_id=1,
-            student_id=2,
-            resume="resume.pdf",
-            letter_of_application="cover.pdf",
-            phone_number="0812345678",
-        )
+                job_id=1,
+                student_id=2,
+                resume="resume.pdf",
+                letter_of_application="cover.pdf",
+                phone_number="0812345678",
+            )
             session.add(app)
             session.flush()
-            assert app.status == "pending"  
-            assert app.applied_at is not None 
+            assert app.status == "pending"
+            assert app.applied_at is not None
         finally:
             session.rollback()
-            session.close()  
+            session.close()
 
     def test_bookmark_defaults(self):
         """Test Bookmark default values without committing."""
@@ -246,7 +245,7 @@ class ORMTestCase(RoutingTestCase):
             bookmark = Bookmark(job_id=1, student_id=2)
             session.add(bookmark)
             session.flush()
-            assert isinstance(bookmark.created_at, datetime) 
+            assert isinstance(bookmark.created_at, datetime)
         finally:
             session.rollback()
             session.close()
