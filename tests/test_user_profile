@@ -1,0 +1,21 @@
+"""Module for testing the Profile features."""
+
+from base_test import RoutingTestCase
+from util_functions import add_mockup_data
+
+
+class ProfileTestCase(RoutingTestCase):
+    """Test case for user profile."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Set up the database for this test suite."""
+        super().setUpClass()
+        add_mockup_data(cls)
+
+    @classmethod
+    def tearDownClass(cls):
+        """Tear down the database for this test suite."""
+        super().tearDownClass()
+
+    
