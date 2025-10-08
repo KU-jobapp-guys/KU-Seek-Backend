@@ -1,7 +1,10 @@
 """Module for testing the Job features."""
 
+from decouple import config
 from base_test import RoutingTestCase
-from util_functions import add_mockup_data
+from util_functions import add_mockup_data, generate_jwt
+
+SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
 
 
 class JobTestCase(RoutingTestCase):
@@ -110,12 +113,13 @@ class JobTestCase(RoutingTestCase):
         """Test posting jobs then check the status code."""
         res = self.client.get("/api/v1/csrf-token")
         csrf_token = res.json["csrf_token"]
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+
         res = self.client.post(
             "/api/v1/jobs",
-            headers={"X-CSRFToken": csrf_token},
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
             json={
                 "capacity": 2,
-                "company_id": 1,
                 "description": "We are looking for an experienced Python developer.",
                 "end_date": "2025-12-31T23:59:59Z",
                 "job_level": "Senior-level",
@@ -139,7 +143,6 @@ class JobTestCase(RoutingTestCase):
 
         job_payload = {
             "capacity": 4,
-            "company_id": 2,
             "description": "We are looking for someone please help us.",
             "end_date": "2026-08-06T23:59:59Z",
             "job_level": "Junior-level",
@@ -153,9 +156,11 @@ class JobTestCase(RoutingTestCase):
             "work_hours": "6:00 AM - 8:00 PM",
         }
 
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
+
         res = self.client.post(
             "/api/v1/jobs",
-            headers={"X-CSRFToken": csrf_token},
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
             json=job_payload,
         )
 
@@ -163,7 +168,7 @@ class JobTestCase(RoutingTestCase):
 
         data = res.json
         self.assertEqual(data["title"], job_payload["title"])
-        self.assertEqual(data["company_id"], job_payload["company_id"])
+        self.assertEqual(data["company_id"], 2)
         self.assertEqual(data["salary_min"], job_payload["salary_min"])
         self.assertEqual(data["salary_max"], job_payload["salary_max"])
 
@@ -175,7 +180,6 @@ class JobTestCase(RoutingTestCase):
         # Missing 'title' and 'salary_min'
         invalid_payload = {
             "capacity": 2,
-            "company_id": 1,
             "description": "This should fail due to missing fields.",
             "end_date": "2025-12-31T23:59:59Z",
             "job_level": "Senior-level",
@@ -185,40 +189,15 @@ class JobTestCase(RoutingTestCase):
             "work_hours": "9:00 AM - 5:00 PM",
         }
 
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+
         res = self.client.post(
             "/api/v1/jobs",
-            headers={"X-CSRFToken": csrf_token},
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
             json=invalid_payload,
         )
 
         self.assertEqual(res.status_code, 400)
-
-    def test_job_post_invalid_company(self):
-        """Test posting job with invalid company_id should fail."""
-        res = self.client.get("/api/v1/csrf-token")
-        csrf_token = res.json["csrf_token"]
-
-        invalid_payload = {
-            "capacity": 1,
-            "company_id": 9999,  # non-existent company
-            "title": "Ghost Job",
-            "end_date": "2025-12-31T23:59:59Z",
-            "job_level": "Entry-level",
-            "job_type": "full-time",
-            "location": "Nowhere",
-            "salary_min": 10000,
-            "salary_max": 20000,
-            "work_hours": "9:00 AM - 5:00 PM",
-        }
-
-        res = self.client.post(
-            "/api/v1/jobs",
-            headers={"X-CSRFToken": csrf_token},
-            json=invalid_payload,
-        )
-
-        self.assertEqual(res.status_code, 400)
-        self.assertIn("Invalid foreign key reference", res.json["message"])
 
     def test_filter_job__status_code(self):
         """Test the status code of filter Job API."""

@@ -71,7 +71,7 @@ def post_job(body: Dict):
     """Add new Job."""
     try:
         job_manager = JobController(current_app.config["Database"])
-        new_job = job_manager.post_job(body)
+        new_job = job_manager.post_job(get_auth_user_id(request), body)
         return jsonify(new_job), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
