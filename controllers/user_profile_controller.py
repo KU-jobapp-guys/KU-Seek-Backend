@@ -68,9 +68,7 @@ class ProfileController:
 
             if existing_profile:
                 raise ProblemException(
-                    status=409,
-                    title="Conflict",
-                    detail=f"Profile already exists for user '{user_id}'",
+                    f"Profile already exists for user '{user_id}'",
                 )
 
             profile = Profile()
@@ -88,7 +86,7 @@ class ProfileController:
             raise
         except Exception as e:
             session.rollback()
-            raise ProblemException(status=500, title="Database Error", detail=str(e))
+            raise ProblemException(str(e))
         finally:
             session.close()
 
@@ -116,9 +114,7 @@ class ProfileController:
             )
             if not profile:
                 raise ProblemException(
-                    status=404,
-                    title="Not Found",
-                    detail=f"User profile with id '{user_id}' not found.",
+                    f"User profile with id '{user_id}' not found.",
                 )
 
             for key, value in body.items():
@@ -132,7 +128,7 @@ class ProfileController:
             raise
         except Exception as e:
             session.rollback()
-            raise ProblemException(status=500, title="Database Error", detail=str(e))
+            raise ProblemException(str(e))
         finally:
             session.close()
 
