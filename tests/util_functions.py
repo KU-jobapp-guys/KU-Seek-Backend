@@ -1,6 +1,7 @@
 """Module containing utility functions for use with unittest."""
 
-from datetime import datetime, timedelta, UTC
+import uuid
+from datetime import datetime, date, timedelta, UTC
 from jwt import encode
 from controllers.models import User, Company, Student, Job, Terms, Tags
 
@@ -158,3 +159,18 @@ def add_mockup_data(cls):
     session.commit()
 
     session.close()
+
+
+def fake_uuid():
+    """Generate a deterministic fake UUID."""
+    return uuid.UUID("12345678-1234-5678-1234-567812345678")
+
+
+def fake_datetime():
+    """Generate a fake datetime."""
+    return datetime(2025, 1, 1, 12, 0, 0)
+
+
+def fake_date():
+    """Generate a fake date."""
+    return date(2025, 1, 1)
