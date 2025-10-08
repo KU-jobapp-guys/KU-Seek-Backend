@@ -1,4 +1,5 @@
 name: Unittest
+
 on:
   push:
     branches: "*"
@@ -11,32 +12,35 @@ jobs:
 
     env:
       DB_NAME: ${{ secrets.DB_NAME }}
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }} 
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_HOST: 127.0.0.1
+      DB_PORT: 12000
+      TESTING_DB: test_unittest_db
+      IS_TESTING: True
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build and start services
+      - name: Start database
         run: docker compose up -d db
 
-      - name: Wait for database to be ready
+      - name: Wait for database
         run: |
           echo "Waiting for MySQL to be ready..."
-          until docker compose exec -T db mysqladmin ping -h 127.0.0.1 -uroot -proot --silent; do
-            sleep 2
-          done
-          echo "Database is ready."
+          timeout 90 bash -c 'until docker compose exec -T db mysqladmin ping -h 127.0.0.1 -uroot -p${{ env.DB_PASSWORD }} --silent; do sleep 2; done'
+          echo "Database is ready!"
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Set up Node.js for npx
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Generate swagger server
         run: |
@@ -50,9 +54,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run unittests
+      - name: Run alembic migration
+        run: alembic upgrade head 
+
+      - name: Run tests
         run: python -m unittest discover tests
 
-      - name: Stop containers
+      - name: Cleanup
         if: always()
-        run: docker compose down
+        run: docker compose down -v

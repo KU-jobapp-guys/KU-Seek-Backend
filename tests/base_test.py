@@ -36,7 +36,7 @@ class TestingController(BaseController):
             with db_engine.connect() as pool:
                 pool.execute(text(f"DROP DATABASE IF EXISTS {testing_db}"))
                 pool.execute(text(f"CREATE DATABASE {testing_db}"))
-                print("Testing database initialization sucessful...")
+                print("Testing database initialization successful...")
 
             # use the testing db
             connection_url = (
