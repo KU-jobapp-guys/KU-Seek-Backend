@@ -25,8 +25,8 @@ class BookmarkTestCase(RoutingTestCase):
         """Test that it return []."""
         jwt = generate_jwt(self.student_user1_id, secret=SECRET_KEY)
         res = self.client.get(
-            "/api/v1/bookmarks"
-            ,headers={"access_token": jwt},
+            "/api/v1/bookmarks",
+            headers={"access_token": jwt},
         )
         self.assertTrue(isinstance(res.get_json(), list))
         self.assertEqual(res.status_code, 200)
