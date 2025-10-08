@@ -41,20 +41,41 @@ def delete_task(task_id: str):
 
 def get_user_profile(user_id: str) -> Dict:
     """GET UserProfile from the database."""
-    profile_manager = ProfileController(current_app.config["Database"])
-    return profile_manager.get_profile_by_uid(user_id)
+    try:
+        profile_manager = ProfileController(current_app.config["Database"])
+        profile_data = profile_manager.get_profile_by_uid(user_id)
+        return jsonify(profile_data), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
 
 
 def create_profile(body: Dict) -> Optional[Dict]:
     """Add UserProfile to the database."""
-    profile_manager = ProfileController(current_app.config["Database"])
-    return profile_manager.create_profile(get_auth_user_id(request), body)
+    try:
+        profile_manager = ProfileController(current_app.config["Database"])
+        new_profile = profile_manager.create_profile(get_auth_user_id(request), body)
+        return jsonify(new_profile), 201
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
 
 
 def update_profile(body: Dict) -> Optional[Dict]:
     """Update User Profile data."""
-    profile_manager = ProfileController(current_app.config["Database"])
-    return profile_manager.update_profile(get_auth_user_id(request), body)
+    try:
+        profile_manager = ProfileController(current_app.config["Database"])
+        profile_updated_data = profile_manager.update_profile(
+            get_auth_user_id(request), body
+        )
+
+        return jsonify(profile_updated_data), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
 
 
 def get_all_jobs(job_id: str = ""):
