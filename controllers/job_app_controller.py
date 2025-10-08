@@ -4,12 +4,17 @@ from uuid import UUID
 from jwt import decode
 from .decorators import role_required
 from flask import request
-from decouple import config
+from decouple import config, Csv
 from sqlalchemy.orm import joinedload
-from .models import User, Job, JobApplication
+from .models import User, Job, JobApplication, Student, Company, File
 from swagger_server.openapi_server import models
+from werkzeug.utils import secure_filename
 
 
+ALLOWED_FILE_FORMATS = config(
+    "ALLOWED_FILE_FORMATS", cast=Csv(), default="application/pdf, application/msword"
+)
+BASE_FILE_PATH = config("BASE_FILE_PATH", default="/content")
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
 
 
@@ -26,7 +31,80 @@ class JobApplicationController:
         user_token = request.headers.get("access_token")
         token_info = decode(jwt=user_token, key=SECRET_KEY, algorithms=["HS512"])
 
+        form = request.form
         session = self.db.get_session()
+
+        # handle fields
+        student = (
+            session.query(Student)
+            .where(Student.user_id == UUID(token_info["uid"]))
+            .one_or_none()
+        )
+
+        if not student:
+            session.close()
+            return models.ErrorMessage("Student not found"), 400
+
+        job_application = JobApplication(
+            job_id=job_id,
+            student_id=student.id,
+            first_name=form.get("first_name"),
+            last_name=form.get("last_name"),
+            contact_email=form.get("email"),
+            years_of_experience=form.get("years_of_experience"),
+            expected_salary=form.get("expected_salary"),
+            phone_number=form.get("phone_number"),
+        )
+
+        job_app_data = job_application.to_dict()
+
+        # handle files
+        resume = request.files.get("resume")
+        letter = request.files.get("application_letter")
+
+        if not resume or not letter:
+            session.close()
+            return models.ErrorMessage("Missing required files"), 400
+
+        if letter not in ALLOWED_FILE_FORMATS:
+            session.close()
+            return models.ErrorMessage("Invalid file type provided"), 400
+        if resume not in ALLOWED_FILE_FORMATS:
+            session.close()
+            return models.ErrorMessage("Invalid file type provided"), 400
+
+        letter_file_name = secure_filename(letter.filename)
+        resume_file_name = secure_filename(resume.filename)
+        letter_file_path = BASE_FILE_PATH + "/" + letter_file_name
+        resume_file_path = BASE_FILE_PATH + "/" + resume_file_name
+        letter.save(letter_file_path)
+        resume.save(resume_file_path)
+
+        letter_model = File(
+            owner=UUID(token_info["uid"]),
+            file_name=letter_file_name,
+            file_path=letter_file_path,
+        )
+        resume_model = File(
+            owner=UUID(token_info["uid"]),
+            file_name=resume_file_name,
+            file_path=resume_file_path,
+        )
+
+        session.add_all([letter_model, resume_model])
+        session.commit()
+
+        # update job application with the file ids
+        session.refresh(letter_model)
+        session.refresh(resume_model)
+        job_application.resume = resume_model.id
+        job_application.letter_of_application = letter_model.id
+
+        session.add(job_application)
+        session.commit()
+        session.close()
+
+        return job_app_data, 200
 
     @role_required(["Student"])
     def fetch_user_job_applications(self):
@@ -36,10 +114,20 @@ class JobApplicationController:
 
         session = self.db.get_session()
 
+        student = (
+            session.query(Student)
+            .where(Student.user_id == UUID(token_info["uid"]))
+            .one_or_none()
+        )
+
+        if not student:
+            session.close()
+            return models.ErrorMessage("Student not found"), 400
+
         job_apps = (
             session.query(JobApplication)
             .options(joinedload(JobApplication.job))
-            .where(JobApplication.user_id == UUID(token_info["uid"]))
+            .where(JobApplication.user_id == student.id)
             .all()
         )
 
@@ -84,12 +172,24 @@ class JobApplicationController:
             session.query(User).where(User.id == UUID(token_info["uid"])).one_or_none()
         )
 
+        company = (
+            session.query(Company)
+            .where(Company.user_id == UUID(token_info["uid"]))
+            .one_or_none()
+        )
+
+        if not company:
+            session.close()
+            return models.ErrorMessage("Company not found"), 400
+
         job = session.query(Job).where(Job.id == job_id).one_or_none()
 
         if not job:
+            session.close()
             return models.ErrorMessage("Invalid job provided"), 400
 
-        if job.user_id != user.id:
+        if job.user_id != company.id:
+            session.close()
             return models.ErrorMessage("User is not the job owner"), 403
 
         job_apps = (
