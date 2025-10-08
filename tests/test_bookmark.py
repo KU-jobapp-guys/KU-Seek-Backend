@@ -23,7 +23,11 @@ class BookmarkTestCase(RoutingTestCase):
 
     def test_get_empty_bookmarked(self):
         """Test that it return []."""
-        res = self.client.get(f"/api/v1/bookmarks?user_id={self.student_user1_id}")
+        jwt = generate_jwt(self.student_user1_id, secret=SECRET_KEY)
+        res = self.client.get(
+            "/api/v1/bookmarks"
+            ,headers={"access_token": jwt},
+        )
         self.assertTrue(isinstance(res.get_json(), list))
         self.assertEqual(res.status_code, 200)
 
@@ -70,7 +74,7 @@ class BookmarkTestCase(RoutingTestCase):
         self.assertEqual(1, deleted_data["job_id"])
         self.assertEqual(2, deleted_data["student_id"])
 
-        res = self.client.get(f"/api/v1/bookmarks?user_id={self.student_user2_id}")
+        res = self.client.get("/api/v1/bookmarks", headers={"access_token": jwt})
         self.assertEqual(res.status_code, 200)
         bookmarks = res.json
         self.assertEqual(len(bookmarks), 0)
