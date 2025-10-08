@@ -34,7 +34,7 @@ class ProfileController:
                 session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
             )
             if not profile:
-                return None
+                return {}
 
             return profile.to_dict()
 
