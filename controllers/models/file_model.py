@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from base_model import BaseModel
+from .base_model import BaseModel
 from sqlalchemy import DateTime, String, func, ForeignKey
 from sqlalchemy.orm import Mapped, MappedColumn
 
