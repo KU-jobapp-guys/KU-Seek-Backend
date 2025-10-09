@@ -10,21 +10,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      DB_NAME: ${{ secrets.DB_NAME }}
-      DB_USER: ${{ secrets.DB_USER }}
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      DB_HOST: 127.0.0.1
-      DB_PORT: 12000
-      TESTING_DB: test_unittest_db
-      IS_TESTING: True
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Start database
         run: docker compose up -d db
+
+      - name: Create .env file
+        run: |
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
 
       - name: Wait for database
         run: |
