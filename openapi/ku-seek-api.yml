@@ -271,14 +271,17 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
-            schema: {}  # TODO: define schema
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApplicationSubmission'
       responses:
         201:
           description: Application created successfully.
           content:
             application/json:
               schema: 
+                type: object
+
                 $ref: '#/components/schemas/JobApplication'
         400:
           description: Invalid request body.
@@ -535,3 +538,41 @@ components:
           type: string
           format: date-time
           example: "2025-10-07T18:30:00Z"
+
+    ApplicationSubmission:
+      type: object
+      required:
+        - first_name
+        - last_name
+        - email
+      properties:
+        first_name:
+          type: string
+          example: John
+        last_name:
+          type: string
+          example: Doe
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        years_of_experience:
+          type: string
+          example: "2"
+        expected_salary:
+          type: string
+          example: "15000"
+        phone_number:
+          type: string
+          example: "0812345678"
+        resume:
+          anyOf:
+            - type: string
+              format: binary
+              description: Upload new resume file
+            - type: string
+              description: Existing resume file ID
+        application_letter:
+          type: string
+          format: binary
+          description: Upload new application letter file
