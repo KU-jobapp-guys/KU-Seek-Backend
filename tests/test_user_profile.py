@@ -344,3 +344,58 @@ class ProfileTestCase(RoutingTestCase):
         self.assertEqual(data["first_name"], "Valid")
         self.assertNotIn("invalid_field", data)
         self.assertNotIn("another_invalid", data)
+
+    def test_profile_email_uniqueness(self):
+        """Test that duplicate email addresses are rejected."""
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        jwt1 = generate_jwt(self.professor_user1_id, secret=SECRET_KEY)
+        first_profile = {
+            "first_name": "First",
+            "email": "unique@example.com",
+        }
+
+        res1 = self.client.post(
+            "/api/v1/users/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt1},
+            json=first_profile,
+        )
+
+        self.assertEqual(res1.status_code, 201)
+
+        jwt2 = generate_jwt(self.professor_user3_id, secret=SECRET_KEY)
+        second_profile = {
+            "first_name": "Second",
+            "email": "unique@example.com",
+        }
+
+        res2 = self.client.post(
+            "/api/v1/users/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt2},
+            json=second_profile,
+        )
+
+        self.assertEqual(res2.status_code, 500)
+        self.assertIn("Duplicate entry", res2.json["message"])
+
+    def test_profile_default_is_verified_false(self):
+        """Test that is_verified defaults to False when creating profile."""
+        jwt = generate_jwt(self.professor_user2_id, secret=SECRET_KEY)
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        profile_payload = {
+            "first_name": "Unverified",
+            "last_name": "User",
+        }
+
+        res = self.client.post(
+            "/api/v1/users/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json=profile_payload,
+        )
+
+        self.assertEqual(res.status_code, 201)
+        data = res.json
+        self.assertEqual(data["is_verified"], False)
