@@ -73,7 +73,7 @@ def update_profile(body: Dict) -> Optional[Dict]:
 
         return jsonify(profile_updated_data), 200
     except ValueError as e:
-        return jsonify({"message": str(e)}), 400
+        return jsonify({"message": str(e)}), 404
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 

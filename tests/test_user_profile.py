@@ -192,3 +192,155 @@ class ProfileTestCase(RoutingTestCase):
         non_existent_uuid = "Praise_The_Sun"
         res = self.client.get(f"/api/v1/users/{non_existent_uuid}/profile")
         self.assertEqual(res.status_code, 404)
+
+    def test_update_profile_status_code(self):
+        """Test updating a profile returns 200 status code."""
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        update_payload = {
+            "first_name": "Updated",
+            "location": "Phuket, Thailand",
+        }
+
+        res = self.client.patch(
+            "/api/v1/users/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json=update_payload,
+        )
+
+        self.assertEqual(res.status_code, 200)
+
+    def test_update_profile_returns_updated_data(self):
+        """Test that updated profile returns the correct modified data."""
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        update_payload = {
+            "first_name": "UpdatedName",
+            "last_name": "UpdatedLastName",
+            "about": "Updated bio information",
+            "age": 30,
+        }
+
+        res = self.client.patch(
+            "/api/v1/users/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json=update_payload,
+        )
+
+        self.assertEqual(res.status_code, 200)
+
+        data = res.json
+        self.assertEqual(data["first_name"], update_payload["first_name"])
+        self.assertEqual(data["last_name"], update_payload["last_name"])
+        self.assertEqual(data["about"], update_payload["about"])
+        self.assertEqual(data["age"], update_payload["age"])
+
+    def test_update_profile_not_found(self):
+        """Test updating a non-existent profile returns 404."""
+        jwt = generate_jwt("00000000-0000-0000-0000-000000000000", secret=SECRET_KEY)
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        update_payload = {
+            "first_name": "Ghost",
+        }
+
+        res = self.client.patch(
+            "/api/v1/users/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json=update_payload,
+        )
+
+        self.assertEqual(res.status_code, 404)
+        self.assertIn("not found", res.json["message"])
+
+    def test_update_profile_empty_body(self):
+        """Test updating a profile with empty body returns 400."""
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        res = self.client.patch(
+            "/api/v1/users/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json={},
+        )
+
+        self.assertEqual(res.status_code, 500)
+        self.assertIn("Request body cannot be empty", res.json["message"])
+
+    def test_update_profile_single_field(self):
+        """Test updating a single field in profile works correctly."""
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        update_payload = {
+            "phone_number": "0823456789",
+        }
+
+        res = self.client.patch(
+            "/api/v1/users/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json=update_payload,
+        )
+
+        self.assertEqual(res.status_code, 200)
+        data = res.json
+        self.assertEqual(data["phone_number"], "0823456789")
+
+    def test_update_profile_multiple_fields(self):
+        """Test updating multiple fields in profile works correctly."""
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        update_payload = {
+            "first_name": "Multi",
+            "last_name": "Update",
+            "location": "Pattaya, Thailand",
+            "age": 28,
+            "phone_number": "0834567890",
+        }
+
+        res = self.client.patch(
+            "/api/v1/users/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json=update_payload,
+        )
+
+        self.assertEqual(res.status_code, 200)
+        data = res.json
+        self.assertEqual(data["first_name"], update_payload["first_name"])
+        self.assertEqual(data["last_name"], update_payload["last_name"])
+        self.assertEqual(data["location"], update_payload["location"])
+        self.assertEqual(data["age"], update_payload["age"])
+        self.assertEqual(data["phone_number"], update_payload["phone_number"])
+
+    def test_update_profile_ignores_invalid_fields(self):
+        """Test that updating with invalid fields ignores them."""
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        update_payload = {
+            "first_name": "Valid",
+            "invalid_field": "should be ignored",
+            "another_invalid": 12345,
+        }
+
+        res = self.client.patch(
+            "/api/v1/users/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json=update_payload,
+        )
+
+        self.assertEqual(res.status_code, 200)
+        data = res.json
+        self.assertEqual(data["first_name"], "Valid")
+        self.assertNotIn("invalid_field", data)
+        self.assertNotIn("another_invalid", data)

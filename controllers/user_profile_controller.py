@@ -57,9 +57,7 @@ class ProfileController:
 
         if not body:
             raise ProblemException(
-                status=400,
-                title="Invalid Request",
-                detail="Request body cannot be empty.",
+                "Request body cannot be empty.",
             )
 
         session = self.db.get_session()
@@ -103,11 +101,7 @@ class ProfileController:
         user_uuid = UUID(user_id)
 
         if not body:
-            raise ProblemException(
-                status=400,
-                title="Invalid Request",
-                detail="Request body cannot be empty.",
-            )
+            raise ProblemException("Request body cannot be empty.")
 
         session = self.db.get_session()
         try:
@@ -115,9 +109,7 @@ class ProfileController:
                 session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
             )
             if not profile:
-                raise ProblemException(
-                    f"User profile with id '{user_id}' not found.",
-                )
+                raise ValueError(f"Profile for user_id={user_id} not found")
 
             for key, value in body.items():
                 if hasattr(profile, key):
@@ -125,12 +117,10 @@ class ProfileController:
 
             session.commit()
 
-        except ProblemException:
+        except SQLAlchemyError as e:
             session.rollback()
-            raise
-        except Exception as e:
-            session.rollback()
-            raise ProblemException(str(e))
+            raise RuntimeError(f"{e}")
+
         finally:
             session.close()
 
