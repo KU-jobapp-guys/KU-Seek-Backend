@@ -53,13 +53,15 @@ def add_mockup_data(cls):
     professor_user1 = session.query(User).where(User.google_uid == "77777").one()
     cls.professor_user1_id = professor_user1.id
 
-    professor_user2 = User(google_uid="88888", email="professor2@gmail.com", type="Professor")
+    professor_user2 = User(google_uid="88888", email="professor2@gmail.com",
+                            type="Professor")
     session.add(professor_user2)
     session.commit()
     professor_user2 = session.query(User).where(User.google_uid == "88888").one()
     cls.professor_user2_id = professor_user2.id
 
-    professor_user3 = User(google_uid="99999", email="professor3@gmail.com", type="Professor")
+    professor_user3 = User(google_uid="99999", email="professor3@gmail.com",
+                            type="Professor")
     session.add(professor_user3)
     session.commit()
     professor_user3 = session.query(User).where(User.google_uid == "99999").one()
