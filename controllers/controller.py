@@ -58,19 +58,19 @@ def update_profile(body: Dict) -> Optional[Dict]:
     return profile_manager.update_profile(get_auth_user_id(request), body)
 
 
-def create_job_application(body: Dict) -> Optional[Dict]:
+def create_job_application(body, job_id: int) -> Optional[Dict]:
     """Create a job application in the database."""
     app_manager = JobApplicationController(current_app.config["Database"])
-    return app_manager.create_job_application(body)
+    return app_manager.create_job_application(body, job_id)
 
 
-def fetch_user_job_applications(body: Dict) -> Optional[Dict]:
+def fetch_user_job_applications() -> Optional[Dict]:
     """Fetch all job applications created by the current user."""
     app_manager = JobApplicationController(current_app.config["Database"])
-    return app_manager.fetch_user_job_applications(body)
+    return app_manager.fetch_user_job_applications()
 
 
-def fetch_job_applications_from_job(body: Dict) -> Optional[Dict]:
-    """Fetch all job applications related to a job post."""
+def fetch_job_applications_from_job(job_id: int) -> Optional[Dict]:
+    """Fetch all job applications related to a job post by job ID."""
     app_manager = JobApplicationController(current_app.config["Database"])
-    return app_manager.fetch_job_application_from_job_post(body)
+    return app_manager.fetch_job_application_from_job_post(job_id)
