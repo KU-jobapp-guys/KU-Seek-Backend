@@ -31,16 +31,18 @@ class ProfileController:
             user_uuid = UUID(user_id)
 
             profile = (
-                session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
+                session.query(Profile)
+                .filter(Profile.user_id == user_uuid)
+                .one_or_none()
             )
+
             if not profile:
-                return {}
+                raise ValueError(f"Profile for user_id={user_id} not found")
 
             return profile.to_dict()
-
-        except (ValueError, SQLAlchemyError) as e:
-            print(f"Error fetching profile for user_id={user_id}: {e}")
-            return None
+        
+        except SQLAlchemyError as e:
+            raise RuntimeError(f"Error fetching profile for user_id={user_id}: {e}")
 
         finally:
             session.close()

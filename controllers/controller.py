@@ -46,7 +46,7 @@ def get_user_profile(user_id: str) -> Dict:
         profile_data = profile_manager.get_profile_by_uid(user_id)
         return jsonify(profile_data), 200
     except ValueError as e:
-        return jsonify({"message": str(e)}), 400
+        return jsonify({"message": str(e)}), 404
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
