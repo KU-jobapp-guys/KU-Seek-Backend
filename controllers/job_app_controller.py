@@ -1,12 +1,13 @@
 """Module containing endpoints for job applications."""
 
+import os
 from uuid import UUID
 from jwt import decode
 from .decorators import role_required
 from flask import request
 from decouple import config, Csv
 from sqlalchemy.orm import joinedload
-from .models import User, Job, JobApplication, Student, Company, File
+from .models import Job, JobApplication, Student, Company, File
 from swagger_server.openapi_server import models
 from werkzeug.utils import secure_filename
 
@@ -14,7 +15,7 @@ from werkzeug.utils import secure_filename
 ALLOWED_FILE_FORMATS = config(
     "ALLOWED_FILE_FORMATS", cast=Csv(), default="application/pdf, application/msword"
 )
-BASE_FILE_PATH = config("BASE_FILE_PATH", default="/content")
+BASE_FILE_PATH = config("BASE_FILE_PATH", default="content")
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
 
 
@@ -34,7 +35,11 @@ class JobApplicationController:
         form = request.form
         session = self.db.get_session()
 
-        # handle fields
+        job = session.query(Job).where(Job.id == job_id).one_or_none()
+        current_applicants = (
+            session.query(JobApplication).where(JobApplication.job_id == job_id).all()
+        )
+
         student = (
             session.query(Student)
             .where(Student.user_id == UUID(token_info["uid"]))
@@ -44,6 +49,20 @@ class JobApplicationController:
         if not student:
             session.close()
             return models.ErrorMessage("Student not found"), 400
+
+        if not job:
+            session.close()
+            return models.ErrorMessage("Job not found."), 400
+
+        if not len(current_applicants) < job.capacity:
+            session.close()
+            return models.ErrorMessage("Invalid job provided."), 400
+
+        if student.id in [applicant.id for applicant in current_applicants]:
+            session.close()
+            return models.ErrorMessage("Could not create job application."), 400
+
+        # handle fields
 
         job_application = JobApplication(
             job_id=job_id,
@@ -56,8 +75,6 @@ class JobApplicationController:
             phone_number=form.get("phone_number"),
         )
 
-        job_app_data = job_application.to_dict()
-
         # handle files
         resume = request.files.get("resume")
         letter = request.files.get("application_letter")
@@ -66,17 +83,18 @@ class JobApplicationController:
             session.close()
             return models.ErrorMessage("Missing required files"), 400
 
-        if letter not in ALLOWED_FILE_FORMATS:
+        if letter.content_type not in ALLOWED_FILE_FORMATS:
             session.close()
             return models.ErrorMessage("Invalid file type provided"), 400
-        if resume not in ALLOWED_FILE_FORMATS:
+        if resume.content_type not in ALLOWED_FILE_FORMATS:
             session.close()
             return models.ErrorMessage("Invalid file type provided"), 400
 
+        base_path = os.path.join(os.getcwd(), BASE_FILE_PATH)
         letter_file_name = secure_filename(letter.filename)
         resume_file_name = secure_filename(resume.filename)
-        letter_file_path = BASE_FILE_PATH + "/" + letter_file_name
-        resume_file_path = BASE_FILE_PATH + "/" + resume_file_name
+        letter_file_path = base_path + "/" + letter_file_name
+        resume_file_path = base_path + "/" + resume_file_name
         letter.save(letter_file_path)
         resume.save(resume_file_path)
 
@@ -104,6 +122,8 @@ class JobApplicationController:
         session.commit()
         session.close()
 
+        job_app_data = job_application.to_dict()
+
         return job_app_data, 200
 
     @role_required(["Student"])
@@ -127,12 +147,10 @@ class JobApplicationController:
         job_apps = (
             session.query(JobApplication)
             .options(joinedload(JobApplication.job))
-            .where(JobApplication.user_id == student.id)
+            .where(JobApplication.student_id == student.id)
             .all()
         )
 
-        applications = [j_app.to_dict() for j_app in job_apps]
-        detailed_apps = [j_app.job.to_dict() for j_app in applications]
         formatted_apps = [
             models.JobApplication(
                 applicant={
@@ -153,7 +171,7 @@ class JobApplicationController:
                 status=j_app.status,
                 applied_at=j_app.applied_at,
             )
-            for j_app in detailed_apps
+            for j_app in job_apps
         ]
 
         session.close()
@@ -167,10 +185,6 @@ class JobApplicationController:
         token_info = decode(jwt=user_token, key=SECRET_KEY, algorithms=["HS512"])
 
         session = self.db.get_session()
-
-        user = (
-            session.query(User).where(User.id == UUID(token_info["uid"])).one_or_none()
-        )
 
         company = (
             session.query(Company)
@@ -188,15 +202,13 @@ class JobApplicationController:
             session.close()
             return models.ErrorMessage("Invalid job provided"), 400
 
-        if job.user_id != company.id:
+        if job.company_id != company.id:
             session.close()
             return models.ErrorMessage("User is not the job owner"), 403
 
         job_apps = (
             session.query(JobApplication).where(JobApplication.job_id == job_id).all()
         )
-
-        applications = [j_app.to_dict() for j_app in job_apps]
 
         formatted_apps = [
             models.JobApplication(
@@ -214,7 +226,7 @@ class JobApplicationController:
                 status=j_app.status,
                 applied_at=j_app.applied_at,
             )
-            for j_app in applications
+            for j_app in job_apps
         ]
 
         session.close()
