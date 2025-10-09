@@ -40,7 +40,7 @@ class ProfileController:
                 raise ValueError(f"Profile for user_id={user_id} not found")
 
             return profile.to_dict()
-        
+
         except SQLAlchemyError as e:
             raise RuntimeError(f"Error fetching profile for user_id={user_id}: {e}")
 

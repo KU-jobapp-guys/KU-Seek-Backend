@@ -154,32 +154,32 @@ class ProfileTestCase(RoutingTestCase):
         """Test fetching a profile returns correct JSON object."""
         res = self.client.get(f"/api/v1/users/{self.user1_id}/profile")
         self.assertTrue(isinstance(res.get_json(), dict))
-    
+
     def test_get_profile_returns_correct_fields(self):
-            """Test that the profile data has all expected fields."""
-            res = self.client.get(f"/api/v1/users/{self.user1_id}/profile")
-            
-            data = res.json
+        """Test that the profile data has all expected fields."""
+        res = self.client.get(f"/api/v1/users/{self.user1_id}/profile")
 
-            expected_fields = {
-                "user_id",
-                "first_name",
-                "last_name",
-                "about",
-                "location",
-                "email",
-                "contact_email",
-                "gender",
-                "age",
-                "user_type",
-                "profile_img",
-                "banner_img",
-                "phone_number",
-                "is_verified",
-            }
+        data = res.json
 
-            for field in expected_fields:
-                self.assertIn(field, data, f"Missing field: {field}")
+        expected_fields = {
+            "user_id",
+            "first_name",
+            "last_name",
+            "about",
+            "location",
+            "email",
+            "contact_email",
+            "gender",
+            "age",
+            "user_type",
+            "profile_img",
+            "banner_img",
+            "phone_number",
+            "is_verified",
+        }
+
+        for field in expected_fields:
+            self.assertIn(field, data, f"Missing field: {field}")
 
     def test_get_profile_not_found(self):
         """Test fetching a non-existent profile returns 404."""
@@ -190,6 +190,5 @@ class ProfileTestCase(RoutingTestCase):
     def test_get_profile_invalid_uuid(self):
         """Test fetching a profile with invalid UUID format returns 400."""
         non_existent_uuid = "Praise_The_Sun"
-        res = self.client.get(f"/api/v1/users/{non_existent_uuid}/profile")      
-        print("kimi no kioku:", res.json)  
+        res = self.client.get(f"/api/v1/users/{non_existent_uuid}/profile")
         self.assertEqual(res.status_code, 404)
