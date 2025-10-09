@@ -26,11 +26,10 @@ ALGORITHM = "HS512"
 
 def get_auth_user_id(request):
     """Get the authenticated user ID to verify the user's identity for the operation."""
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
+    token = request.headers.get("access_token")
+    if not token:
         raise ProblemException(status=401, title="Unauthorized", detail="Missing token")
 
-    token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload.get("uid")
