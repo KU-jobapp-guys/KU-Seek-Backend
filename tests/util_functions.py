@@ -3,14 +3,8 @@
 import uuid
 from datetime import datetime, date, timedelta, UTC
 from jwt import encode
-from controllers.models import (
-    Job,
-    Tags,
-    Terms,
-    User,
-    Student,
-    Company,
-)
+
+from controllers.models import User, Company, Student, Job, Terms, Tags
 
 
 def generate_jwt(uid, iat=None, exp=None, secret="KU-Seek"):
@@ -167,7 +161,6 @@ def add_mockup_data(cls):
 
     session.close()
 
-
 def fake_uuid(mock_uid="12345678-1234-5678-1234-567812345678"):
     """Generate a deterministic fake UUID."""
     return uuid.UUID(mock_uid)
@@ -181,3 +174,4 @@ def fake_datetime():
 def fake_date():
     """Generate a fake date."""
     return date(2025, 1, 1)
+
