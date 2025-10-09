@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime
 from .base_model import BaseModel
 from sqlalchemy.orm import Mapped, MappedColumn, relationship
-from sqlalchemy import String, Text, Float, Integer, DateTime, Boolean
+from sqlalchemy import String, Text, Float, Integer, DateTime, Boolean, inspect
 from sqlalchemy import ForeignKey, func, UniqueConstraint
 from typing import Optional
 
@@ -149,8 +149,20 @@ class JobApplication(BaseModel):
 
     job: Mapped["Job"] = relationship(
         "Job",
-        back_populates="application",
+        back_populates="applications",
     )
+
+    def to_dict(self, include_job=True):
+        """Return the object as a dictionary."""
+        data = {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+
+        if include_job and getattr(self, "job", None):
+            data["job"] = {
+                c.key: getattr(self.job, c.key)
+                for c in inspect(self.job).mapper.column_attrs
+            }
+
+        return data
 
 
 class Bookmark(BaseModel):
