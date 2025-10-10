@@ -502,7 +502,6 @@ components:
     JobPost:
       type: object
       required:
-        - company_id
         - title
         - salary_min
         - salary_max
@@ -513,10 +512,6 @@ components:
         - capacity
         - end_date
       properties:
-        company_id:
-          type: integer
-          description: The ID of the company posting the job
-          example: 5
         description:
           type: string
           description: Detailed description of the job

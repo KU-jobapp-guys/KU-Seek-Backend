@@ -47,7 +47,7 @@ class JobController:
             session.close()
             raise Exception(f"Error retrieving jobs: {str(e)}")
 
-    def post_job(self, body: Dict) -> Dict:
+    def post_job(self, user_id: str, body: Dict) -> Dict:
         """
         Create a new Job from the request body.
 
@@ -56,7 +56,6 @@ class JobController:
 
         Args:
             body: A request body containing job information with required fields:
-                - company_id (int): ID of the company posting the job
                 - title (str): Job title
                 - salary_min (float): Minimum salary
                 - salary_max (float): Maximum salary
@@ -79,7 +78,6 @@ class JobController:
             ValueError: If required fields are missing or invalid
         """
         required_fields = [
-            "company_id",
             "title",
             "salary_min",
             "salary_max",
@@ -97,13 +95,23 @@ class JobController:
 
         session = self.db.get_session()
 
+        if isinstance(user_id, str):
+            try:
+                user_id = uuid.UUID(user_id)
+            except ValueError:
+                raise ValueError("Invalid user_id format. Expected UUID string.")
+
         try:
             end_date = body["end_date"]
             if isinstance(end_date, str):
                 end_date = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
 
+            company_id = (
+                session.query(Company).where(Company.user_id == user_id).one_or_none()
+            )
+
             job = Job(
-                company_id=body["company_id"],
+                company_id=company_id.id,
                 title=body["title"],
                 description=body.get("description"),
                 salary_min=body["salary_min"],
