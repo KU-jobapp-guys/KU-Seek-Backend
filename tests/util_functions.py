@@ -185,7 +185,7 @@ def add_mockup_data(cls):
 
     session.close()
 
-    
+
 def fake_uuid(mock_uid="12345678-1234-5678-1234-567812345678"):
     """Generate a deterministic fake UUID."""
     return uuid.UUID(mock_uid)
