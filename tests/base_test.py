@@ -6,7 +6,6 @@ from sqlalchemy import create_engine, text
 from controllers.models import BaseModel
 from app import create_app
 from decouple import config
-from sqlalchemy.orm import Session
 
 
 class TestingController(BaseController):
@@ -14,11 +13,7 @@ class TestingController(BaseController):
 
     def __init__(self):
         """Instantiate from parent class and redifine the database engine."""
-        pass
-
-    def get_session(self):
-        """Return a session object for ORM usage connected to test database."""
-        return Session(self.pool)
+        super().__init__()
 
     def _get_testing_database(self):
         """Create a database for testing."""
@@ -41,7 +36,7 @@ class TestingController(BaseController):
             with db_engine.connect() as pool:
                 pool.execute(text(f"DROP DATABASE IF EXISTS {testing_db}"))
                 pool.execute(text(f"CREATE DATABASE {testing_db}"))
-                print("Testing database initialization successful...")
+                print("Testing database initialization sucessful...")
 
             # use the testing db
             connection_url = (

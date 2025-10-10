@@ -104,6 +104,7 @@ def add_mockup_data(cls):
 
     for tag_name in tag_mock_data:
         tag = Tags(name=tag_name)
+
         session.add(tag)
 
     session.commit()
@@ -121,13 +122,14 @@ def add_mockup_data(cls):
 
     for term_data in term_mock_data:
         tag = Terms(name=term_data[0], type=term_data[1])
+
         session.add(tag)
 
     session.commit()
     # mockup job data
     job1 = Job(
         capacity=2,
-        company_id=company.id,
+        company_id=1,
         description="Job 1",
         end_date="2025-12-31 23:59:59",
         job_level="Senior-level",
@@ -140,7 +142,7 @@ def add_mockup_data(cls):
     )
     job2 = Job(
         capacity=4,
-        company_id=company_2.id,
+        company_id=2,
         description="Job 2",
         end_date="2026-08-06 23:59:59",
         job_level="Junior-level",

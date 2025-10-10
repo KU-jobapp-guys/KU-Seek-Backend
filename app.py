@@ -7,6 +7,7 @@ from flask_cors import CORS
 from flask_wtf import CSRFProtect
 from controllers.db_controller import BaseController
 
+
 if not os.path.exists(".env"):
     print(".env file not found.You may create one from 'sample-env.txt'.")
     sys.exit(1)
