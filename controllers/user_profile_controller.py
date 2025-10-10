@@ -2,18 +2,17 @@
 
 from typing import Optional, Dict
 from connexion.exceptions import ProblemException
-from .db_controller import BaseController
 from .models.profile_model import Profile
 from uuid import UUID
 from sqlalchemy.exc import SQLAlchemyError
 
 
-class ProfileController(BaseController):
+class ProfileController:
     """Controller to use CRUD operations for UserProfile."""
 
-    def __init__(self):
+    def __init__(self, database):
         """Initialize the class."""
-        super().__init__()
+        self.db = database
 
     def get_profile_by_uid(self, user_id: str) -> Optional[Dict]:
         """
@@ -27,7 +26,7 @@ class ProfileController(BaseController):
         Returns:
             The user profile dictionary if found, otherwise None.
         """
-        session = self.get_session()
+        session = self.db.get_session()
         try:
             user_uuid = UUID(user_id)
 
@@ -61,7 +60,7 @@ class ProfileController(BaseController):
                 detail="Request body cannot be empty.",
             )
 
-        session = self.get_session()
+        session = self.db.get_session()
         try:
             existing_profile = (
                 session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
@@ -110,7 +109,7 @@ class ProfileController(BaseController):
                 detail="Request body cannot be empty.",
             )
 
-        session = self.get_session()
+        session = self.db.get_session()
         try:
             profile = (
                 session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
