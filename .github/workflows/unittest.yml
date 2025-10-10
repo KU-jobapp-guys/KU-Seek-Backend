@@ -22,6 +22,7 @@ jobs:
           echo "DB_HOST=127.0.0.1" >> .env
           echo "DB_PORT=12000" >> .env
           echo "TESTING_DB=test_db" >> .env
+          echo "SECRET_KEY=sadness_ahead" >> .env
 
       - name: Start database
         run: docker compose up -d db
