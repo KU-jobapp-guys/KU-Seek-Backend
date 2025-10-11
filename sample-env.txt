@@ -1,9 +1,21 @@
+# === Application Config ===
 OPENAPI_STUB_DIR = "swagger_server"
+
+# === Database Config ===
 DB_USER = <Your Username>
 DB_PASSWORD = <Your Password>
 DB_HOST = <Your Database Host>
 DB_PORT = <Your Database Port>
 DB_NAME = <Your Database Name>
+
+# === CORS Config ===
 ALLOWED_ORIGINS = http://localhost:5173
+
+# === OAuth / Google Config ===
 CLIENT_SECRETS_FILE = "client_secret.json"
 CLIENT_ID = <Your client google cloud console ID>
+
+# === Security Config ===
+# SECRET_KEY is used for creating JWT tokens, CSRF tokens, and other secure hashes.
+# Use a long random string to make it secure
+SECRET_KEY = <Your random text use for create security thing>
