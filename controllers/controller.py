@@ -128,7 +128,7 @@ def delete_bookmark_jobs(job_id: int):
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
-      
+
 def create_job_application(body, job_id: int) -> Optional[Dict]:
     """Create a job application in the database."""
     app_manager = JobApplicationController(current_app.config["Database"])
