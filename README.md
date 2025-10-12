@@ -29,7 +29,17 @@ DB_NAME     = {your database}
 ALLOWED_ORIGINS =  {the frontend host or http://localhost:5173 for default configuration}
 CLIENT_SECRETS_FILE = {the file path to your client secrets}
 CLIENT_ID = {Your google cloud console client ID}
-SECRET_KEY = {Your random text use for create security thing}
+SECRET_KEY = {A secure secret key for JWT signing - see below}
+```
+
+### Generating a Secure SECRET_KEY
+
+**DO NOT use a random text string for production!** The SECRET_KEY is used for signing JWTs and should be cryptographically secure.
+
+**For Development:**
+# Generate a secure random key using Python
+```
+python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
 ## Running the backend (API service)
