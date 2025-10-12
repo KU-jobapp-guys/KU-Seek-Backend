@@ -32,12 +32,12 @@ CLIENT_ID = {Your google cloud console client ID}
 SECRET_KEY = {A secure secret key for JWT signing - see below}
 ```
 
-### Generating a Secure SECRET_KEY
+## Generating a Secure SECRET_KEY
 
 **DO NOT use a random text string for production!** The SECRET_KEY is used for signing JWTs and should be cryptographically secure.
 
 **For Development:**
-# Generate a secure random key using Python
+## Generate a secure random key using Python
 ```
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
