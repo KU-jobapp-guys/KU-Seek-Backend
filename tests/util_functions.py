@@ -36,6 +36,36 @@ def add_mockup_data(cls):
     user = session.query(User).where(User.google_uid == "98765").one()
     cls.user2_id = user.id
 
+    user3 = User(google_uid="11111", email="company3@gmail.com", type="Company")
+    session.add(user3)
+    session.commit()
+    user3 = session.query(User).where(User.google_uid == "11111").one()
+    cls.user3_id = user3.id
+
+    user4 = User(google_uid="22222", email="company4@gmail.com", type="Company")
+    session.add(user4)
+    session.commit()
+    user4 = session.query(User).where(User.google_uid == "22222").one()
+    cls.user4_id = user4.id
+
+    user5 = User(google_uid="33333", email="company5@gmail.com", type="Company")
+    session.add(user5)
+    session.commit()
+    user5 = session.query(User).where(User.google_uid == "33333").one()
+    cls.user5_id = user5.id
+
+    user6 = User(google_uid="44444", email="company6@gmail.com", type="Company")
+    session.add(user6)
+    session.commit()
+    user6 = session.query(User).where(User.google_uid == "44444").one()
+    cls.user6_id = user6.id
+
+    user7 = User(google_uid="00000", email="company7@gmail.com", type="Company")
+    session.add(user7)
+    session.commit()
+    user7 = session.query(User).where(User.google_uid == "00000").one()
+    cls.user7_id = user7.id
+
     student_user1 = User(google_uid="55555", email="student1@gmail.com", type="Student")
     session.add(student_user1)
     session.commit()
@@ -93,8 +123,57 @@ def add_mockup_data(cls):
         full_location="Chiangmai, Thailand",
     )
 
-    session.add(company)
-    session.add(company_2)
+    company_3 = Company(
+        user_id=cls.user3_id,
+        company_name="DataVision Analytics",
+        company_type="Public",
+        company_industry="Data Science",
+        company_size="500-1000",
+        company_website="https://www.datavision.com",
+        full_location="Phuket, Thailand",
+    )
+
+    company_4 = Company(
+        user_id=cls.user4_id,
+        company_name="CloudNext Solutions",
+        company_type="Private",
+        company_industry="Cloud Computing",
+        company_size="100-200",
+        company_website="https://www.cloudnext.io",
+        full_location="Chonburi, Thailand",
+    )
+
+    company_5 = Company(
+        user_id=cls.user5_id,
+        company_name="AI Innovations Lab",
+        company_type="Startup",
+        company_industry="Artificial Intelligence",
+        company_size="10-50",
+        company_website="https://www.aiinnovations.tech",
+        full_location="Bangkok, Thailand",
+    )
+
+    company_6 = Company(
+        user_id=cls.user6_id,
+        company_name="CyberShield Security",
+        company_type="Private",
+        company_industry="Cybersecurity",
+        company_size="50-100",
+        company_website="https://www.cybershield.net",
+        full_location="Pattaya, Thailand",
+    )
+
+    company_7 = Company(
+        user_id=cls.user7_id,
+        company_name="GreenTech Energy",
+        company_type="Public",
+        company_industry="Renewable Energy",
+        company_size="1000+",
+        company_website="https://www.greentech-energy.com",
+        full_location="Nakhon Ratchasima, Thailand",
+    )
+
+    session.add_all([company, company_2, company_3, company_4, company_5, company_6, company_7])
     session.commit()
 
     student1 = Student(
@@ -115,7 +194,6 @@ def add_mockup_data(cls):
 
     session.add_all([student1, student2])
     session.commit()
-
 
     # Add Professor data
     professor1 = Professor(
@@ -148,9 +226,7 @@ def add_mockup_data(cls):
         description="Leading expert in data science with multiple published papers in top-tier conferences.",
     )
 
-    session.add(professor1)
-    session.add(professor2)
-    session.add(professor3)
+    session.add_all([professor1, professor2, professor3])
     session.commit()
 
     # add tag mock data
@@ -167,7 +243,6 @@ def add_mockup_data(cls):
 
     for tag_name in tag_mock_data:
         tag = Tags(name=tag_name)
-
         session.add(tag)
 
     session.commit()
@@ -185,10 +260,10 @@ def add_mockup_data(cls):
 
     for term_data in term_mock_data:
         tag = Terms(name=term_data[0], type=term_data[1])
-
         session.add(tag)
 
     session.commit()
+
     # mockup job data
     job1 = Job(
         capacity=2,
@@ -216,8 +291,7 @@ def add_mockup_data(cls):
         title="Junior Slave Developer",
         work_hours="6:00 AM - 8:00 PM",
     )
-    session.add(job1)
-    session.add(job2)
+    session.add_all([job1, job2])
     session.commit()
 
     session.close()

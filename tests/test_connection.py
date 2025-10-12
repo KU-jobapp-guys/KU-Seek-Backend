@@ -47,7 +47,7 @@ class ProfessorConnectionTestCase(RoutingTestCase):
         jwt = generate_jwt(self.professor_user1_id, secret=SECRET_KEY)
         
         connection_payload = {
-            "company_id": 1,
+            "company_id": 3,
         }
         
         res = self.client.post(
@@ -117,7 +117,7 @@ class ProfessorConnectionTestCase(RoutingTestCase):
         jwt = generate_jwt(self.professor_user2_id, secret=SECRET_KEY)
 
         connection_payload = {
-            "company_id": 2,
+            "company_id": 6,
         }
 
         res = self.client.post(
@@ -129,7 +129,7 @@ class ProfessorConnectionTestCase(RoutingTestCase):
         self.assertEqual(res.status_code, 201)
         created_data = res.json
         connection_id = created_data["id"]
-        self.assertEqual(2, created_data["company_id"])
+        self.assertEqual(6, created_data["company_id"])
 
         before_delete = self.client.get("/api/v1/connections",
                                         headers={
@@ -169,8 +169,6 @@ class ProfessorConnectionTestCase(RoutingTestCase):
             f"/api/v1/connections?connection_id={connection_id}",
             headers={"X-CSRFToken": csrf_token, "access_token": jwt},
         )
-
-        print("ABCD", res.json)
 
         self.assertEqual(res.status_code, 200)
         data = res.json
@@ -232,4 +230,109 @@ class ProfessorConnectionTestCase(RoutingTestCase):
         self.assertEqual(res.status_code, 404)
         self.assertIn("not found", res.json["detail"])
 
-  
+    def test_post_multiple_connections(self):
+        """Test creating multiple connections for the same professor."""
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+        jwt = generate_jwt(self.professor_user1_id, secret=SECRET_KEY)
+
+        res1 = self.client.post(
+            "/api/v1/connections",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json={"company_id": 4},
+        )
+        self.assertEqual(res1.status_code, 201)
+
+        res2 = self.client.post(
+            "/api/v1/connections",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json={"company_id": 5},
+        )
+        self.assertEqual(res2.status_code, 201)
+
+        res = self.client.get(
+            "/api/v1/connections",
+            headers={"access_token": jwt},
+        )
+        self.assertEqual(res.status_code, 200)
+        connections = res.json
+        self.assertGreaterEqual(len(connections), 2)
+
+    def test_post_duplicate_connection(self):
+        """Test creating a duplicate connection returns 409."""
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+        jwt = generate_jwt(self.professor_user3_id, secret=SECRET_KEY)
+        
+        connection_payload = {"company_id": 7}
+        
+        res1 = self.client.post(
+            "/api/v1/connections",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json=connection_payload,
+        )
+        self.assertEqual(res1.status_code, 201)
+        first_connection_id = res1.json["id"]
+        self.assertEqual(res1.json["company_id"], 7)
+        
+        res2 = self.client.post(
+            "/api/v1/connections",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json=connection_payload,
+        )
+
+        self.assertEqual(res2.status_code, 500)
+        self.assertIn("already exists", res2.json["message"])
+        
+        res3 = self.client.get(
+            "/api/v1/connections",
+            headers={"access_token": jwt},
+        )
+        self.assertEqual(res3.status_code, 200)
+        connections = res3.json
+        
+        company_7_connections = [conn for conn in connections if conn["company_id"] == 7]
+        self.assertEqual(len(company_7_connections), 1)
+        self.assertEqual(company_7_connections[0]["id"], first_connection_id)
+
+
+    def test_different_professors_same_company(self):
+        """Test that different professors can connect to the same company."""
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+        
+        jwt1 = generate_jwt(self.professor_user1_id, secret=SECRET_KEY)
+        res1 = self.client.post(
+            "/api/v1/connections",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt1},
+            json={"company_id": 7},
+        )
+        self.assertEqual(res1.status_code, 201)
+        self.assertEqual(res1.json["company_id"], 7)
+        self.assertEqual(res1.json["professor_id"], 1)
+        
+        jwt2 = generate_jwt(self.professor_user2_id, secret=SECRET_KEY)
+        res2 = self.client.post(
+            "/api/v1/connections",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt2},
+            json={"company_id": 7},
+        )
+        self.assertEqual(res2.status_code, 201)
+        self.assertEqual(res2.json["company_id"], 7)
+        self.assertEqual(res2.json["professor_id"], 2)
+        
+        connections_prof1 = self.client.get(
+            "/api/v1/connections",
+            headers={"access_token": jwt1},
+        )
+        company_7_prof1 = [c for c in connections_prof1.json if c["company_id"] == 7]
+        self.assertEqual(len(company_7_prof1), 1)
+        
+        connections_prof2 = self.client.get(
+            "/api/v1/connections",
+            headers={"access_token": jwt2},
+        )
+        company_7_prof2 = [c for c in connections_prof2.json if c["company_id"] == 7]
+        self.assertEqual(len(company_7_prof2), 1)
+        
+        self.assertNotEqual(res1.json["id"], res2.json["id"])
