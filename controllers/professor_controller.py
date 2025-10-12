@@ -27,24 +27,33 @@ class ProfessorController:
         user_uuid = UUID(user_id)
 
         session = self.db.get_session()
+        print("YESSS")
+        print(session.query(Professor).all())
+        print(user_uuid)
         try:
             professor = (
-                session.query(Professor).where(Professor.user_id == user_uuid).one()
+                session.query(Professor).where(
+                    Professor.user_id == user_uuid
+                ).one()
             )
             professor_connection = (
                 session.query(ProfessorConnections)
-                .where(Professor.professor_id == professor.id)
+                .where(ProfessorConnections.professor_id == professor.id)
                 .all()
             )
 
-            return professor_connection.to_dict
+            if not professor_connection:
+                session.close()
+                return []
+            
+            return professor_connection
 
         except ProblemException:
             session.rollback()
             raise
         except Exception as e:
             session.rollback()
-            raise ProblemException(status=500, title="Database Error", detail=str(e))
+            raise ProblemException(f"Database Error {str(e)}")
         finally:
             session.close()
 
