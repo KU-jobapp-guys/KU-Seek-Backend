@@ -43,10 +43,12 @@ class ProfessorController:
 
             return [
                 {
-                    "id": str(conn.id),  # Convert UUID to string
+                    "id": conn.id,
                     "professor_id": conn.professor_id,
                     "company_id": conn.company_id,
-                    "created_at": conn.created_at.isoformat() if conn.created_at else None,  # Convert datetime to string
+                    "created_at": conn.created_at.isoformat()
+                    if conn.created_at
+                    else None,
                 }
                 for conn in professor_connections
             ]
@@ -66,16 +68,15 @@ class ProfessorController:
 
         Args:
             user_id: The unique ID of the user (string format).
+            body: Dictionary containing company_id
 
         Returns:
-            The user profile dictionary if found, otherwise None.
+            The connection dictionary with id, professor_id, company_id, created_at.
         """
         user_uuid = UUID(user_id)
 
         if not body:
-            raise ProblemException(
-                "Request body cannot be empty.",
-            )
+            raise ProblemException("Request body cannot be empty.")
 
         session = self.db.get_session()
         try:
@@ -84,6 +85,25 @@ class ProfessorController:
                 .where(Professor.user_id == user_uuid)
                 .one_or_none()
             )
+
+            if not professor:
+                raise ProblemException(f"Professor with user_id '{user_id}' not found.")
+
+            existing_connection = (
+                session.query(ProfessorConnections)
+                .where(
+                    ProfessorConnections.professor_id == professor.id,
+                    ProfessorConnections.company_id == body["company_id"],
+                )
+                .one_or_none()
+            )
+
+            if existing_connection:
+                raise ProblemException(
+                    f"Connection already exists between professor and company {
+                        body['company_id']
+                    }."
+                )
 
             connection = ProfessorConnections(
                 professor_id=professor.id, company_id=body["company_id"]
@@ -96,8 +116,12 @@ class ProfessorController:
                 "id": connection.id,
                 "professor_id": connection.professor_id,
                 "company_id": connection.company_id,
-                "created_at": connection.created_at,
+                "created_at": connection.created_at.isoformat()
+                if connection.created_at
+                else None,
             }
+
+            return connection_data
 
         except ProblemException:
             session.rollback()
@@ -107,8 +131,6 @@ class ProfessorController:
             raise ProblemException(f"Database Error {str(e)}")
         finally:
             session.close()
-
-        return connection_data
 
     def delete_connection(self, user_id: str, connection_id: int) -> Dict:
         """
@@ -150,12 +172,14 @@ class ProfessorController:
                         connection_id
                     }' not found for this professor."
                 )
-            
+
             connection_data = {
                 "id": connection.id,
                 "professor_id": connection.professor_id,
                 "company_id": connection.company_id,
-                "created_at": connection.created_at,
+                "created_at": connection.created_at.isoformat()
+                if connection.created_at
+                else None,
             }
 
             session.delete(connection)
