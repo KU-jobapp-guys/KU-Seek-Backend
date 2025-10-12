@@ -5,6 +5,7 @@ from .task_controller import TaskController
 from .user_profile_controller import ProfileController
 from .auth_controller import get_auth_user_id
 from .job_controller import JobController
+from .professor_controller import ProfessorConnections
 from typing import Dict, Optional
 from flask import current_app
 
@@ -126,3 +127,41 @@ def delete_bookmark_jobs(job_id: int):
         return jsonify({"message": str(e)}), 400
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+
+def get_professor_connection():
+    """Return professor connection."""
+    try:
+        user_id = get_auth_user_id(request)
+        connection_controller = ProfessorConnections(current_app.config["Database"])
+        professor_connection = connection_controller.get_connection(user_id)
+        return jsonify(professor_connection), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+def post_new_connection(body: dict):
+    """Add new connection to the database."""
+    try:
+        connection_controller = ProfessorConnections(current_app.config["Database"])
+        new_connection = connection_controller.post_new_connection(
+            get_auth_user_id(request), body
+        )
+        return jsonify(new_connection), 201
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+def delete_connection(connection_id: str):
+    """Delete connection from the ProfessorConnection table."""
+    try:
+        user_id = get_auth_user_id(request)
+        connection_controller = ProfessorConnections(current_app.config["Database"])
+        deleted_connection = connection_controller.delete_connection(user_id, connection_id)
+        return jsonify(deleted_connection), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+    

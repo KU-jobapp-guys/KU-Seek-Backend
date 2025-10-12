@@ -280,7 +280,7 @@ paths:
                 $ref: '#/components/schemas/UserProfile'
   
   /users/profile:
-        
+    
     post:
       summary: Create an user profile
       operationId: controllers.controller.create_profile
@@ -331,6 +331,60 @@ paths:
         404:
           description: user profile not found
 
+  /connections:
+    get:
+        summary: Get the professor connections
+        operationId: controllers.controller.get_professor_connection
+       
+        responses:
+          200:
+            description: Return the user profile data created successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Connection'
+    post:
+      summary: Create a new connection
+      operationId: controllers.controller.post_new_connection
+ 
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectionInput'
+      
+      responses:
+        201:
+          description: User profile created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
+        
+        400:
+          description: Error BAD REQUEST
+    
+    delete:
+      summary: Delete the professor connection
+      operationId: controllers.controller.delete_connection
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          description: The ID of the connection
+          schema:
+            type: integer
+      
+      responses:
+        200:
+          description: Return the deleted data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
+        
+
 components:
   securitySchemes:
       BearerAuth:
@@ -339,6 +393,31 @@ components:
         bearerFormat: JWT
 
   schemas:
+    ConnectionInput:
+        type: object
+        required:
+          - company_id
+        properties:
+          company_id:
+            type: integer
+            description: The unique identifier of the company
+   
+    Connection:
+        type: object
+        properties:
+          id:
+            type: integer
+            description: The unique identifier for a connection
+            example: 1
+          professor_id:
+            type: integer
+            description: The unique identifier of the professor
+          company_id:
+            type: integer
+            description: The unique identifier of the company
+          created_at:
+            type: string
+            description: Time that this connection got created
     Job:
         type: object
         required:

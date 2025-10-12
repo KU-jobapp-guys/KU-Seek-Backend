@@ -112,7 +112,7 @@ class ProfessorController:
         """
         Delete a connection for a professor.
 
-        Corresponds to: DELETE /api/v1/connections/{connection_id}
+        Corresponds to: DELETE /api/v1/connections/
 
         Args:
             user_id: The unique ID of the user (string format).
