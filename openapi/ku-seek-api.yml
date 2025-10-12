@@ -370,7 +370,7 @@ paths:
       operationId: controllers.controller.delete_connection
       parameters:
         - name: connection_id
-          in: path
+          in: query
           required: true
           description: The ID of the connection
           schema:

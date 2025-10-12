@@ -31,17 +31,25 @@ class ProfessorController:
             professor = (
                 session.query(Professor).where(Professor.user_id == user_uuid).one()
             )
-            professor_connection = (
+            professor_connections = (
                 session.query(ProfessorConnections)
                 .where(ProfessorConnections.professor_id == professor.id)
                 .all()
             )
 
-            if not professor_connection:
+            if not professor_connections:
                 session.close()
                 return []
 
-            return professor_connection
+            return [
+                {
+                    "id": str(conn.id),  # Convert UUID to string
+                    "professor_id": conn.professor_id,
+                    "company_id": conn.company_id,
+                    "created_at": conn.created_at.isoformat() if conn.created_at else None,  # Convert datetime to string
+                }
+                for conn in professor_connections
+            ]
 
         except ProblemException:
             session.rollback()
@@ -102,7 +110,7 @@ class ProfessorController:
 
         return connection_data
 
-    def delete_connection(self, user_id: str, connection_id: str) -> Dict:
+    def delete_connection(self, user_id: str, connection_id: int) -> Dict:
         """
         Delete a connection for a professor.
 
@@ -116,8 +124,6 @@ class ProfessorController:
             A dictionary with success message.
         """
         user_uuid = UUID(user_id)
-        connection_uuid = UUID(connection_id)
-
         session = self.db.get_session()
         try:
             professor = (
@@ -132,7 +138,7 @@ class ProfessorController:
             connection = (
                 session.query(ProfessorConnections)
                 .where(
-                    ProfessorConnections.id == connection_uuid,
+                    ProfessorConnections.id == connection_id,
                     ProfessorConnections.professor_id == professor.id,
                 )
                 .one_or_none()
@@ -144,14 +150,18 @@ class ProfessorController:
                         connection_id
                     }' not found for this professor."
                 )
+            
+            connection_data = {
+                "id": connection.id,
+                "professor_id": connection.professor_id,
+                "company_id": connection.company_id,
+                "created_at": connection.created_at,
+            }
 
             session.delete(connection)
             session.commit()
 
-            return {
-                "message": "Connection deleted successfully",
-                "connection_id": connection_id,
-            }
+            return connection_data
 
         except ProblemException:
             session.rollback()

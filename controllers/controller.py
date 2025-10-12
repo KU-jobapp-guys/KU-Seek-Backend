@@ -156,7 +156,7 @@ def post_new_connection(body: dict):
         return jsonify({"message": str(e)}), 500
 
 
-def delete_connection(connection_id: str):
+def delete_connection(connection_id: int):
     """Delete connection from the ProfessorConnection table."""
     try:
         user_id = get_auth_user_id(request)
