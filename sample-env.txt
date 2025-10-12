@@ -1,9 +1,31 @@
+# === Application Config ===
 OPENAPI_STUB_DIR = "swagger_server"
+
+# === Database Config ===
 DB_USER = <Your Username>
 DB_PASSWORD = <Your Password>
 DB_HOST = <Your Database Host>
 DB_PORT = <Your Database Port>
 DB_NAME = <Your Database Name>
+
+# === CORS Config ===
 ALLOWED_ORIGINS = http://localhost:5173
+
+# === OAuth / Google Config ===
 CLIENT_SECRETS_FILE = "client_secret.json"
 CLIENT_ID = <Your client google cloud console ID>
+
+# === Security Config ===
+# SECRET_KEY is used for creating JWT tokens, CSRF tokens, and other secure hashes.
+# Use a long random string to make it secure
+SECRET_KEY = <A secure secret key for JWT signing - see below>
+
+# Generating a Secure SECRET_KEY
+
+**DO NOT use a random text string for production!** The SECRET_KEY is used for signing JWTs and should be cryptographically secure.
+
+**For Development:**
+### Generate a secure random key using Python
+```
+python -c "import secrets; print(secrets.token_hex(32))"
+```
