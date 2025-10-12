@@ -108,5 +108,64 @@ class ProfessorController:
 
         return connection_data
     
-    def delete_connection(self, user_id: str):
-        pass
+    def delete_connection(self, user_id: str, connection_id: str) -> Dict:
+        """
+        Delete a connection for a professor.
+
+        Corresponds to: DELETE /api/v1/connections/{connection_id}
+
+        Args:
+            user_id: The unique ID of the user (string format).
+            connection_id: The unique ID of the connection to delete.
+
+        Returns:
+            A dictionary with success message.
+        """
+        user_uuid = UUID(user_id)
+        connection_uuid = UUID(connection_id)
+
+        session = self.db.get_session()
+        try:
+            professor = (
+                session.query(Professor).where(
+                    Professor.user_id == user_uuid
+                ).one_or_none()
+            )
+
+            if not professor:
+                raise ProblemException(
+                    status=404,
+                    title="Not Found",
+                    detail=f"Professor with user_id '{user_id}' not found.",
+                )
+
+            connection = (
+                session.query(ProfessorConnections).where(
+                    ProfessorConnections.id == connection_uuid,
+                    ProfessorConnections.professor_id == professor.id
+                ).one_or_none()
+            )
+
+            if not connection:
+                raise ProblemException(
+                    status=404,
+                    title="Not Found",
+                    detail=f"Connection with id '{connection_id}' not found for this professor.",
+                )
+
+            session.delete(connection)
+            session.commit()
+
+            return {
+                "message": "Connection deleted successfully",
+                "connection_id": connection_id
+            }
+
+        except ProblemException:
+            session.rollback()
+            raise
+        except Exception as e:
+            session.rollback()
+            raise ProblemException(status=500, title="Database Error", detail=str(e))
+        finally:
+            session.close()
