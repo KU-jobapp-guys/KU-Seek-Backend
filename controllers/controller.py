@@ -128,6 +128,7 @@ def delete_bookmark_jobs(job_id: int):
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
+
 def get_professor_connection():
     """Return professor connection."""
     try:
@@ -139,6 +140,7 @@ def get_professor_connection():
         return jsonify({"message": str(e)}), 400
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+
 
 def post_new_connection(body: dict):
     """Add new connection to the database."""
@@ -153,15 +155,17 @@ def post_new_connection(body: dict):
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
+
 def delete_connection(connection_id: str):
     """Delete connection from the ProfessorConnection table."""
     try:
         user_id = get_auth_user_id(request)
         connection_controller = ProfessorConnections(current_app.config["Database"])
-        deleted_connection = connection_controller.delete_connection(user_id, connection_id)
+        deleted_connection = connection_controller.delete_connection(
+            user_id, connection_id
+        )
         return jsonify(deleted_connection), 200
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
     except Exception as e:
         return jsonify({"message": str(e)}), 500
-    

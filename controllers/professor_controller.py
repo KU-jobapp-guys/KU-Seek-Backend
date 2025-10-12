@@ -26,18 +26,15 @@ class ProfessorController:
         """
         user_uuid = UUID(user_id)
 
-
         session = self.db.get_session()
         try:
             professor = (
-                session.query(Professor).where(
-                    Professor.user_id == user_uuid
-                ).one()
+                session.query(Professor).where(Professor.user_id == user_uuid).one()
             )
             professor_connection = (
-                session.query(ProfessorConnections).where(
-                    Professor.professor_id == professor.id
-                ).all()
+                session.query(ProfessorConnections)
+                .where(Professor.professor_id == professor.id)
+                .all()
             )
 
             return professor_connection.to_dict
@@ -51,12 +48,9 @@ class ProfessorController:
         finally:
             session.close()
 
-    
     def post_connection(self, user_id: str, body: dict):
         """
         Create a new connection for professor.
-
-        Retrieves a single user profile by user id from the MySQL database.
 
         Args:
             user_id: The unique ID of the user (string format).
@@ -76,26 +70,24 @@ class ProfessorController:
         session = self.db.get_session()
         try:
             professor = (
-                session.query(Professor).where(
-                    Professor.user_id == user_uuid
-                ).one_or_none()
+                session.query(Professor)
+                .where(Professor.user_id == user_uuid)
+                .one_or_none()
             )
 
             connection = ProfessorConnections(
-                professor_id=professor.id,
-                company_id=body["company_id"]
+                professor_id=professor.id, company_id=body["company_id"]
             )
-           
+
             session.add(connection)
             session.commit()
-        
+
             connection_data = {
                 "id": connection.id,
                 "professor_id": connection.professor_id,
                 "company_id": connection.company_id,
-                "created_at": connection.created_at
+                "created_at": connection.created_at,
             }
-
 
         except ProblemException:
             session.rollback()
@@ -107,7 +99,7 @@ class ProfessorController:
             session.close()
 
         return connection_data
-    
+
     def delete_connection(self, user_id: str, connection_id: str) -> Dict:
         """
         Delete a connection for a professor.
@@ -127,9 +119,9 @@ class ProfessorController:
         session = self.db.get_session()
         try:
             professor = (
-                session.query(Professor).where(
-                    Professor.user_id == user_uuid
-                ).one_or_none()
+                session.query(Professor)
+                .where(Professor.user_id == user_uuid)
+                .one_or_none()
             )
 
             if not professor:
@@ -140,10 +132,12 @@ class ProfessorController:
                 )
 
             connection = (
-                session.query(ProfessorConnections).where(
+                session.query(ProfessorConnections)
+                .where(
                     ProfessorConnections.id == connection_uuid,
-                    ProfessorConnections.professor_id == professor.id
-                ).one_or_none()
+                    ProfessorConnections.professor_id == professor.id,
+                )
+                .one_or_none()
             )
 
             if not connection:
@@ -158,7 +152,7 @@ class ProfessorController:
 
             return {
                 "message": "Connection deleted successfully",
-                "connection_id": connection_id
+                "connection_id": connection_id,
             }
 
         except ProblemException:
