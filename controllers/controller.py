@@ -146,7 +146,7 @@ def post_new_connection(body: dict):
     """Add new connection to the database."""
     try:
         connection_controller = ProfessorController(current_app.config["Database"])
-        new_connection = connection_controller.post_new_connection(
+        new_connection = connection_controller.post_connection(
             get_auth_user_id(request), body
         )
         return jsonify(new_connection), 201

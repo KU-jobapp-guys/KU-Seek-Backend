@@ -27,14 +27,9 @@ class ProfessorController:
         user_uuid = UUID(user_id)
 
         session = self.db.get_session()
-        print("YESSS")
-        print(session.query(Professor).all())
-        print(user_uuid)
         try:
             professor = (
-                session.query(Professor).where(
-                    Professor.user_id == user_uuid
-                ).one()
+                session.query(Professor).where(Professor.user_id == user_uuid).one()
             )
             professor_connection = (
                 session.query(ProfessorConnections)
@@ -45,7 +40,7 @@ class ProfessorController:
             if not professor_connection:
                 session.close()
                 return []
-            
+
             return professor_connection
 
         except ProblemException:
@@ -71,9 +66,7 @@ class ProfessorController:
 
         if not body:
             raise ProblemException(
-                status=400,
-                title="Invalid Request",
-                detail="Request body cannot be empty.",
+                "Request body cannot be empty.",
             )
 
         session = self.db.get_session()
@@ -103,7 +96,7 @@ class ProfessorController:
             raise
         except Exception as e:
             session.rollback()
-            raise ProblemException(status=500, title="Database Error", detail=str(e))
+            raise ProblemException(f"Database Error {str(e)}")
         finally:
             session.close()
 
@@ -134,11 +127,7 @@ class ProfessorController:
             )
 
             if not professor:
-                raise ProblemException(
-                    status=404,
-                    title="Not Found",
-                    detail=f"Professor with user_id '{user_id}' not found.",
-                )
+                raise ProblemException(f"Professor with user_id '{user_id}' not found.")
 
             connection = (
                 session.query(ProfessorConnections)
@@ -151,9 +140,9 @@ class ProfessorController:
 
             if not connection:
                 raise ProblemException(
-                    status=404,
-                    title="Not Found",
-                    detail=f"Connection with id '{connection_id}' not found for this professor.",
+                    f"Connection with id '{
+                        connection_id
+                    }' not found for this professor."
                 )
 
             session.delete(connection)
@@ -169,6 +158,6 @@ class ProfessorController:
             raise
         except Exception as e:
             session.rollback()
-            raise ProblemException(status=500, title="Database Error", detail=str(e))
+            raise ProblemException(f"Database Error = {str(e)}")
         finally:
             session.close()
