@@ -102,11 +102,13 @@ class JobApplicationController:
             owner=UUID(token_info["uid"]),
             file_name=letter_file_name,
             file_path=letter_file_path,
+            file_type="letter"
         )
         resume_model = File(
             owner=UUID(token_info["uid"]),
             file_name=resume_file_name,
             file_path=resume_file_path,
+            file_type="resume"
         )
 
         session.add_all([letter_model, resume_model])

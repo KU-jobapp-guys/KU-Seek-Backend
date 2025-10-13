@@ -17,6 +17,7 @@ class File(BaseModel):
     )
     file_name: Mapped[str] = MappedColumn(String(100), nullable=False)
     file_path: Mapped[str] = MappedColumn(String(100), nullable=False)
+    file_type: Mapped[str] = MappedColumn(String(100), nullable=False)
     created_at: Mapped[datetime] = MappedColumn(
         DateTime, default=func.now(), nullable=False
     )
