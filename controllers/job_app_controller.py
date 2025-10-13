@@ -120,9 +120,9 @@ class JobApplicationController:
 
         session.add(job_application)
         session.commit()
-        session.close()
 
         job_app_data = job_application.to_dict()
+        session.close()
 
         return job_app_data, 200
 
