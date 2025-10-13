@@ -7,9 +7,11 @@ from .decorators import role_required
 from flask import request
 from decouple import config, Csv
 from sqlalchemy.orm import joinedload
-from .models import Job, JobApplication, Student, Company, File
 from swagger_server.openapi_server import models
 from werkzeug.utils import secure_filename
+from .models.job_model import Job, JobApplication
+from .models.user_model import Student, Company
+from .models.file_model import File
 
 
 ALLOWED_FILE_FORMATS = config(
