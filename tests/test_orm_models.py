@@ -79,6 +79,11 @@ class ORMTestCase(RoutingTestCase):
         app = JobApplication(
             job_id=1,
             student_id=2,
+            first_name="joe",
+            last_name="biden",
+            years_of_experience="3 years",
+            expected_salary="< 1000",
+            contact_email="joebiden@joe.com",
             resume="resume.pdf",
             letter_of_application="cover.pdf",
             phone_number="0812345678",
@@ -226,6 +231,11 @@ class ORMTestCase(RoutingTestCase):
             app = JobApplication(
                 job_id=1,
                 student_id=2,
+                first_name="joe",
+                last_name="biden",
+                contact_email="joebiden@joe.com",
+                years_of_experience="3 years",
+                expected_salary="< 1000",
                 resume="resume.pdf",
                 letter_of_application="cover.pdf",
                 phone_number="0812345678",
