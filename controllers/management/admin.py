@@ -1,5 +1,7 @@
 """Module for admin verification systems."""
 
+import pathlib
+import mimetypes
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Tuple
 from google import genai
@@ -73,7 +75,7 @@ class AiAdminModel(AdminModel):
 
     def __read_prompt_file(self):
         """Read the prompt file for context."""
-        with open(self.prompt, 'r', encoding='utf-8') as file:
+        with open(self.prompt, "r", encoding="utf-8") as file:
             return file.read()
 
     def __initialize_agentic_ai(self):
@@ -82,7 +84,7 @@ class AiAdminModel(AdminModel):
         cache = self.client.caches.create(
             model=self.model,
             config=genai.types.CreateCachedContentConfig(
-                display_name="",
+                display_name="validation instructions",
                 system_instruction=prompt,
                 ttl="2hr",
             ),
@@ -102,15 +104,42 @@ class AiAdminModel(AdminModel):
 
         returns: The user's user type and verification status.
         """
-        user_info = f"{user_data}"
+        verification_file = pathlib.Path(file)
+        file_type = mimetypes.guess_type(file)
         response = self.client.models.generate_content(
             model=self.model,
-            contents=(
-                "Introduce different characters in the movie by describing "
-                "their personality, looks, and names. Also list the timestamps "
-                "they were introduced for the first time."
-            ),
+            contents=[
+                genai.types.Part.from_bytes(
+                    data=verification_file.read_bytes(),
+                    mime_type=f"{file_type}",
+                ),
+                (
+                    f"Validate the following user data in JSON format: {user_data} "
+                    "additionally, review the attached verification document."
+                ),
+            ],
             config=genai.types.GenerateContentConfig(cached_content=self.cache.name),
         )
 
         return response["message"]["content"]
+
+    def verify_job_post(self, job_post_data):
+        """
+        Verify a job post's validity, based on the given user data.
+
+        Validates whether the provided job post makes sense, determines whether
+        the content violates any content rules or is potentially malicious.
+
+        Args:
+            job_post_data: The job post data.
+
+        returns: The job post's validity and reason if the job post is not valid.
+        """
+        response = self.client.models.generate_content(
+            model=self.model,
+            contents=(
+                f"Validate the following job post data in JSON format: {job_post_data}"
+            ),
+            config=genai.types.GenerateContentConfig(cached_content=self.cache.name),
+        )
+        return response
