@@ -178,8 +178,8 @@ class JobApplicationTestCase(RoutingTestCase):
         """A student cannot create a job application to a job post that is full."""
         jwt = generate_jwt(self.user_id, secret=SECRET_KEY)
 
-        resume_content = b"Fake resume content for testing"
-        letter_content = b"Fake application letter content for testing"
+        resume = BytesIO(b"Fake resume content for testing")
+        letter = BytesIO(b"Fake application letter content for testing")
 
         data = {
             "first_name": "John",
@@ -188,9 +188,9 @@ class JobApplicationTestCase(RoutingTestCase):
             "years_of_experience": "2",
             "expected_salary": "15000",
             "phone_number": "0812345678",
-            "resume": (BytesIO(resume_content), "resume.pdf", "application/pdf"),
+            "resume": (resume, "resume.pdf", "application/pdf"),
             "application_letter": (
-                BytesIO(letter_content),
+                letter,
                 "letter.pdf",
                 "application/pdf",
             ),
@@ -211,8 +211,8 @@ class JobApplicationTestCase(RoutingTestCase):
         """A Student can create a new job application."""
         jwt = generate_jwt(self.user_id, secret=SECRET_KEY)
 
-        resume_content = b"Fake resume content for testing"
-        letter_content = b"Fake application letter content for testing"
+        resume = BytesIO(b"Fake resume content for testing")
+        letter = BytesIO(b"Fake application letter content for testing")
 
         data = {
             "first_name": "John",
@@ -221,9 +221,9 @@ class JobApplicationTestCase(RoutingTestCase):
             "years_of_experience": "2",
             "expected_salary": "15000",
             "phone_number": "0812345678",
-            "resume": (BytesIO(resume_content), "resume.pdf", "application/pdf"),
+            "resume": (resume, "resume.pdf", "application/pdf"),
             "application_letter": (
-                BytesIO(letter_content),
+                letter,
                 "letter.pdf",
                 "application/pdf",
             ),
@@ -247,3 +247,39 @@ class JobApplicationTestCase(RoutingTestCase):
         res = self.client.get("/api/v1/application", headers={"access_token": jwt})
         self.assertEqual(res.status_code, 200)
         self.assertEqual(len(res.json), 2)
+
+    def test_same_job_application_submission(self):
+        """A Student cannot apply for a job twice."""
+        jwt = generate_jwt(self.user_id, secret=SECRET_KEY)
+
+        # POST to the API route with files + form data for job 2
+        csrf = self.client.get("/api/v1/csrf-token")
+
+        resume = BytesIO(b"Fake resume content for testing2")
+        letter = BytesIO(b"Fake application letter content for testing2")
+
+        data = {
+            "first_name": "John",
+            "last_name": "Doe",
+            "email": "john.doe@example.com",
+            "years_of_experience": "2",
+            "expected_salary": "15000",
+            "phone_number": "0812345678",
+            "resume": (resume, "resume2.pdf", "application/pdf"),
+            "application_letter": (
+                letter,
+                "letter2.pdf",
+                "application/pdf",
+            ),
+        }
+
+        # POST to the API route with files + form data for job 1
+        csrf = self.client.get("/api/v1/csrf-token")
+        res = self.client.post(
+            "/api/v1/application/1",
+            data=data,
+            headers={"access_token": jwt, "X-CSRFToken": csrf.json["csrf_token"]},
+            content_type="multipart/form-data",
+        )
+
+        self.assertEqual(res.status_code, 400)
