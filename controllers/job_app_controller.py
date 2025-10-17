@@ -60,7 +60,7 @@ class JobApplicationController:
             session.close()
             return models.ErrorMessage("Invalid job provided."), 400
 
-        if student.id in [applicant.id for applicant in current_applicants]:
+        if student.id in [applicant.student_id for applicant in current_applicants]:
             session.close()
             return models.ErrorMessage("Could not create job application."), 400
 
@@ -77,42 +77,68 @@ class JobApplicationController:
             phone_number=form.get("phone_number"),
         )
 
-        # handle files
-        resume = request.files.get("resume")
-        letter = request.files.get("application_letter")
+        base_path = os.path.join(os.getcwd(), BASE_FILE_PATH)
 
-        if not resume or not letter:
+        # process application letter
+        letter = request.files.get("application_letter")
+        if not letter:
             session.close()
-            return models.ErrorMessage("Missing required files"), 400
+            return models.ErrorMessage("Missing required application letter file"), 400
 
         if letter.content_type not in ALLOWED_FILE_FORMATS:
             session.close()
-            return models.ErrorMessage("Invalid file type provided"), 400
-        if resume.content_type not in ALLOWED_FILE_FORMATS:
-            session.close()
-            return models.ErrorMessage("Invalid file type provided"), 400
+            return models.ErrorMessage("Invalid letter file type provided"), 400
 
-        base_path = os.path.join(os.getcwd(), BASE_FILE_PATH)
         letter_file_name = secure_filename(letter.filename)
-        resume_file_name = secure_filename(resume.filename)
         letter_file_path = base_path + "/" + letter_file_name
-        resume_file_path = base_path + "/" + resume_file_name
-        letter.save(letter_file_path)
-        resume.save(resume_file_path)
 
         letter_model = File(
             owner=UUID(token_info["uid"]),
             file_name=letter_file_name,
-            file_path=letter_file_path,
+            file_path=BASE_FILE_PATH + "/" + letter_file_name,
             file_type="letter",
         )
+
+        # check if resume is an ID
+        resume = form.get("resume")
+        if resume:
+            session.add(letter_model)
+            session.commit()
+
+            session.refresh(letter_model)
+            job_application.resume = resume
+            job_application.letter_of_application = letter_model.id
+            session.add(job_application)
+            session.commit()
+
+            job_app_data = job_application.to_dict()
+            session.close()
+
+            return job_app_data, 200
+
+        # process resume
+        resume = request.files.get("resume")
+        if not resume:
+            session.close()
+            return models.ErrorMessage("Missing required resume file"), 400
+
+        if resume.content_type not in ALLOWED_FILE_FORMATS:
+            session.close()
+            return models.ErrorMessage("Invalid resume file type provided"), 400
+
+        resume_file_name = secure_filename(resume.filename)
+        resume_file_path = base_path + "/" + resume_file_name
+
         resume_model = File(
             owner=UUID(token_info["uid"]),
             file_name=resume_file_name,
-            file_path=resume_file_path,
+            file_path=BASE_FILE_PATH + "/" + resume_file_name,
             file_type="resume",
         )
 
+        # commit transaction
+        resume.save(resume_file_path)
+        letter.save(letter_file_path)
         session.add_all([letter_model, resume_model])
         session.commit()
 
