@@ -60,7 +60,9 @@ class JobApplicationController:
             session.close()
             return models.ErrorMessage("Invalid job provided."), 400
 
-        if str(student.id) in [str(applicant.student_id) for applicant in current_applicants]:
+        if str(student.id) in [
+            str(applicant.student_id) for applicant in current_applicants
+        ]:
             session.close()
             return models.ErrorMessage("Could not create job application."), 400
 
