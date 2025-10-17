@@ -16,7 +16,7 @@ class File(BaseModel):
         ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
     )
     file_name: Mapped[str] = MappedColumn(String(100), nullable=False)
-    file_path: Mapped[str] = MappedColumn(String(100), nullable=False)
+    file_path: Mapped[str] = MappedColumn(String(200), nullable=False)
     file_type: Mapped[str] = MappedColumn(String(100), nullable=False)
     created_at: Mapped[datetime] = MappedColumn(
         DateTime, default=func.now(), nullable=False
