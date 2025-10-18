@@ -156,9 +156,7 @@ class ProfessorController:
 
             if existing_connection:
                 raise ProblemException(
-                    f"Connection already exists between professor and company {
-                        body['company_id']
-                    }."
+                    f"Connection already exists between professor and company {body['company_id']}."
                 )
 
             connection = ProfessorConnections(
@@ -259,10 +257,9 @@ class ProfessorController:
             )
 
             if not connection:
+                # Single-line formatted message
                 raise ProblemException(
-                    f"Connection with id '{
-                        connection_id
-                    }' not found for this professor."
+                    f"Connection with id '{connection_id}' not found for this professor."
                 )
 
             connection_data = {
