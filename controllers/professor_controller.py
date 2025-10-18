@@ -81,17 +81,17 @@ class ProfessorController:
             results = []
             for a in announcements:
                 professor = (
-                    session.query(Professor).where(
-                        Professor.id == a.professor_id
-                    ).one_or_none()
+                    session.query(Professor)
+                    .where(Professor.id == a.professor_id)
+                    .one_or_none()
                 )
 
                 prof_profile = None
                 if professor:
                     prof_profile = (
-                        session.query(Profile).where(
-                            Profile.user_id == professor.user_id
-                        ).one_or_none()
+                        session.query(Profile)
+                        .where(Profile.user_id == professor.user_id)
+                        .one_or_none()
                     )
 
                 results.append(
@@ -100,10 +100,18 @@ class ProfessorController:
                         "professor_id": a.professor_id,
                         "title": a.title,
                         "content": a.content,
-                        "created_at": a.created_at.isoformat() if a.created_at else None,
-                        "professor_first_name": prof_profile.first_name if prof_profile else None,
-                        "professor_last_name": prof_profile.last_name if prof_profile else None,
-                        "professor_profile_img": prof_profile.profile_img if prof_profile else None,
+                        "created_at": a.created_at.isoformat()
+                        if a.created_at
+                        else None,
+                        "professor_first_name": prof_profile.first_name
+                        if prof_profile
+                        else None,
+                        "professor_last_name": prof_profile.last_name
+                        if prof_profile
+                        else None,
+                        "professor_profile_img": prof_profile.profile_img
+                        if prof_profile
+                        else None,
                     }
                 )
 
@@ -156,7 +164,8 @@ class ProfessorController:
 
             if existing_connection:
                 raise ProblemException(
-                    f"Connection already exists between professor and company {body['company_id']}."
+                    f"Connection already exists between professor"
+                    f" and company {body['company_id']}."
                 )
 
             connection = ProfessorConnections(
@@ -176,9 +185,7 @@ class ProfessorController:
             }
 
             professor_profile = (
-                session.query(Profile)
-                .where(Profile.user_id == user_uuid)
-                .one()
+                session.query(Profile).where(Profile.user_id == user_uuid).one()
             )
 
             company = (
@@ -188,16 +195,15 @@ class ProfessorController:
                 )
                 .one()
             )
-            
-            company_profile = ( 
-                
+
+            company_profile = (
                 session.query(Profile)
                 .where(
                     Profile.user_id == company.user_id,
                 )
                 .one()
             )
-            
+
             # create announcement using ORM attribute access
             annouce = Announcements(
                 professor_id=connection_data["professor_id"],

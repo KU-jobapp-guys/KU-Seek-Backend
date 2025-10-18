@@ -173,7 +173,9 @@ def add_mockup_data(cls):
         full_location="Nakhon Ratchasima, Thailand",
     )
 
-    session.add_all([company, company_2, company_3, company_4, company_5, company_6, company_7])
+    session.add_all(
+        [company, company_2, company_3, company_4, company_5, company_6, company_7]
+    )
     session.commit()
 
     student1 = Student(
