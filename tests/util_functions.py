@@ -204,9 +204,9 @@ def add_mockup_data(cls):
         position="Associate Professor",
         office_location="Engineering Building, Room 301",
         education_id=None,
-        research_interests="Artificial Intelligence," \
+        research_interests="Artificial Intelligence,"
         " Machine Learning, Natural Language Processing",
-        description="Experienced researcher in AI" \
+        description="Experienced researcher in AI"
         " with over 10 years of teaching experience.",
     )
 
@@ -217,7 +217,7 @@ def add_mockup_data(cls):
         office_location="Engineering Building, Room 405",
         education_id=None,
         research_interests="Software Architecture, Cloud Computing, DevOps",
-        description="Specializes in scalable software" \
+        description="Specializes in scalable software"
         " systems and modern development practices.",
     )
 
@@ -228,7 +228,7 @@ def add_mockup_data(cls):
         office_location="Science Building, Room 201",
         education_id=None,
         research_interests="Big Data Analytics, Deep Learning, Computer Vision",
-        description="Leading expert in data science with" \
+        description="Leading expert in data science with"
         " multiple published papers in top-tier conferences.",
     )
 
