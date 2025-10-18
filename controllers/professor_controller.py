@@ -1,11 +1,10 @@
 """Module for store api that relate to professor."""
 
-from typing import Optional, Dict
+from typing import Dict
 from connexion.exceptions import ProblemException
 from .models.profile_model import ProfessorConnections, Announcements, Profile
 from .models.user_model import Professor, Company
 from uuid import UUID
-from sqlalchemy.exc import SQLAlchemyError
 
 
 class ProfessorController:
@@ -68,8 +67,8 @@ class ProfessorController:
 
         If `user_id` is provided it is ignored — the API returns all announcements.
 
-        Each announcement will include the professor's first_name, last_name and profile_img
-        if available.
+        Each announcement will include the professor's
+        first_name, last_name and profile_img if available.
         """
         session = self.db.get_session()
         try:
@@ -265,7 +264,8 @@ class ProfessorController:
             if not connection:
                 # Single-line formatted message
                 raise ProblemException(
-                    f"Connection with id '{connection_id}' not found for this professor."
+                    f"Connection with id '{connection_id}'\
+                      not found for this professor."
                 )
 
             connection_data = {

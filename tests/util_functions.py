@@ -204,8 +204,10 @@ def add_mockup_data(cls):
         position="Associate Professor",
         office_location="Engineering Building, Room 301",
         education_id=None,
-        research_interests="Artificial Intelligence, Machine Learning, Natural Language Processing",
-        description="Experienced researcher in AI with over 10 years of teaching experience.",
+        research_interests="Artificial Intelligence," \
+        " Machine Learning, Natural Language Processing",
+        description="Experienced researcher in AI" \
+        " with over 10 years of teaching experience.",
     )
 
     professor2 = Professor(
@@ -215,7 +217,8 @@ def add_mockup_data(cls):
         office_location="Engineering Building, Room 405",
         education_id=None,
         research_interests="Software Architecture, Cloud Computing, DevOps",
-        description="Specializes in scalable software systems and modern development practices.",
+        description="Specializes in scalable software" \
+        " systems and modern development practices.",
     )
 
     professor3 = Professor(
@@ -225,7 +228,8 @@ def add_mockup_data(cls):
         office_location="Science Building, Room 201",
         education_id=None,
         research_interests="Big Data Analytics, Deep Learning, Computer Vision",
-        description="Leading expert in data science with multiple published papers in top-tier conferences.",
+        description="Leading expert in data science with" \
+        " multiple published papers in top-tier conferences.",
     )
 
     session.add_all([professor1, professor2, professor3])
