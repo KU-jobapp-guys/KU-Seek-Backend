@@ -73,7 +73,7 @@ class ProfessorConnectionTestCase(RoutingTestCase):
         session.add_all(company_profiles + prof_profiles)
         session.commit()
         session.close()
-        
+
     @classmethod
     def tearDownClass(cls):
         """Tear down the database for this test suite."""
@@ -184,7 +184,6 @@ class ProfessorConnectionTestCase(RoutingTestCase):
             json=connection_payload,
         )
 
-        print("UWOO", res.json)
         self.assertEqual(res.status_code, 201)
         created_data = res.json
         connection_id = created_data["id"]
