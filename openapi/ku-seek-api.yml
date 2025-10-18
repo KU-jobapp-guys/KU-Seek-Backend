@@ -331,6 +331,19 @@ paths:
         404:
           description: user profile not found
 
+  /annoucements:
+    get:
+      summary: Get all of the annoucements from professors
+      operationId: controllers.controller.get_professor_annoucement
+       
+      responses:
+        200:
+          description: Return all of the annoucements that exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Annoucement'
+
   /connections:
     get:
         summary: Get the professor connections
@@ -418,6 +431,42 @@ components:
           created_at:
             type: string
             description: Time that this connection got created
+    
+    Annoucement:
+        type: object
+        properties:
+          id:
+            type: integer
+            description: The unique identifier for a annoucement
+            example: 1
+          professor_id:
+            type: integer
+            description: The unique identifier for a professor 
+            example: 1
+          title:
+            type: string
+            description: The connection title
+            example: Professor Sompong has connection with UwU company.
+          content: 
+            type: string
+            description: A company overview
+            example: This company is tech company which is suck please don't come to our company
+          create_at:
+            type: string
+            description: The time this annoucement got created
+            example: "2025-09-06T10:30:00Z"
+          professor_first_name:
+            type: string
+            description: First name of the professor
+            example: Andre
+          professor_last_name:
+            type: string
+            description: Surname of the professor
+            example: Astora
+          professor_profile_img:
+            type: string
+            description: Profile img of the professor
+            example: /idk/where/is/the/img/container
     Job:
         type: object
         required:

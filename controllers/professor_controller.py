@@ -62,6 +62,62 @@ class ProfessorController:
         finally:
             session.close()
 
+    def get_annoucement(self):
+        """
+        Return all announcements in the system.
+
+        If `user_id` is provided it is ignored — the API returns all announcements.
+
+        Each announcement will include the professor's first_name, last_name and profile_img
+        if available.
+        """
+        session = self.db.get_session()
+        try:
+            announcements = session.query(Announcements).all()
+
+            if not announcements:
+                return []
+
+            results = []
+            for a in announcements:
+                professor = (
+                    session.query(Professor).where(
+                        Professor.id == a.professor_id
+                    ).one_or_none()
+                )
+
+                prof_profile = None
+                if professor:
+                    prof_profile = (
+                        session.query(Profile).where(
+                            Profile.user_id == professor.user_id
+                        ).one_or_none()
+                    )
+
+                results.append(
+                    {
+                        "id": a.id,
+                        "professor_id": a.professor_id,
+                        "title": a.title,
+                        "content": a.content,
+                        "created_at": a.created_at.isoformat() if a.created_at else None,
+                        "professor_first_name": prof_profile.first_name if prof_profile else None,
+                        "professor_last_name": prof_profile.last_name if prof_profile else None,
+                        "professor_profile_img": prof_profile.profile_img if prof_profile else None,
+                    }
+                )
+
+            return results
+
+        except ProblemException:
+            session.rollback()
+            raise
+        except Exception as e:
+            session.rollback()
+            raise ProblemException(f"Database Error {str(e)}")
+        finally:
+            session.close()
+
     def post_connection(self, user_id: str, body: dict):
         """
         Create a new connection for professor.

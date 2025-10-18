@@ -169,3 +169,15 @@ def delete_connection(connection_id: int):
         return jsonify({"message": str(e)}), 400
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+
+
+def get_professor_annoucement():
+    """Return professor announcements."""
+    try:
+        connection_controller = ProfessorController(current_app.config["Database"])
+        annoucements = connection_controller.get_annoucement()
+        return jsonify(annoucements), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
