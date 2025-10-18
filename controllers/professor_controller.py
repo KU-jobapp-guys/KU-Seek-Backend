@@ -2,8 +2,8 @@
 
 from typing import Optional, Dict
 from connexion.exceptions import ProblemException
-from .models.profile_model import ProfessorConnections, Announcements
-from .models.user_model import Professor
+from .models.profile_model import ProfessorConnections, Announcements, Profile
+from .models.user_model import Professor, Company
 from uuid import UUID
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -120,6 +120,44 @@ class ProfessorController:
                 if connection.created_at
                 else None,
             }
+
+            professor_profile = ( 
+                
+                session.query(Profile)
+                .where(
+                    Profile.user_id == user_uuid,
+                )
+                .one_or_none()
+            )
+
+            company = (
+                session.query(Company)
+                .where(
+                    Company.id == connection.company_id,
+                )
+                .one_or_none()
+            )
+            
+            company_profile = ( 
+                
+                session.query(Profile)
+                .where(
+                    Profile.user_id == company.user_id,
+                )
+                .one_or_none()
+            )
+            
+            
+            annouce = Announcements(
+                professor_id=connection_data.professor_id,
+                title=
+                    f"Professor {professor_profile.first_name}"
+                    f" has connection with {company.company_name} company.",
+                content=company_profile.about
+            )
+
+            session.add(annouce)
+            session.commit()
 
             return connection_data
 
