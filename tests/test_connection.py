@@ -3,6 +3,7 @@
 from decouple import config
 from base_test import RoutingTestCase
 from util_functions import add_mockup_data, generate_jwt
+from controllers.models import Profile
 
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
 
@@ -16,6 +17,63 @@ class ProfessorConnectionTestCase(RoutingTestCase):
         super().setUpClass()
         add_mockup_data(cls)
 
+        session = cls.database.get_session()
+
+        # company profiles (for user1..user7)
+        uids = [
+            cls.user1_id,
+            cls.user2_id,
+            cls.user3_id,
+            cls.user4_id,
+            cls.user5_id,
+            cls.user6_id,
+            cls.user7_id,
+        ]
+
+        company_profiles = []
+        for uid in uids:
+            company_profiles.append(
+                Profile(
+                    user_id=uid,
+                    first_name=None,
+                    last_name=None,
+                    about="Company about",
+                    user_type="company",
+                )
+            )
+
+        # professor profiles
+        prof_profiles = [
+            Profile(
+                user_id=cls.professor_user1_id,
+                first_name="ProfA",
+                last_name="One",
+                profile_img="/img/p1.png",
+                about="Professor One",
+                user_type="professor",
+            ),
+            Profile(
+                user_id=cls.professor_user2_id,
+                first_name="ProfB",
+                last_name="Two",
+                profile_img="/img/p2.png",
+                about="Professor Two",
+                user_type="professor",
+            ),
+            Profile(
+                user_id=cls.professor_user3_id,
+                first_name="ProfC",
+                last_name="Three",
+                profile_img="/img/p3.png",
+                about="Professor Three",
+                user_type="professor",
+            ),
+        ]
+
+        session.add_all(company_profiles + prof_profiles)
+        session.commit()
+        session.close()
+        
     @classmethod
     def tearDownClass(cls):
         """Tear down the database for this test suite."""
@@ -126,6 +184,7 @@ class ProfessorConnectionTestCase(RoutingTestCase):
             json=connection_payload,
         )
 
+        print("UWOO", res.json)
         self.assertEqual(res.status_code, 201)
         created_data = res.json
         connection_id = created_data["id"]

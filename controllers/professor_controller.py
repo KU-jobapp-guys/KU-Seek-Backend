@@ -177,13 +177,10 @@ class ProfessorController:
                 else None,
             }
 
-            professor_profile = ( 
-                
+            professor_profile = (
                 session.query(Profile)
-                .where(
-                    Profile.user_id == user_uuid,
-                )
-                .one_or_none()
+                .where(Profile.user_id == user_uuid)
+                .one()
             )
 
             company = (
@@ -191,7 +188,7 @@ class ProfessorController:
                 .where(
                     Company.id == connection.company_id,
                 )
-                .one_or_none()
+                .one()
             )
             
             company_profile = ( 
@@ -200,16 +197,17 @@ class ProfessorController:
                 .where(
                     Profile.user_id == company.user_id,
                 )
-                .one_or_none()
+                .one()
             )
             
-            
+            # create announcement using ORM attribute access
             annouce = Announcements(
-                professor_id=connection_data.professor_id,
-                title=
+                professor_id=connection_data["professor_id"],
+                title=(
                     f"Professor {professor_profile.first_name}"
-                    f" has connection with {company.company_name} company.",
-                content=company_profile.about
+                    f" has connection with {company.company_name} company."
+                ),
+                content=company_profile.about,
             )
 
             session.add(annouce)
