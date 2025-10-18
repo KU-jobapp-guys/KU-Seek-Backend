@@ -29,20 +29,36 @@ class YesManModel(AdminModel):
         """Initialize the class."""
         pass
 
-    def verify_user(self, file: str) -> Tuple[str, bool]:
+    def verify_user(self, user_info:dict, file: str) -> Dict[str, Any]:
         """
         Verify a user's identify, based on the given file.
 
-        Automatically assumes the given file is valid, and classifies the user
-        if they are student, professor, or staff based on the file type and file name.
+        Automatically assumes the user's info and verification document is real.
+        and assigns the user role based on the given KU ID if they are student,
+        professor, or staff in the case of a KU personel.
+        Defaults to student as a fallback.
 
         Args:
+            user_info: the user's info
             file: the file path for the file in the system.
 
         returns: the user's user type and verification status, which is always True.
         """
-        if file:
-            pass
+        if user_info:
+            if user_info["type"] == "company":
+                return {"status": True, "role": "company"}
+            
+            id = user_info["kuId"]
+            if id[0] == "1":
+                return {"status": True, "role": "professor"}
+            elif id[0] == "2":
+                return {"status": True, "role": "staff"}
+            else:
+                return {"status": True, "role": "student"}
+
+        return {"status": True, "role": "student"}
+
+
 
     def verify_job_post(self, job_post_data) -> bool:
         """

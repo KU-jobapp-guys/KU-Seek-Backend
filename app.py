@@ -6,6 +6,7 @@ from decouple import config, Csv
 from flask_cors import CORS
 from flask_wtf import CSRFProtect
 from controllers.db_controller import BaseController
+from controllers.management.admin import YesManModel
 
 
 if not os.path.exists(".env"):
@@ -36,7 +37,7 @@ except ModuleNotFoundError:
 from openapi_server import encoder  # noqa: E402
 
 
-def create_app(engine=None):
+def create_app(engine=None, admin=None):
     """
     Setups and configure the application.
 
@@ -72,6 +73,11 @@ def create_app(engine=None):
     # set database controller if provided
     if engine:
         app.app.config["Database"] = engine
+
+    app.app.config["Admin"] = YesManModel()
+    # set an agentic model for validation if provided
+    if admin:
+        app.app.config["Admin"] = admin
 
     return app
 

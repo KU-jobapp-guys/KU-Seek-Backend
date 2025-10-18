@@ -54,7 +54,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               properties:
@@ -685,6 +685,8 @@ components:
           description: The access token
         email:
           description: The account email
+        type:
+          description: The account type
     error_message:
       type: object
       properties:
