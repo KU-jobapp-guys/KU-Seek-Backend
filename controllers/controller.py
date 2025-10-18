@@ -3,6 +3,7 @@
 from flask import request, jsonify
 from .task_controller import TaskController
 from .user_profile_controller import ProfileController
+from .job_app_controller import JobApplicationController
 from .auth_controller import get_auth_user_id
 from .job_controller import JobController
 from typing import Dict, Optional
@@ -126,3 +127,21 @@ def delete_bookmark_jobs(job_id: int):
         return jsonify({"message": str(e)}), 400
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+
+
+def create_job_application(body, job_id: int) -> Optional[Dict]:
+    """Create a job application in the database."""
+    app_manager = JobApplicationController(current_app.config["Database"])
+    return app_manager.create_job_application(body, job_id)
+
+
+def fetch_user_job_applications() -> Optional[Dict]:
+    """Fetch all job applications created by the current user."""
+    app_manager = JobApplicationController(current_app.config["Database"])
+    return app_manager.fetch_user_job_applications()
+
+
+def fetch_job_applications_from_job(job_id: int) -> Optional[Dict]:
+    """Fetch all job applications related to a job post by job ID."""
+    app_manager = JobApplicationController(current_app.config["Database"])
+    return app_manager.fetch_job_application_from_job_post(job_id)

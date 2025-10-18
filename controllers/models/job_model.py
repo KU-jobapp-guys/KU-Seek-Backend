@@ -4,8 +4,8 @@ import uuid
 
 from datetime import datetime
 from .base_model import BaseModel
-from sqlalchemy.orm import Mapped, MappedColumn
-from sqlalchemy import String, Text, Float, Integer, DateTime, Boolean
+from sqlalchemy.orm import Mapped, MappedColumn, relationship
+from sqlalchemy import String, Text, Float, Integer, DateTime, Boolean, inspect
 from sqlalchemy import ForeignKey, func, UniqueConstraint
 from typing import Optional
 
@@ -58,6 +58,12 @@ class Job(BaseModel):
 
     approved_by: Mapped[Optional[uuid.UUID]] = MappedColumn(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+
+    applications: Mapped[list["JobApplication"]] = relationship(
+        "JobApplication",
+        back_populates="job",
+        cascade="all, delete-orphan",
     )
 
 
@@ -114,13 +120,19 @@ class JobApplication(BaseModel):
         ForeignKey("students.id", ondelete="CASCADE"), nullable=False
     )
 
+    first_name: Mapped[Optional[str]] = MappedColumn(String(100), nullable=False)
+
+    last_name: Mapped[Optional[str]] = MappedColumn(String(100), nullable=False)
+
+    contact_email: Mapped[Optional[str]] = MappedColumn(String(255), nullable=False)
+
     resume: Mapped[str] = MappedColumn(String(500), nullable=False)
 
     letter_of_application: Mapped[str] = MappedColumn(String(500), nullable=False)
 
-    additional_document: Mapped[Optional[str]] = MappedColumn(
-        String(500), nullable=True
-    )
+    years_of_experience: Mapped[str] = MappedColumn(String(255), nullable=False)
+
+    expected_salary: Mapped[str] = MappedColumn(String(255), nullable=False)
 
     phone_number: Mapped[str] = MappedColumn(String(12), nullable=False)
 
@@ -134,6 +146,23 @@ class JobApplication(BaseModel):
     applied_at: Mapped[datetime] = MappedColumn(
         DateTime, default=func.now(), nullable=False
     )
+
+    job: Mapped["Job"] = relationship(
+        "Job",
+        back_populates="applications",
+    )
+
+    def to_dict(self, include_job=True):
+        """Return the object as a dictionary."""
+        data = {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+
+        if include_job and getattr(self, "job", None):
+            data["job"] = {
+                c.key: getattr(self.job, c.key)
+                for c in inspect(self.job).mapper.column_attrs
+            }
+
+        return data
 
 
 class Bookmark(BaseModel):
