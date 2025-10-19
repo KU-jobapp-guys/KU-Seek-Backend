@@ -8,6 +8,7 @@ from .auth_controller import get_auth_user_id
 from .job_controller import JobController
 from typing import Dict, Optional
 from flask import current_app
+from .history_controller import HistoryController
 
 
 def get_all_tasks():
@@ -166,3 +167,15 @@ def fetch_job_applications_from_job(job_id: int) -> Optional[Dict]:
     """Fetch all job applications related to a job post by job ID."""
     app_manager = JobApplicationController(current_app.config["Database"])
     return app_manager.fetch_job_application_from_job_post(job_id)
+
+
+def get_student_histories():
+    """Return view histories for the authenticated student."""
+    history_manager = HistoryController(current_app.config["Database"])
+    return history_manager.get_histories()
+
+
+def post_student_history(body: Dict):
+    """Create or update a student view history entry."""
+    history_manager = HistoryController(current_app.config["Database"])
+    return history_manager.post_history(body)
