@@ -5,6 +5,9 @@ config.py
 **/secret*
 **/key*
 
+# Any content under the content directory
+/content/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
