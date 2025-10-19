@@ -8,6 +8,7 @@ from .auth_controller import get_auth_user_id
 from .job_controller import JobController
 from typing import Dict, Optional
 from flask import current_app
+from .education_controller import EducationController
 
 
 def get_all_tasks():
@@ -166,3 +167,51 @@ def fetch_job_applications_from_job(job_id: int) -> Optional[Dict]:
     """Fetch all job applications related to a job post by job ID."""
     app_manager = JobApplicationController(current_app.config["Database"])
     return app_manager.fetch_job_application_from_job_post(job_id)
+
+
+def get_educations(education_id: int = None):
+    """Return all educations or a single education by id."""
+    try:
+        education_manager = EducationController(current_app.config["Database"])
+        data = education_manager.get_educations(education_id)
+        return jsonify(data), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 404
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+def post_education(body: Dict):
+    """Create a new education record."""
+    try:
+        education_manager = EducationController(current_app.config["Database"])
+        new_edu = education_manager.post_education(get_auth_user_id(request), body)
+        return jsonify(new_edu), 201
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+def patch_education(education_id: int, body: Dict):
+    """Update an education record partially."""
+    try:
+        education_manager = EducationController(current_app.config["Database"])
+        updated = education_manager.patch_education(education_id, body)
+        return jsonify(updated), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 404
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+def delete_education(education_id: int):
+    """Delete an education record."""
+    try:
+        education_manager = EducationController(current_app.config["Database"])
+        deleted = education_manager.delete_education(education_id)
+        return jsonify(deleted), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 404
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
