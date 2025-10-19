@@ -1,3 +1,14 @@
+## Project Overview
+This is the backend API service for **KU-Seek**, a job-seeking platform for KU Computer Engineering students.  
+
+
+## Requirements
+- Python 3.11+
+- MySQL 8.0+
+- Docker & Docker Compose (optional, for local DB)
+- Node.js (for generating the Swagger server)
+
+
 ## Generating the Swagger Server
 If the `swagger server` does not exist, you must generate one by using [Swagger Codegen](https://editor.swagger.io/) or [openapi-generator-cli](https://www.npmjs.com/package/@openapitools/openapi-generator-cli).
 
@@ -18,6 +29,17 @@ DB_NAME     = {your database}
 ALLOWED_ORIGINS =  {the frontend host or http://localhost:5173 for default configuration}
 CLIENT_SECRETS_FILE = {the file path to your client secrets}
 CLIENT_ID = {Your google cloud console client ID}
+SECRET_KEY = {A secure secret key for JWT signing - see below}
+```
+
+## Generating a Secure SECRET_KEY
+
+**DO NOT use a random text string for production!** The SECRET_KEY is used for signing JWTs and should be cryptographically secure.
+
+**For Development:**
+### Generate a secure random key using Python
+```
+python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
 ## Running the backend (API service)
@@ -32,5 +54,12 @@ or to run manually (ensure your database is running)
     # on Windows use
     .\env\scripts\activate
     ```
-3. Run the backend using:<br>
+3. Create the MySQL table by using<br>
+    ```alembic upgrade head```
+
+4. Run the backend using:<br>
    ```python app.py```
+
+## Running Tests
+To run the unit tests, execute:
+```python -m unittest discover tests```
