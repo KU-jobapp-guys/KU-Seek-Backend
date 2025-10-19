@@ -42,7 +42,7 @@ class EducationController:
         finally:
             session.close()
 
-    def post_education(self, user_id: str, body: Dict) -> Dict:
+    def post_education(self, body: Dict) -> Dict:
         """Create a new education record.
 
         Expects fields: curriculum_name, university, major, year_of_study, graduate_year
