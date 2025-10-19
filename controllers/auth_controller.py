@@ -4,7 +4,6 @@ import random
 import jwt
 import json
 
-from uuid import UUID
 from flask import make_response, request
 from connexion.exceptions import ProblemException
 from typing import Dict, TypedDict
@@ -272,6 +271,24 @@ class AuthenticationController:
         session.commit()
         session.refresh(user)
         user_id = user.id
+
+        # role based tables
+        if user_type == "student":
+            student = Student(user_id=user_id, nisit_id=credentials["kuId"])
+            session.add(student)
+            session.commit()
+        elif user_type == "professor":
+            professor = Professor(user_id=user_id)
+            session.add(professor)
+            session.commit()
+        elif user_type == "company":
+            company = Company(
+                user_id=user_id,
+                company_name=credentials["companyName"],
+                company_size=credentials["companySize"],
+            )
+            session.add(company)
+            session.commit()
 
         session.close()
 
