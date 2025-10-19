@@ -29,7 +29,7 @@ class YesManModel(AdminModel):
         """Initialize the class."""
         pass
 
-    def verify_user(self, user_info:dict, file: str) -> Dict[str, Any]:
+    def verify_user(self, user_info: dict, file: str) -> Dict[str, Any]:
         """
         Verify a user's identify, based on the given file.
 
@@ -47,7 +47,7 @@ class YesManModel(AdminModel):
         if user_info:
             if user_info["type"] == "company":
                 return {"status": True, "role": "company"}
-            
+
             id = user_info["kuId"]
             if id[0] == "1":
                 return {"status": True, "role": "professor"}
@@ -57,8 +57,6 @@ class YesManModel(AdminModel):
                 return {"status": True, "role": "student"}
 
         return {"status": True, "role": "student"}
-
-
 
     def verify_job_post(self, job_post_data) -> bool:
         """
@@ -82,12 +80,12 @@ class AiAdminModel(AdminModel):
 
     __GEMINI_KEY = config("GEMINI_KEY", default="real-key-trust")
 
-    def __init__(self, prompt_file, model=""):
+    def __init__(self, prompt_file, model="gemini-2.5-flash"):
         """Initialize the class."""
         self.prompt = prompt_file
-        self.client = genai.Client(self.__GEMINI_KEY)
+        self.client = genai.Client(api_key=self.__GEMINI_KEY)
         self.model = model
-        self.cache = self.__initialize_agentic_ai()
+        self.chat = self.__initialize_agentic_ai()
 
     def __read_prompt_file(self):
         """Read the prompt file for context."""
@@ -97,13 +95,14 @@ class AiAdminModel(AdminModel):
     def __initialize_agentic_ai(self):
         """Setsup the context for the AI."""
         prompt = self.__read_prompt_file()
-        cache = self.client.caches.create(
+        cache = self.client.chats.create(
             model=self.model,
-            config=genai.types.CreateCachedContentConfig(
-                display_name="validation instructions",
-                system_instruction=prompt,
-                ttl="2hr",
-            ),
+            config={
+                "system_instruction": prompt,
+                "temperature": 0.2,
+                "max_output_tokens": 2048,
+                "response_mime_type": "application/json",
+            },
         )
         return cache
 
@@ -121,23 +120,21 @@ class AiAdminModel(AdminModel):
         returns: The user's user type and verification status.
         """
         verification_file = pathlib.Path(file)
-        file_type = mimetypes.guess_type(file)
-        response = self.client.models.generate_content(
-            model=self.model,
-            contents=[
+        file_type = mimetypes.guess_type(file)[0]
+        response = self.chat.send_message(
+            [
                 genai.types.Part.from_bytes(
                     data=verification_file.read_bytes(),
                     mime_type=f"{file_type}",
                 ),
                 (
-                    f"Validate the following user data in JSON format: {user_data} "
+                    f"Validate the provided user data that follows this JSON format: {user_data} "
                     "additionally, review the attached verification document."
                 ),
             ],
-            config=genai.types.GenerateContentConfig(cached_content=self.cache.name),
         )
 
-        return response["message"]["content"]
+        return response.text
 
     def verify_job_post(self, job_post_data):
         """
@@ -158,4 +155,4 @@ class AiAdminModel(AdminModel):
             ),
             config=genai.types.GenerateContentConfig(cached_content=self.cache.name),
         )
-        return response
+        return response.text
