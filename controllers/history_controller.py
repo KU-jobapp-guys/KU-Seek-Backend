@@ -1,6 +1,6 @@
 """Module for Student history endpoints."""
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 from uuid import UUID
 from datetime import datetime
 from connexion.exceptions import ProblemException
@@ -19,7 +19,7 @@ class HistoryController:
         self.db = database
 
     @role_required(["Student"])
-    def get_histories(self) -> List[Dict]:
+    def get_histories(self, user_id: str) -> List[Dict]:
         """Return all history entries for the authenticated student.
 
         Uses the authenticated user's token to resolve the student record and
@@ -27,10 +27,9 @@ class HistoryController:
         """
         session = self.db.get_session()
         try:
-            uid = get_auth_user_id(request)
             student = (
                 session.query(Student)
-                .where(Student.user_id == UUID(uid))
+                .where(Student.user_id == UUID(user_id))
                 .one_or_none()
             )
 
@@ -77,9 +76,32 @@ class HistoryController:
         if not body or "job_id" not in body:
             raise ProblemException("'job_id' is a required property")
 
+        def _ensure_trim(session, student_id: int):
+            total = (
+                session.query(StudentHistories)
+                .where(StudentHistories.student_id == student_id)
+                .count()
+            )
+            if total <= 15:
+                return
+
+            to_delete = total - 15
+            oldest = (
+                session.query(StudentHistories)
+                .where(StudentHistories.student_id == student_id)
+                .order_by(StudentHistories.viewed_at.asc())
+                .limit(to_delete)
+                .all()
+            )
+            for row in oldest:
+                session.delete(row)
+
         session = self.db.get_session()
         try:
-            uid = get_auth_user_id(request)
+            uid = None
+            if isinstance(body, dict) and "user_id" in body:
+                uid = body.get("user_id")
+            uid = uid or get_auth_user_id(request)
             student = (
                 session.query(Student)
                 .where(Student.user_id == UUID(uid))
@@ -116,6 +138,8 @@ class HistoryController:
             session.add(history)
             session.commit()
             session.refresh(history)
+
+            _ensure_trim(session, student.id)
 
             return {
                 "job_id": history.job_id,

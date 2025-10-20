@@ -172,10 +172,12 @@ def fetch_job_applications_from_job(job_id: int) -> Optional[Dict]:
 def get_student_histories():
     """Return view histories for the authenticated student."""
     history_manager = HistoryController(current_app.config["Database"])
-    return history_manager.get_histories()
+    return history_manager.get_histories(get_auth_user_id(request))
 
 
 def post_student_history(body: Dict):
     """Create or update a student view history entry."""
     history_manager = HistoryController(current_app.config["Database"])
+    if isinstance(body, dict):
+        body["user_id"] = get_auth_user_id(request)
     return history_manager.post_history(body)
