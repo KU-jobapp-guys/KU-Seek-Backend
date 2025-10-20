@@ -331,6 +331,48 @@ paths:
         404:
           description: user profile not found
 
+
+  /student/histories:
+    get:
+      summary: Get view histories for the authenticated student
+      description: Returns a list of student history entries for the authenticated user.
+      operationId: controllers.controller.get_student_histories
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: A list of student history entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StudentHistory'
+        404:
+          description: Student not found
+
+    post:
+      summary: Create or update a student history entry
+      description: Insert a new history row or update the viewed_at timestamp if the (student, job) pair exists.
+      operationId: controllers.controller.post_student_history
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentHistoryInput'
+      responses:
+        200:
+          description: Created or updated history entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentHistory'
+        400:
+          description: Invalid input
+
   /application:
     get:
       summary: Get user job applications
@@ -565,6 +607,34 @@ components:
 
     JobPost:
       type: object
+
+    StudentHistory:
+      type: object
+      required:
+        - job_id
+        - student_id
+        - viewed_at
+      properties:
+        job_id:
+          type: integer
+          example: 1
+        student_id:
+          type: integer
+          example: 1
+        viewed_at:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the student viewed the job
+
+    StudentHistoryInput:
+      type: object
+      required:
+        - job_id
+      properties:
+        job_id:
+          type: integer
+          example: 1
+  
       required:
         - title
         - salary_min
