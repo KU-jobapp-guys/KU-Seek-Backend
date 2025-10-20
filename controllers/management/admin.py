@@ -128,8 +128,9 @@ class AiAdminModel(AdminModel):
                     mime_type=f"{file_type}",
                 ),
                 (
-                    f"Validate the provided user data that follows this JSON format: {user_data} "
-                    "additionally, review the attached verification document."
+                    f"Validate the provided user data "
+                    f"that follows this JSON format: {user_data} "
+                    f"additionally, review the attached verification document."
                 ),
             ],
         )
