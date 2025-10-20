@@ -16,5 +16,10 @@ This short guide will tell you how to configure your Google account to allow sen
 1. Input a name for the app password such as `mailing service` and click create
 <img src="./email-4.JPG" width="850"><br>
 
-1. Put the created app password into the `.env` ensure that the password is memorized before closing the dialogue box, as the password is shown only once.
+1. View the created password and ensure that the password is memorized before closing the dialogue box, as the password is shown only once.
 <img src="./email-5.JPG" width="850"><br>
+
+### Configuring the .env
+1. Fill out the following variables in the `.env` file
+- `SERVICE_EMAIL = <the account for sending emails>`
+- `EMAIL_PASSWORD = <the created app password>`
