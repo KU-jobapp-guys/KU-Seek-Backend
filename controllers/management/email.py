@@ -1,6 +1,7 @@
 """Module for sending emails."""
 
 import smtplib
+import os
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -33,6 +34,10 @@ class EmailSender:
         msg["Subject"] = topic
         msg["From"] = self.email
         msg["To"] = recipient
+
+        email_file = os.path.join(
+            os.getcwd(), "controllers", "management", "email_templates", email_file
+        )
 
         try:
             with open(email_file + ".html", "r", encoding="utf-8") as f:

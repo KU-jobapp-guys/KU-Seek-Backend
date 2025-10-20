@@ -19,6 +19,7 @@ from datetime import datetime, timedelta, UTC
 from .models.user_model import User, Student, Company, Professor
 from .models.token_model import Token
 from .management.admin import AdminModel
+from .management.email import EmailSender
 
 
 SECRET_KEY = config("SECRET_KEY", default="good-key123")
@@ -155,6 +156,24 @@ def handle_authentication(body: Dict):
             user_info["user_type"] = user_info["type"]
             user = auth_controller.register_user(user_info, validation_res["role"])
             user_jwt, refresh, user_type = auth_controller.login_user(user)
+
+            # send a registration email
+            if user_info["user_type"] == "student":
+                mail_file = "welcome_student"
+            elif user_info["user_type"] == "company":
+                mail_file = "welcome_company"
+            else:
+                mail_file = "welcome"
+            try:
+                email = EmailSender()
+                email.send_email(
+                    id_info["sub"],
+                    "Welcome to KU-Seek",
+                    mail_file
+                )
+            except Exception:
+                # implement logging later
+                pass
 
         response = make_response(
             models.UserCredentials(user_jwt, id_info["email"], user_type).to_dict(), 200
