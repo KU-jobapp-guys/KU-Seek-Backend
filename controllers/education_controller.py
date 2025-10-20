@@ -3,9 +3,6 @@
 from typing import List, Dict, Optional
 from connexion.exceptions import ProblemException
 from .models.profile_model import Education
-from .models.user_model import Student
-from uuid import UUID
-from .auth_controller import get_auth_user_id
 from sqlalchemy.exc import SQLAlchemyError
 
 

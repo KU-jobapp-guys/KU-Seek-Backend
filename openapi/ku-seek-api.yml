@@ -331,19 +331,13 @@ paths:
         404:
           description: user profile not found
 
-    /educations:
+  /educations:
     get:
-      summary: Get all education records or query by id
+      summary: Get all education records
       operationId: controllers.controller.get_educations
-      parameters:
-        - name: education_id
-          in: query
-          required: false
-          schema:
-            type: integer
       responses:
         200:
-          description: A list of educations or a single education
+          description: A list of educations
           content:
             application/json:
               schema:
@@ -375,18 +369,6 @@ paths:
         description: The ID of the education record
         schema:
           type: integer
-    get:
-      summary: Get a single education by ID
-      operationId: controllers.controller.get_educations
-      responses:
-        200:
-          description: Education retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Education'
-        404:
-          description: Education not found
     patch:
       summary: Update an existing education record
       operationId: controllers.controller.patch_education
@@ -395,7 +377,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EducationInput'
+              $ref: '#/components/schemas/EducationPatch'
       responses:
         200:
           description: Education updated successfully
@@ -587,74 +569,90 @@ components:
               $ref: '#/components/schemas/Tag'
           company:
             $ref: '#/components/schemas/Company'
-  Education:
-    type: object
-    required:
-      - id
-      - curriculum_name
-      - university
-      - major
-      - year_of_study
-      - graduate_year
-    properties:
-      id:
-        type: integer
-        description: The unique identifier for an education record
-        example: 1
-      curriculum_name:
-        type: string
-        description: The name of the curriculum or degree program
-        example: "Computer Science"
-      university:
-        type: string
-        description: The university name
-        example: "Kasetsart University"
-      major:
-        type: string
-        description: The major or field of study
-        example: "Computer Science"
-      year_of_study:
-        type: string
-        format: date
-        description: The start or year of study
-        example: "2020-08-01"
-      graduate_year:
-        type: string
-        format: date
-        description: The graduation year or date
-        example: "2024-05-15"
-  EducationInput:
-    type: object
-    required:
-      - curriculum_name
-      - university
-      - major
-      - year_of_study
-      - graduate_year
-    properties:
-      curriculum_name:
-        type: string
-        description: The name of the curriculum or degree program
-        example: "Computer Science"
-      university:
-        type: string
-        description: The university name
-        example: "Kasetsart University"
-      major:
-        type: string
-        description: The major or field of study
-        example: "Computer Science"
-      year_of_study:
-        type: string
-        format: date
-        description: The start or year of study
-        example: "2020-08-01"
-      graduate_year:
-        type: string
-        format: date
-        description: The graduation year or date
-        example: "2024-05-15"
+    Education:
+      type: object
+      required:
+        - id
+        - curriculum_name
+        - university
+        - major
+        - year_of_study
+        - graduate_year
+      properties:
+        id:
+          type: integer
+          description: The unique identifier for an education record
+          example: 1
+        curriculum_name:
+          type: string
+          description: The name of the curriculum or degree program
+          example: "Computer Science"
+        university:
+          type: string
+          description: The university name
+          example: "Kasetsart University"
+        major:
+          type: string
+          description: The major or field of study
+          example: "Computer Science"
+        year_of_study:
+          type: string
+          format: date
+          description: The start or year of study
+          example: "2020-08-01"
+        graduate_year:
+          type: string
+          format: date
+          description: The graduation year or date
+          example: "2024-05-15"
+    EducationInput:
+      type: object
+      required:
+        - curriculum_name
+        - university
+        - major
+        - year_of_study
+        - graduate_year
+      properties:
+        curriculum_name:
+          type: string
+          description: The name of the curriculum or degree program
+          example: "Computer Science"
+        university:
+          type: string
+          description: The university name
+          example: "Kasetsart University"
+        major:
+          type: string
+          description: The major or field of study
+          example: "Computer Science"
+        year_of_study:
+          type: string
+          format: date
+          description: The start or year of study
+          example: "2020-08-01"
+        graduate_year:
+          type: string
+          format: date
+          description: The graduation year or date
+          example: "2024-05-15"
     
+    EducationPatch:
+      type: object
+      properties:
+        curriculum_name:
+          type: string
+        university:
+          type: string
+        major:
+          type: string
+        year_of_study:
+          type: string
+          format: date
+        graduate_year:
+          type: string
+          format: date
+
     JobFilter:
       type: object
       properties:
