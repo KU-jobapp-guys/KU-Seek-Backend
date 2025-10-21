@@ -82,7 +82,10 @@ def create_app(engine=None, admin=None):
     return app
 
 
-app = create_app(admin=AiAdminModel())
+prompt = os.path.join(
+    os.getcwd(), "controllers", "management", "prompts", "validator_prompt.txt"
+)
+app = create_app(admin=AiAdminModel(prompt_file=prompt))
 
 if __name__ == "__main__":
     app.run(port=8000, debug=True, use_reloader=False)
