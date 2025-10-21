@@ -105,9 +105,7 @@ class HistoryController:
                 uid = body.get("user_id")
             uid = uid or get_auth_user_id(request)
             student = (
-                session.query(Student)
-                .where(Student.user_id == UUID(uid))
-                .one_or_none()
+                session.query(Student).where(Student.user_id == UUID(uid)).one_or_none()
             )
 
             if not student:

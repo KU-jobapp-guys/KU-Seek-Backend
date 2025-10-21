@@ -20,7 +20,7 @@ class StudentHistoryTestCase(RoutingTestCase):
         add_mockup_data(cls)
 
         session = cls.database.get_session()
-        for jid in range(3, 18):  
+        for jid in range(3, 18):
             job = Job(
                 capacity=5,
                 company_id=1,
@@ -70,7 +70,7 @@ class StudentHistoryTestCase(RoutingTestCase):
             headers={"X-CSRFToken": csrf, "access_token": jwt},
             json=payload,
         )
-        
+
         self.assertEqual(post_res.status_code, 200)
         data = post_res.get_json()
         self.assertIn("job_id", data)
@@ -121,7 +121,7 @@ class StudentHistoryTestCase(RoutingTestCase):
         """Creating more than 15 histories should trim the oldest ones."""
         jwt, csrf = self._csrf_and_jwt(self.student_user1_id)
 
-        for jid in range(1, 18):  
+        for jid in range(1, 18):
             res = self.client.post(
                 "/api/v1/student/histories",
                 headers={"X-CSRFToken": csrf, "access_token": jwt},
@@ -137,5 +137,5 @@ class StudentHistoryTestCase(RoutingTestCase):
         arr = get_res.get_json()
         self.assertEqual(len(arr), 15)
         job_ids = {h["job_id"] for h in arr}
-        self.assertNotIn(1, job_ids)  
-        self.assertNotIn(2, job_ids)  
+        self.assertNotIn(1, job_ids)
+        self.assertNotIn(2, job_ids)
