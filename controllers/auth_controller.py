@@ -158,9 +158,7 @@ def handle_authentication(body: Dict):
             val_filepath = base_path + "/" + val_filename
             validation_file.save(val_filepath)
 
-            validation_res = auth_controller.admin.verify_user(
-                user_info, val_filepath
-            )
+            validation_res = auth_controller.admin.verify_user(user_info, val_filepath)
             if not validation_res["status"]:
                 raise ValueError("User did not pass validation")
 
