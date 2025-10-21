@@ -158,13 +158,15 @@ def handle_authentication(body: Dict):
             validation_file.save(val_filepath)
 
             validation_res = auth_controller.admin.verify_user(user_info, val_filepath)
-            if not validation_res["status"]:
+            validation_res = json.loads(validation_res)
+            print("AI result:", validation_res)
+            if not validation_res["valid"]:
                 raise ValueError("User did not pass validation")
 
             # reformat info like UserCredentails class
             user_info["email"] = id_info["email"]
             user_info["google_uid"] = id_info["sub"]
-            user_info["user_type"] = user_info["type"]
+            user_info["user_type"] = validation_res["role"]
             user = auth_controller.register_user(user_info, validation_res["role"])
             user_jwt, refresh, user_type = auth_controller.login_user(user)
 

@@ -236,4 +236,5 @@ Return the data in the following JSON format:
     "info": the users information
     "valid": boolean, yes if valid, else otherwise
     "reason": The reason for denial, if the id or document is not valid, null if credentials are valid
+    "role": The user's role, whether they are a student, company, staff, or professor, all lower case
 }
