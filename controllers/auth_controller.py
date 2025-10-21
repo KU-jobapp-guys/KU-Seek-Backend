@@ -19,7 +19,6 @@ from swagger_server.openapi_server import models
 from datetime import datetime, timedelta, UTC
 from .models.user_model import User, Student, Company, Professor
 from .models.token_model import Token
-from .models.file_model import File
 from .management.admin import AdminModel
 from .management.email import EmailSender
 from werkzeug.utils import secure_filename
