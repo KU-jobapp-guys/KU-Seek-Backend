@@ -6,7 +6,7 @@ from decouple import config, Csv
 from flask_cors import CORS
 from flask_wtf import CSRFProtect
 from controllers.db_controller import BaseController
-from controllers.management.admin import YesManModel
+from controllers.management.admin import YesManModel, AiAdminModel
 
 
 if not os.path.exists(".env"):
@@ -82,7 +82,7 @@ def create_app(engine=None, admin=None):
     return app
 
 
-app = create_app()
+app = create_app(admin=AiAdminModel())
 
 if __name__ == "__main__":
     app.run(port=8000, debug=True, use_reloader=False)
