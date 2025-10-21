@@ -213,8 +213,11 @@ You know the following rules about student IDs and student cards:
 Staff and Professor ID schemes are unknown for security reasons, to verify their identity you will need to check the verification document.
 The document for Staff and Professors will have the following information:
   - The persons face, clearly visable
-  - Their ID number
-  - Their affiliated faculty or department (professor only.)
+  - Their full name
+  - For Staff their id code is a long string of numbers, they are completely different from student ids and do not have 10-digits
+  Professors have additional fields
+  - Their affiliated faculty or department
+  - An Advisor ID code such as E1234, with the first letter denoting the faculty
 
 Companies will submit a business permit or equivalent document
 The document must have the following information:

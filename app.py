@@ -85,7 +85,7 @@ def create_app(engine=None, admin=None):
 prompt = os.path.join(
     os.getcwd(), "controllers", "management", "prompts", "validator_prompt.txt"
 )
-app = create_app(admin=AiAdminModel(prompt_file=prompt))
+app = create_app(admin=AiAdminModel(prompt_file=prompt, model="gemini-2.0-flash"))
 
 if __name__ == "__main__":
     app.run(port=8000, debug=True, use_reloader=False)
