@@ -1,6 +1,6 @@
 """Module for Student history endpoints."""
 
-from typing import List, Dict, Optional
+from typing import List, Dict
 from uuid import UUID
 from datetime import datetime
 from connexion.exceptions import ProblemException
@@ -89,12 +89,14 @@ class HistoryController:
             oldest = (
                 session.query(StudentHistories)
                 .where(StudentHistories.student_id == student_id)
-                .order_by(StudentHistories.viewed_at.asc())
+                .order_by(StudentHistories.viewed_at.desc())
                 .limit(to_delete)
                 .all()
             )
             for row in oldest:
                 session.delete(row)
+
+            session.commit()
 
         session = self.db.get_session()
         try:
@@ -126,6 +128,8 @@ class HistoryController:
                 existing.viewed_at = datetime.utcnow()
                 session.commit()
                 session.refresh(existing)
+                _ensure_trim(session, student.id)
+
                 return {
                     "job_id": existing.job_id,
                     "student_id": existing.student_id,

@@ -4,6 +4,8 @@ from decouple import config
 from base_test import RoutingTestCase
 from util_functions import add_mockup_data, generate_jwt
 from datetime import datetime
+from controllers.models import Job
+
 
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
 
@@ -16,6 +18,25 @@ class StudentHistoryTestCase(RoutingTestCase):
         """Set up the database for this test suite."""
         super().setUpClass()
         add_mockup_data(cls)
+
+        session = cls.database.get_session()
+        for jid in range(3, 18):  
+            job = Job(
+                capacity=5,
+                company_id=1,
+                description=f"Test Job {jid}",
+                end_date="2025-12-31 23:59:59",
+                job_level="Entry-level",
+                job_type="full-time",
+                location="Bangkok, Thailand",
+                salary_max=50000,
+                salary_min=30000,
+                title=f"Test Developer {jid}",
+                work_hours="9:00 AM - 5:00 PM",
+            )
+            session.add(job)
+        session.commit()
+        session.close()
 
     @classmethod
     def tearDownClass(cls):
@@ -49,6 +70,7 @@ class StudentHistoryTestCase(RoutingTestCase):
             headers={"X-CSRFToken": csrf, "access_token": jwt},
             json=payload,
         )
+        
         self.assertEqual(post_res.status_code, 200)
         data = post_res.get_json()
         self.assertIn("job_id", data)
@@ -75,6 +97,7 @@ class StudentHistoryTestCase(RoutingTestCase):
             headers={"X-CSRFToken": csrf, "access_token": jwt},
             json=payload,
         )
+
         self.assertEqual(first.status_code, 200)
         first_data = first.get_json()
         first_ts = first_data.get("viewed_at")
@@ -98,8 +121,7 @@ class StudentHistoryTestCase(RoutingTestCase):
         """Creating more than 15 histories should trim the oldest ones."""
         jwt, csrf = self._csrf_and_jwt(self.student_user1_id)
 
-        # create 17 distinct job histories
-        for jid in range(100, 117):
+        for jid in range(1, 18):  
             res = self.client.post(
                 "/api/v1/student/histories",
                 headers={"X-CSRFToken": csrf, "access_token": jwt},
@@ -107,7 +129,6 @@ class StudentHistoryTestCase(RoutingTestCase):
             )
             self.assertEqual(res.status_code, 200)
 
-        # Now GET and ensure only 15 remain and oldest two (100,101) are gone
         get_res = self.client.get(
             "/api/v1/student/histories",
             headers={"access_token": jwt},
@@ -116,5 +137,5 @@ class StudentHistoryTestCase(RoutingTestCase):
         arr = get_res.get_json()
         self.assertEqual(len(arr), 15)
         job_ids = {h["job_id"] for h in arr}
-        self.assertNotIn(100, job_ids)
-        self.assertNotIn(101, job_ids)
+        self.assertNotIn(1, job_ids)  
+        self.assertNotIn(2, job_ids)  
