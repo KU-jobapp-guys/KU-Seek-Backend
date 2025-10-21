@@ -3,6 +3,7 @@
 import random
 import jwt
 import json
+import os
 
 from flask import make_response, request
 from connexion.exceptions import ProblemException
@@ -18,13 +19,17 @@ from swagger_server.openapi_server import models
 from datetime import datetime, timedelta, UTC
 from .models.user_model import User, Student, Company, Professor
 from .models.token_model import Token
+from .models.file_model import File
 from .management.admin import AdminModel
 from .management.email import EmailSender
+from werkzeug.utils import secure_filename
 
 
 SECRET_KEY = config("SECRET_KEY", default="good-key123")
 
 ALGORITHM = "HS512"
+
+BASE_FILE_PATH = config("BASE_FILE_PATH", default="content")
 
 
 def get_auth_user_id(request):
@@ -89,6 +94,8 @@ def handle_authentication(body: Dict):
 
     redirect_uri = config("REDIRECT_URI", default="http://localhost:5173/login")
 
+    base_path = os.path.join(os.getcwd(), BASE_FILE_PATH)
+
     form = request.form
     # Create the OAuth flow
     try:
@@ -143,9 +150,16 @@ def handle_authentication(body: Dict):
             user_info = form.get("user_info")
             user_info = json.loads(user_info)
             print(user_info)
+
+            # process the file for validation
             validation_file = request.files.get("id_doc")
+            print(validation_file.filename)
+            val_filename = secure_filename(validation_file.filename)
+            val_filepath = base_path + "/" + val_filename
+            validation_file.save(val_filepath)
+
             validation_res = auth_controller.admin.verify_user(
-                user_info, validation_file
+                user_info, val_filepath
             )
             if not validation_res["status"]:
                 raise ValueError("User did not pass validation")
@@ -181,6 +195,7 @@ def handle_authentication(body: Dict):
 
         return response
     except Exception as e:
+        print(e)
         return models.ErrorMessage(
             f"Database error occured during authentication, {e}"
         ), 400
