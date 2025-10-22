@@ -15,7 +15,7 @@ from decouple import config
 from jwt import encode, decode
 from swagger_server.openapi_server import models
 from datetime import datetime, timedelta, UTC
-from .models.user_model import User
+from .models.user_model import User, Company
 from .models.token_model import Token
 
 
@@ -251,6 +251,22 @@ class AuthenticationController:
         session.commit()
         session.refresh(user)
         user_id = user.id
+        
+        # WAHAHAHAH I'M NOT APPROVE TIMMY API AND DECIDE TO ADD THIS HARDCODE
+        #  COMPANY FOR TESTING
+        mock_company = Company(
+            user_id=user_id,
+            company_name="DogDogHorse Technologies Co., Ltd.",
+            company_type="Private",
+            company_industry="Software Development",
+            company_size="51-200 employees",
+            company_website="https://www.dogdoghorse.dev",
+            full_location="Bangkok, Thailand",
+        )
+
+        session.add(mock_company)
+        session.commit()
+        session.refresh(mock_company)
         session.close()
 
         return str(user_id)
