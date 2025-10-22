@@ -179,7 +179,7 @@ def handle_authentication(body: Dict):
                 mail_file = "welcome"
             try:
                 email = EmailSender()
-                email.send_email(id_info["sub"], "Welcome to KU-Seek", mail_file)
+                email.send_email(id_info["email"], "Welcome to KU-Seek", mail_file)
             except Exception:
                 # implement logging later
                 pass
