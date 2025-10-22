@@ -6,7 +6,8 @@ from decouple import config, Csv
 from flask_cors import CORS
 from flask_wtf import CSRFProtect
 from controllers.db_controller import BaseController
-
+from openapi_server import encoder
+from controllers.models.tag_term_model import Terms
 
 if not os.path.exists(".env"):
     print(".env file not found.You may create one from 'sample-env.txt'.")
@@ -32,9 +33,6 @@ except ModuleNotFoundError:
         " pip install -r requirements.txt"
     )
     sys.exit(1)
-
-from openapi_server import encoder  # noqa: E402
-from controllers.models.tag_term_model import Terms
 
 
 def create_app(engine=None):

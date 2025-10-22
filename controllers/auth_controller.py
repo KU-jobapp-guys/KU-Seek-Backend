@@ -251,7 +251,7 @@ class AuthenticationController:
         session.commit()
         session.refresh(user)
         user_id = user.id
-        
+
         # WAHAHAHAH I'M NOT APPROVE TIMMY API AND DECIDE TO ADD THIS HARDCODE
         #  COMPANY FOR TESTING
         mock_company = Company(
