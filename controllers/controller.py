@@ -5,6 +5,7 @@ from .task_controller import TaskController
 from .user_profile_controller import ProfileController
 from .job_app_controller import JobApplicationController
 from .auth_controller import get_auth_user_id
+from connexion.exceptions import ProblemException
 from .job_controller import JobController
 from typing import Dict, Optional
 from flask import current_app
@@ -98,6 +99,8 @@ def post_job(body: Dict):
         return jsonify(new_job), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
+    except ProblemException:
+        raise
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 

@@ -703,7 +703,6 @@ components:
           format: date-time
           description: Application deadline
           example: "2025-12-31T23:59:59Z"
-        # skill_ids and tag_ids are deprecated; frontend should send names only
         skill_names:
           type: array
           description: Array of skill names (strings). Missing names will be created.

@@ -107,12 +107,17 @@ class JobController:
             if isinstance(end_date, str):
                 end_date = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
 
-            company_id = (
+            company_obj = (
                 session.query(Company).where(Company.user_id == user_id).one_or_none()
             )
 
+            if not company_obj:
+                raise ValueError(
+                    "Company not found for current user. Create a company first."
+                )
+
             job = Job(
-                company_id=company_id.id,
+                company_id=company_obj.id,
                 title=body["title"],
                 description=body.get("description"),
                 salary_min=body["salary_min"],
