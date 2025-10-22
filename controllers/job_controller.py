@@ -66,10 +66,11 @@ class JobController:
                 - capacity (int): Number of positions
                 - end_date (str): Application deadline (ISO format)
 
-            Optional fields:
-                - description (str): Job description
-                - skill_ids (list[int]): List of skill IDs
-                - tag_ids (list[int]): List of tag IDs
+                        Optional fields:
+                                - description (str): Job description
+                                - skill_names (list[str]): List of skill names (strings)
+                                - tag_names (list[str]): List of tag names (strings)
+                                    If a name does not exist in Tags it will be created
 
         Returns:
             Dict: The created job data
@@ -128,13 +129,26 @@ class JobController:
             session.add(job)
             session.flush()
 
-            if "skill_ids" in body and body["skill_ids"]:
-                for skill_id in body["skill_ids"]:
-                    job_skill = JobSkills(job_id=job.id, skill_id=skill_id)
+            if "skill_names" in body and body["skill_names"]:
+                if not isinstance(body["skill_names"], list):
+                    raise ValueError("skill_names must be an array of strings")
+                for name in body["skill_names"]:
+                    if not name:
+                        continue
+                    name = str(name).strip()
+                    term = session.query(Terms).where(Terms.name == name).one_or_none()
+                    if not term:
+                        raise ValueError(f"Term not found: {name}")
+                    job_skill = JobSkills(job_id=job.id, skill_id=term.id)
                     session.add(job_skill)
 
-            if "tag_ids" in body and body["tag_ids"]:
-                for tag_id in body["tag_ids"]:
+            if "tag_names" in body and body["tag_names"]:
+                if not isinstance(body["tag_names"], list):
+                    raise ValueError("tag_names must be an array of strings")
+                for name in body["tag_names"]:
+                    if not name:
+                        continue
+                    tag_id = self._get_or_create_tag(session, str(name).strip())
                     job_tag = JobTags(job_id=job.id, tag_id=tag_id)
                     session.add(job_tag)
 
@@ -467,3 +481,26 @@ class JobController:
         if single_response and result:
             return result[0]
         return result
+
+    def _get_or_create_tag(self, session, name: str) -> int:
+        """Return tag id for name, creating the tag if it doesn't exist.
+
+        Uses the provided session and handles race conditions similarly to terms.
+        """
+        try:
+            tag = session.query(Tags).where(Tags.name == name).one_or_none()
+            if tag:
+                return tag.id
+
+            tag = Tags(name=name)
+            session.add(tag)
+            try:
+                session.flush()
+                return tag.id
+            except IntegrityError:
+                session.rollback()
+                tag = session.query(Tags).where(Tags.name == name).one()
+                return tag.id
+        except Exception:
+            session.rollback()
+            raise

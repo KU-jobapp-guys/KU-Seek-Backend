@@ -703,18 +703,19 @@ components:
           format: date-time
           description: Application deadline
           example: "2025-12-31T23:59:59Z"
-        skill_ids:
+        # skill_ids and tag_ids are deprecated; frontend should send names only
+        skill_names:
           type: array
-          description: Array of skill IDs required for this job
+          description: Array of skill names (strings). Missing names will be created.
           items:
-            type: integer
-          example: [1, 2, 3]
-        tag_ids:
+            type: string
+          example: ["Python", "Django"]
+        tag_names:
           type: array
-          description: Array of tag IDs associated with this job
+          description: Array of tag names (strings). Missing names will be created.
           items:
-            type: integer
-          example: [5, 6]
+            type: string
+          example: ["Remote", "Backend"]
 
 
     Skill:
