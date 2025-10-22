@@ -8,6 +8,7 @@ from .auth_controller import get_auth_user_id
 from .job_controller import JobController
 from typing import Dict, Optional
 from flask import current_app
+from .skills_controller import SkillsController
 
 
 def get_all_tasks():
@@ -166,3 +167,64 @@ def fetch_job_applications_from_job(job_id: int) -> Optional[Dict]:
     """Fetch all job applications related to a job post by job ID."""
     app_manager = JobApplicationController(current_app.config["Database"])
     return app_manager.fetch_job_application_from_job_post(job_id)
+
+
+def get_tag_by_id(tag_id: int):
+    """Get a tag by its id."""
+    try:
+        skills = SkillsController(current_app.config["Database"])
+        tag = skills.get_tag(tag_id)
+        return jsonify(tag), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 404
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+def get_term_by_id(term_id: int):
+    """Get a term by its id."""
+    try:
+        skills = SkillsController(current_app.config["Database"])
+        term = skills.get_term(term_id)
+        return jsonify(term), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 404
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+def get_all_terms():
+    """Return all terms (id, name, type)."""
+    try:
+        skills = SkillsController(current_app.config["Database"])
+        terms = skills.get_terms()
+        return jsonify(terms), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+def post_tag(body: Dict):
+    """Create a tag or return existing tag id.
+
+    Expects body: {"name": "tag name"}
+    Returns: {"id": <tag_id>} with 201 if created, 200 if already existed.
+    """
+    try:
+        if not body or "name" not in body:
+            return jsonify({"message": "'name' is required"}), 400
+
+        skills = SkillsController(current_app.config["Database"])
+        name = body.get("name")
+        try:
+            tag_id, created = skills.post_tag(name)
+        except ValueError as e:
+            return jsonify({"message": str(e)}), 400
+        except Exception:
+            raise
+
+        status = 201 if created else 200
+        return jsonify({"id": tag_id}), status
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500

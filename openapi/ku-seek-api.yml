@@ -395,6 +395,85 @@ paths:
           description: Invalid request body.
 
 
+  /tags:
+    post:
+      summary: Create a new tag or return existing tag id
+      operationId: controllers.controller.post_tag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagInput'
+      responses:
+        200:
+          description: Existing tag returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        201:
+          description: New tag created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+
+  /tags/{tag_id}:
+    parameters:
+      - name: tag_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get a tag by id
+      operationId: controllers.controller.get_tag_by_id
+      responses:
+        200:
+          description: Tag found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        404:
+          description: Tag not found
+
+  /terms:
+    get:
+      summary: Get all terms
+      operationId: controllers.controller.get_all_terms
+      responses:
+        200:
+          description: A list of terms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Term'
+
+  /terms/{term_id}:
+    parameters:
+      - name: term_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get a term by id
+      operationId: controllers.controller.get_term_by_id
+      responses:
+        200:
+          description: Term found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Term'
+        404:
+          description: Term not found
+
+
 components:
   securitySchemes:
       BearerAuth:
@@ -1017,3 +1096,26 @@ components:
           type: string
           format: binary
           description: Upload new application letter file
+
+    TagInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 40
+          example: "Remote Work"
+
+    Term:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Python"
+        type:
+          type: string
+          example: "Programming Language"
