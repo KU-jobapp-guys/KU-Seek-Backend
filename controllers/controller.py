@@ -168,13 +168,14 @@ def fetch_job_applications_from_job(job_id: int) -> Optional[Dict]:
     app_manager = JobApplicationController(current_app.config["Database"])
     return app_manager.fetch_job_application_from_job_post(job_id)
 
+
 def get_file(file_id: str) -> Response:
     """Get a file for viewing, based on the file id."""
     file_manager = FileController(current_app.config["Database"])
     return file_manager.get_file(file_id)
 
+
 def download_file(file_id: str) -> Response:
     """Get a file for downloading, based on the file id."""
     file_manager = FileController(current_app.config["Database"])
     return file_manager.download_file(file_id)
-
