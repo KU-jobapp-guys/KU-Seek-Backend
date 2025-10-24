@@ -7,6 +7,7 @@ from .decorators import login_required
 from decouple import config
 from swagger_server.openapi_server import models
 from .models.file_model import File
+from uuid import UUID
 
 
 FILE_DIR = config("BASE_FILE_PATH", default="content")
@@ -35,7 +36,7 @@ class FileController:
         """
         try:
             session = self.db.get_session()
-            file = session.query(File).where(File.id == file_id).one_or_none()
+            file = session.query(File).where(File.id == UUID(file_id)).one_or_none()
             if not file:
                 session.close()
                 return models.ErrorMessage("File record not found"), 404
@@ -65,7 +66,7 @@ class FileController:
         """
         try:
             session = self.db.get_session()
-            file = session.query(File).where(File.id == file_id).one_or_none()
+            file = session.query(File).where(File.id == UUID(file_id)).one_or_none()
             if not file:
                 session.close()
                 return models.ErrorMessage("File record not found"), 404
