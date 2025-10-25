@@ -264,3 +264,21 @@ class JobApplicationController:
         session.close()
 
         return formatted_apps, 200
+    
+    @role_required(["Company"])
+    def update_job_applications_status(self, job_id:int, body:list):
+        """
+        Update the status of multiple job applications.
+
+        Update the status of all job applications sent in the request body,
+        and queues an email notifying students about their job application
+        status.
+
+        Args:
+            job_id: The job id for the job application's applied job
+            body: The request body, in the format of a list of JSON
+                  with the following attribues:
+                    {application_id: str, status: str}
+
+        returns A copy of a list of updated job applications
+        """
