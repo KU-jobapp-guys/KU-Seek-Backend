@@ -2,7 +2,7 @@
 
 import os
 from uuid import uuid4
-from .base_test import RoutingTestCase
+from base_test import RoutingTestCase
 from controllers.models.file_model import File
 from controllers.models.user_model import User
 from decouple import config
@@ -42,7 +42,7 @@ class FileServingTestCase(RoutingTestCase):
             owner=user.id,
             file_name=cls.test_file_name,
             file_path=cls.test_file_path,
-            file_type="letter"
+            file_type="letter",
         )
         session.add(test_file)
         session.commit()
@@ -92,7 +92,7 @@ class FileServingTestCase(RoutingTestCase):
             owner=self.user_id,
             file_name="missing_file.pdf",
             file_path=os.path.join(self.file_dir, "missing_file.pdf"),
-            file_type="letter"
+            file_type="letter",
         )
         session.add(missing_file)
         session.commit()
@@ -131,13 +131,12 @@ class FileDownloadingTestCase(RoutingTestCase):
         with open(cls.test_file_path, "w") as f:
             f.write("Downloadable content")
 
-
         # Create a file record in the database
         test_file = File(
             owner=user.id,
             file_name=cls.test_file_name,
             file_path=cls.test_file_path,
-            file_type="letter"
+            file_type="letter",
         )
         session.add(test_file)
         session.commit()
@@ -189,7 +188,7 @@ class FileDownloadingTestCase(RoutingTestCase):
             owner=self.user_id,
             file_name="missing_download2.txt",
             file_path=os.path.join(self.file_dir, "missing_download.txt"),
-            file_type="letter"
+            file_type="letter",
         )
         session.add(missing_file)
         session.commit()
