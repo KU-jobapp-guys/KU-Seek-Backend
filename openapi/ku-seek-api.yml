@@ -1059,10 +1059,10 @@ components:
         - status
       properties:
         application_id:
-          type: string
+          type: integer
           format: uuid
-          description: The unique identifier of the job application in uuid v.4 format
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          description: The unique identifier of the job application
+          example: 12
         status:
           type: string
           enum: ["accepted", "rejected"]

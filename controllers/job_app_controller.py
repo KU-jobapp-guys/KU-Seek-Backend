@@ -31,7 +31,7 @@ class JobApplicationController:
         self.db = database
 
     @role_required(["Student"])
-    def create_job_application(self, body, job_id:int):
+    def create_job_application(self, body, job_id: int):
         """Create a new job application from the request body."""
         user_token = request.headers.get("access_token")
         token_info = decode(jwt=user_token, key=SECRET_KEY, algorithms=["HS512"])
@@ -213,7 +213,7 @@ class JobApplicationController:
         return formatted_apps, 200
 
     @role_required(["Company"])
-    def fetch_job_application_from_job_post(self, job_id:int):
+    def fetch_job_application_from_job_post(self, job_id: int):
         """Fetch all job applications for a specific job post."""
         user_token = request.headers.get("access_token")
         token_info = decode(jwt=user_token, key=SECRET_KEY, algorithms=["HS512"])
@@ -266,9 +266,9 @@ class JobApplicationController:
         session.close()
 
         return formatted_apps, 200
-    
+
     @role_required(["Company"])
-    def update_job_applications_status(self, job_id:int, body:list[Dict]):
+    def update_job_applications_status(self, job_id: int, body: list[Dict]):
         """
         Update the status of multiple job applications.
 
@@ -314,7 +314,7 @@ class JobApplicationController:
         )
 
         applicant_ids = [application.id for application in job_apps]
-        update_ids = [UUID(application["application_id"]) for application in body]
+        update_ids = [int(application["application_id"]) for application in body]
 
         if not set(update_ids).issubset(set(applicant_ids)):
             session.close()
@@ -328,7 +328,11 @@ class JobApplicationController:
             session.begin()
             orm_models = []
             for application in body:
-                app_orm = session.query(JobApplication).where(JobApplication.job_id == UUID(application["application_id"])).one()
+                app_orm = (
+                    session.query(JobApplication)
+                    .where(JobApplication.job_id == int(application["application_id"]))
+                    .one()
+                )
                 app_orm.status = application["status"]
                 orm_models.append(orm_models)
 
