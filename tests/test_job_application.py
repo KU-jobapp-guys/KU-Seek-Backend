@@ -3,8 +3,8 @@
 import os
 import shutil
 from io import BytesIO
-from base_test import RoutingTestCase
-from util_functions import generate_jwt
+from .base_test import RoutingTestCase
+from .util_functions import generate_jwt
 from datetime import datetime, timedelta
 from decouple import config
 from controllers.models import User, Job, Company, Student, JobApplication
@@ -404,7 +404,7 @@ class JobApplicationTestCase(RoutingTestCase):
             headers={"access_token": jwt, "X-CSRFToken": csrf.json["csrf_token"]},
         )
         self.assertEqual(res.status_code, 400)
-        self.assertIn("Invalid ID provided", res.json["message"])
+        self.assertIn("Invalid job application ID provided", res.json["message"])
 
     def test_update_one_job_application(self):
         """A company can update a job application."""
@@ -437,7 +437,7 @@ class JobApplicationTestCase(RoutingTestCase):
 
     def test_update_multiple_job_applications(self):
         """A company can update multiple job applications at once."""
-        # Create additional applications for job 1
+        # Create additional applications for job 2
         session = self.database.get_session()
 
         # Create a second student
@@ -458,7 +458,7 @@ class JobApplicationTestCase(RoutingTestCase):
 
         # Create second application
         job_application2 = JobApplication(
-            job_id=1,
+            job_id=2,
             student_id=student2.id,
             first_name="Jane",
             last_name="Smith",
@@ -475,7 +475,7 @@ class JobApplicationTestCase(RoutingTestCase):
         session.commit()
 
         # Get both application IDs
-        job_apps = session.query(JobApplication).where(JobApplication.job_id == 1).all()
+        job_apps = session.query(JobApplication).where(JobApplication.job_id == 2).all()
         app_ids = [app.id for app in job_apps]
         session.close()
 
@@ -488,7 +488,7 @@ class JobApplicationTestCase(RoutingTestCase):
 
         csrf = self.client.get("/api/v1/csrf-token")
         res = self.client.patch(
-            "/api/v1/application/update/1",
+            "/api/v1/application/update/2",
             json=data,
             headers={"access_token": jwt, "X-CSRFToken": csrf.json["csrf_token"]},
         )

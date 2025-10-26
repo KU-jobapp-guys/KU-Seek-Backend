@@ -317,6 +317,7 @@ class JobApplicationController:
         )
 
         if not all([applicant.status == "pending" for applicant in job_apps]):
+            session.close()
             return models.ErrorMessage("Invalid job application ID provided"), 400
 
         applicant_ids = [application.id for application in job_apps]
