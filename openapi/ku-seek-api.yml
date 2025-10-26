@@ -331,6 +331,44 @@ paths:
         404:
           description: user profile not found
 
+
+  /student/histories:
+    get:
+      summary: Get view histories for the authenticated student
+      description: Returns a list of student history entries for the authenticated user.
+      operationId: controllers.controller.get_student_histories
+      responses:
+        200:
+          description: A list of student history entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StudentHistory'
+        404:
+          description: Student not found
+
+    post:
+      summary: Create or update a student history entry
+      description: Insert a new history row or update the viewed_at timestamp if the (student, job) pair exists.
+      operationId: controllers.controller.post_student_history
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentHistoryInput'
+      responses:
+        200:
+          description: Created or updated history entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentHistory'
+        400:
+          description: Invalid input
+
   /application:
     get:
       summary: Get user job applications
@@ -565,79 +603,34 @@ components:
 
     JobPost:
       type: object
+
+    StudentHistory:
+      type: object
       required:
-        - title
-        - salary_min
-        - salary_max
-        - location
-        - work_hours
-        - job_type
-        - job_level
-        - capacity
-        - end_date
+        - job_id
+        - student_id
+        - viewed_at
       properties:
-        description:
-          type: string
-          description: Detailed description of the job
-          example: "We are looking for an experienced Python developer to join our dynamic team..."
-        title:
-          type: string
-          maxLength: 50
-          description: The job title/position title
-          example: "Senior Python Developer"
-        salary_min:
-          type: number
-          format: float
-          description: Minimum salary offered
-          example: 80000.0
-        salary_max:
-          type: number
-          format: float
-          description: Maximum salary offered
-          example: 120000.0
-        location:
-          type: string
-          maxLength: 255
-          description: Job location
-          example: "Bangkok, Thailand"
-        work_hours:
-          type: string
-          maxLength: 20
-          description: Working hours
-          example: "9:00 AM - 5:00 PM"
-        job_type:
-          type: string
-          maxLength: 40
-          description: Type of employment
-          example: "full-time"
-        job_level:
-          type: string
-          maxLength: 40
-          description: Type of Job Level
-          example: "Senior-level"
-        capacity:
+        job_id:
           type: integer
-          description: Number of positions available
-          example: 2
-        end_date:
+          example: 1
+        student_id:
+          type: integer
+          example: 1
+        viewed_at:
           type: string
           format: date-time
-          description: Application deadline
-          example: "2025-12-31T23:59:59Z"
-        skill_ids:
-          type: array
-          description: Array of skill IDs required for this job
-          items:
-            type: integer
-          example: [1, 2, 3]
-        tag_ids:
-          type: array
-          description: Array of tag IDs associated with this job
-          items:
-            type: integer
-          example: [5, 6]
+          description: ISO 8601 timestamp when the student viewed the job
 
-
+    StudentHistoryInput:
+      type: object
+      required:
+        - job_id
+      properties:
+        job_id:
+          type: integer
+          example: 1
+    
     Skill:
       type: object
       properties:
