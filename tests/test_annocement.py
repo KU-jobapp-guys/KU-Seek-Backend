@@ -76,13 +76,12 @@ class AnnouncementTestCase(RoutingTestCase):
             ann = data[0]
             expected = {
                 "id",
-                "professor_id",
-                "title",
-                "content",
-                "created_at",
-                "professor_first_name",
-                "professor_last_name",
-                "professor_profile_img",
+                "professor",
+                "professorPosition",
+                "department",
+                "company",
+                "companyIndustry",
+                "tags",
             }
             for field in expected:
                 self.assertIn(field, ann)
@@ -111,12 +110,10 @@ class AnnouncementTestCase(RoutingTestCase):
         anns = get_res.get_json()
         self.assertIsInstance(anns, list)
 
-        found = [
-            a for a in anns if a.get("professor_id") == conn_data.get("professor_id")
-        ]
+        found = [a for a in anns if a.get("id") == conn_data.get("id")]
         self.assertTrue(found, "No announcement found for the created connection")
 
         ann = found[0]
-        self.assertIn("professor_first_name", ann)
-        self.assertIn("professor_last_name", ann)
-        self.assertIn("professor_profile_img", ann)
+        self.assertIn("professor", ann)
+        self.assertIn("company", ann)
+        self.assertIn("tags", ann)

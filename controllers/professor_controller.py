@@ -2,8 +2,9 @@
 
 from typing import Dict
 from connexion.exceptions import ProblemException
-from .models.profile_model import ProfessorConnections, Announcements, Profile
+from .models.profile_model import ProfessorConnections, Profile, CompanyTags
 from .models.user_model import Professor, Company
+from .models.tag_term_model import Tags
 from uuid import UUID
 
 
@@ -72,16 +73,16 @@ class ProfessorController:
         """
         session = self.db.get_session()
         try:
-            announcements = session.query(Announcements).all()
+            connections = session.query(ProfessorConnections).all()
 
-            if not announcements:
+            if not connections:
                 return []
 
             results = []
-            for a in announcements:
+            for c in connections:
                 professor = (
                     session.query(Professor)
-                    .where(Professor.id == a.professor_id)
+                    .where(Professor.id == c.professor_id)
                     .one_or_none()
                 )
 
@@ -93,24 +94,44 @@ class ProfessorController:
                         .one_or_none()
                     )
 
+                company = (
+                    session.query(Company)
+                    .where(Company.id == c.company_id)
+                    .one_or_none()
+                )
+
+                tags = []
+                if company:
+                    tag_rows = (
+                        session.query(Tags)
+                        .join(CompanyTags, CompanyTags.tag_id == Tags.id)
+                        .filter(CompanyTags.company_id == company.id)
+                        .all()
+                    )
+                    tags = [t.name for t in tag_rows if t and t.name]
+
                 results.append(
                     {
-                        "id": a.id,
-                        "professor_id": a.professor_id,
-                        "title": a.title,
-                        "content": a.content,
-                        "created_at": a.created_at.isoformat()
-                        if a.created_at
-                        else None,
-                        "professor_first_name": prof_profile.first_name
-                        if prof_profile
-                        else None,
-                        "professor_last_name": prof_profile.last_name
-                        if prof_profile
-                        else None,
-                        "professor_profile_img": prof_profile.profile_img
-                        if prof_profile
-                        else None,
+                        "id": c.id,
+                        "professor": (
+                            (
+                                (
+                                    (prof_profile.first_name or "")
+                                    + " "
+                                    + (prof_profile.last_name or "")
+                                )
+                                .strip()
+                            )
+                            if prof_profile
+                            else None
+                        ),
+                        "professorPosition": professor.position if professor else None,
+                        "department": professor.department if professor else None,
+                        "company": company.company_name if company else None,
+                        "companyIndustry": (
+                            company.company_industry if company else None
+                        ),
+                        "tags": tags,
                     }
                 )
 
@@ -182,40 +203,6 @@ class ProfessorController:
                 if connection.created_at
                 else None,
             }
-
-            professor_profile = (
-                session.query(Profile).where(Profile.user_id == user_uuid).one()
-            )
-
-            company = (
-                session.query(Company)
-                .where(
-                    Company.id == connection.company_id,
-                )
-                .one()
-            )
-
-            company_profile = (
-                session.query(Profile)
-                .where(
-                    Profile.user_id == company.user_id,
-                )
-                .one()
-            )
-
-            # create announcement using ORM attribute access
-            annouce = Announcements(
-                professor_id=connection_data["professor_id"],
-                title=(
-                    f"Professor {professor_profile.first_name}"
-                    f" has connection with {company.company_name} company."
-                ),
-                content=company_profile.about,
-            )
-
-            session.add(annouce)
-            session.commit()
-
             return connection_data
 
         except ProblemException:
