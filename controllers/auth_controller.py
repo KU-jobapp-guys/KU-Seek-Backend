@@ -2,6 +2,8 @@
 
 import random
 import jwt
+import json
+import os
 
 from flask import make_response, request
 from connexion.exceptions import ProblemException
@@ -15,13 +17,18 @@ from decouple import config
 from jwt import encode, decode
 from swagger_server.openapi_server import models
 from datetime import datetime, timedelta, UTC
-from .models.user_model import User
+from .models.user_model import User, Student, Company, Professor
 from .models.token_model import Token
+from .management.admin import AdminModel
+from .management.email import EmailSender
+from werkzeug.utils import secure_filename
 
 
 SECRET_KEY = config("SECRET_KEY", default="good-key123")
 
 ALGORITHM = "HS512"
+
+BASE_FILE_PATH = config("BASE_FILE_PATH", default="content")
 
 
 def get_auth_user_id(request):
@@ -86,6 +93,9 @@ def handle_authentication(body: Dict):
 
     redirect_uri = config("REDIRECT_URI", default="http://localhost:5173/login")
 
+    base_path = os.path.join(os.getcwd(), BASE_FILE_PATH)
+
+    form = request.form
     # Create the OAuth flow
     try:
         flow = Flow.from_client_secrets_file(
@@ -104,7 +114,7 @@ def handle_authentication(body: Dict):
 
     # Exchange the authorization code for tokens
     try:
-        flow.fetch_token(code=body["code"])
+        flow.fetch_token(code=form.get("code"))
     except Exception as e:
         return models.ErrorMessage(f"Invalid authorization code, {e}"), 400
 
@@ -118,7 +128,9 @@ def handle_authentication(body: Dict):
         clock_skew_in_seconds=10,
     )
 
-    auth_controller = AuthenticationController(current_app.config["Database"])
+    auth_controller = AuthenticationController(
+        current_app.config["Database"], current_app.config["Admin"]
+    )
 
     try:
         is_registered = auth_controller.check_users(id_info["sub"])
@@ -131,21 +143,49 @@ def handle_authentication(body: Dict):
             user = auth_controller.get_user(id_info["sub"])
             if user is None:
                 raise ValueError("User was not found")
-            user_jwt, refresh = auth_controller.login_user(user)
+            user_jwt, refresh, user_type = auth_controller.login_user(user)
 
         else:
-            # hardcoding to company for now, since KU auth is not created
-            user = auth_controller.register_user(
-                {
-                    "google_uid": id_info["sub"],
-                    "email": id_info["email"],
-                    "user_type": "company",
-                },
-            )
-            user_jwt, refresh = auth_controller.login_user(user)
+            user_info = form.get("user_info")
+            user_info = json.loads(user_info)
+            print(user_info)
+
+            # process the file for validation
+            validation_file = request.files.get("id_doc")
+            print(validation_file.filename)
+            val_filename = secure_filename(validation_file.filename)
+            val_filepath = base_path + "/" + val_filename
+            validation_file.save(val_filepath)
+
+            validation_res = auth_controller.admin.verify_user(user_info, val_filepath)
+            validation_res = json.loads(validation_res)
+            print("AI result:", validation_res)
+            if not validation_res["valid"]:
+                raise ValueError("User did not pass validation")
+
+            # reformat info like UserCredentails class
+            user_info["email"] = id_info["email"]
+            user_info["google_uid"] = id_info["sub"]
+            user_info["user_type"] = validation_res["role"]
+            user = auth_controller.register_user(user_info, validation_res["role"])
+            user_jwt, refresh, user_type = auth_controller.login_user(user)
+
+            # send a registration email
+            if user_info["user_type"] == "student":
+                mail_file = "welcome_student"
+            elif user_info["user_type"] == "company":
+                mail_file = "welcome_company"
+            else:
+                mail_file = "welcome"
+            try:
+                email = EmailSender()
+                email.send_email(id_info["email"], "Welcome to KU-Seek", mail_file)
+            except Exception:
+                # implement logging later
+                pass
 
         response = make_response(
-            models.UserCredentials(user_jwt, id_info["email"]).to_dict(), 200
+            models.UserCredentials(user_jwt, id_info["email"], user_type).to_dict(), 200
         )
         # set the refresh token as a HttpOnly cookie
         response.set_cookie(
@@ -154,6 +194,7 @@ def handle_authentication(body: Dict):
 
         return response
     except Exception as e:
+        print(e)
         return models.ErrorMessage(
             f"Database error occured during authentication, {e}"
         ), 400
@@ -162,9 +203,10 @@ def handle_authentication(body: Dict):
 class AuthenticationController:
     """Controller for fetching database authentication credentials."""
 
-    def __init__(self, database):
+    def __init__(self, database, admin: AdminModel):
         """Init the class."""
         self.db = database
+        self.admin = admin
 
     def check_users(self, google_id: str):
         """Check if the user is in the users table."""
@@ -211,9 +253,11 @@ class AuthenticationController:
         token = Token(uid=uid, refresh_id=refresh_id)
         session.add(token)
         session.commit()
+        user = session.query(User).where(User.id == uid).one()
+        user_type = user.type.value.lower()
         session.close()
 
-        return auth_token, refresh_token
+        return auth_token, refresh_token, user_type
 
     def get_user(self, google_uid):
         """Return the user id with the matching google_uid."""
@@ -226,13 +270,16 @@ class AuthenticationController:
         session.close()
         return uid
 
-    def register_user(self, credentials: UserCredentials) -> str:
-        """Register a new user using the provided credentials.
+    def register_user(self, credentials: UserCredentials, user_type: str) -> str:
+        """
+        Register a new user using the provided credentials and type.
 
         Create a new credentials in the database based on the provided credentials.
+        The user will have additional information filled out based on the user type.
 
         Args:
             credentials: The account's credentials
+            user_type: The user's type {student, company, staff, professor}
 
         Returns: The user's id in the database
         """
@@ -242,6 +289,8 @@ class AuthenticationController:
             raise TypeError("Invalid credentials.")
 
         session = self.db.get_session()
+
+        # register the user in the system
         user = User(
             google_uid=credentials["google_uid"],
             email=credentials["email"],
@@ -251,9 +300,28 @@ class AuthenticationController:
         session.commit()
         session.refresh(user)
         user_id = user.id
+
+        # role based tables
+        if user_type == "student":
+            student = Student(user_id=user_id, nisit_id=credentials["kuId"])
+            session.add(student)
+            session.commit()
+        elif user_type == "professor":
+            professor = Professor(user_id=user_id)
+            session.add(professor)
+            session.commit()
+        elif user_type == "company":
+            company = Company(
+                user_id=user_id,
+                company_name=credentials["companyName"],
+                company_size=credentials["companySize"],
+            )
+            session.add(company)
+            session.commit()
+
         session.close()
 
-        return str(user_id)
+        return user_id
 
     def refresh_access_token(self, refresh_token: str):
         """

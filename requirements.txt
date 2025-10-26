@@ -13,5 +13,6 @@ google-auth-oauthlib
 PyJWT
 SQLalchemy
 alembic
+google-genai
 
 -r swagger_server/requirements.txt

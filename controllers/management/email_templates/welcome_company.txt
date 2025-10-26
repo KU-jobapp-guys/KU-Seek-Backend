@@ -1,0 +1,15 @@
+Welcome to KU-Seek
+
+Hi {{UserName}},
+
+We’re excited to have you with us! You’ve successfully joined our community where campus meets careers.
+
+Here’s what you can do next:
+- Explore your dashboard
+- Setup your company profile
+- Create a new job post now!
+
+We can’t wait to see what you’ll accomplish!
+
+———————————————
+© 2025 KU-Seek. All rights reserved.
