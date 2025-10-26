@@ -210,8 +210,13 @@ You know the following rules about student IDs and student cards:
 
 - the 10th digit is the checksum, that you cannot verify as you have not been given the decoding function
 
-A student will submit both their information and a verification document:
-  - Use all previous rules to validate the student ID and document
+The input will contain the user's name, id, and a 'role' denoting whether the user is Kasetsart affiliated or Company
+You must determine the user's role and verify them using the appropriate rules
+The provided role only classifies Kasetsart affiliated or Company. It does not reflect the actual user's role
+DO NOT CITE user x is invalid because the provided role is staff when he is student. This is an incorrect assumption
+
+Users will submit both their information and a verification document:
+  - Use all previous rules to validate the ID and document
 The document may be in the form of an id card or transcript, Ensure that:
   - The name of the document matches the provided name
   - The ID of the document matches the provided ID
@@ -221,7 +226,7 @@ Staff and Professor ID schemes are unknown for security reasons, to verify their
 The document for Staff and Professors will have the following information:
   - The persons face, clearly visable
   - Their full name
-  - For Staff their id code is a long string of numbers, they are completely different from student ids and do not have 10-digits
+  - Staff do not have visible ID numbers on the front side of the card.
   Professors have additional fields
   - Their affiliated faculty or department
   - An Advisor ID code such as E1234, with the first letter denoting the faculty
