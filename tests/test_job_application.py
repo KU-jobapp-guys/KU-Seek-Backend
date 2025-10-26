@@ -3,8 +3,8 @@
 import os
 import shutil
 from io import BytesIO
-from .base_test import RoutingTestCase
-from .util_functions import generate_jwt
+from base_test import RoutingTestCase
+from util_functions import generate_jwt
 from datetime import datetime, timedelta
 from decouple import config
 from controllers.models import User, Job, Company, Student, JobApplication
