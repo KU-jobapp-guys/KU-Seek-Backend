@@ -499,36 +499,34 @@ components:
         properties:
           id:
             type: integer
-            description: The unique identifier for a annoucement
+            description: The unique identifier for an announcement
             example: 1
-          professor_id:
-            type: integer
-            description: The unique identifier for a professor 
-            example: 1
-          title:
+          professor:
             type: string
-            description: The connection title
-            example: Professor Sompong has connection with UwU company.
-          content: 
+            description: Professor full name (first + last)
+            example: "Assoc. Prof. Nattawut Meechai"
+          professorPosition:
             type: string
-            description: A company overview
-            example: This company is tech company which is suck please don't come to our company
-          create_at:
+            description: Professor position/title
+            example: "Assistant Professor"
+          department:
             type: string
-            description: The time this annoucement got created
-            example: "2025-09-06T10:30:00Z"
-          professor_first_name:
+            description: Professor department
+            example: "Agricultural Engineering"
+          company:
             type: string
-            description: First name of the professor
-            example: Andre
-          professor_last_name:
+            description: Company name
+            example: "EcoFarm Innovation Ltd."
+          companyIndustry:
             type: string
-            description: Surname of the professor
-            example: Astora
-          professor_profile_img:
-            type: string
-            description: Profile img of the professor
-            example: /idk/where/is/the/img/container
+            description: Company industry
+            example: "IoT & Smart Farming"
+          tags:
+            type: array
+            items:
+              type: string
+            description: Tags associated with the company
+            example: ["IoT", "Smart Farming", "Workshop"]
     Job:
         type: object
         required:

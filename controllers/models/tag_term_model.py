@@ -22,3 +22,4 @@ class Terms(BaseModel):
     id: Mapped[int] = MappedColumn(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = MappedColumn(String(40), nullable=True)
     type: Mapped[str] = MappedColumn(String(40), nullable=True)
+
