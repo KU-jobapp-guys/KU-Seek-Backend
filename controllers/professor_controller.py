@@ -119,8 +119,7 @@ class ProfessorController:
                                     (prof_profile.first_name or "")
                                     + " "
                                     + (prof_profile.last_name or "")
-                                )
-                                .strip()
+                                ).strip()
                             )
                             if prof_profile
                             else None
