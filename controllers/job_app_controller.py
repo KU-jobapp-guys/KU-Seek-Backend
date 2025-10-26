@@ -287,6 +287,9 @@ class JobApplicationController:
         user_token = request.headers.get("access_token")
         token_info = decode(jwt=user_token, key=SECRET_KEY, algorithms=["HS512"])
 
+        if not body:
+            return models.ErrorMessage("No job applications provided"), 400
+
         session = self.db.get_session()
 
         company = (
@@ -325,16 +328,15 @@ class JobApplicationController:
             return models.ErrorMessage("Invalid status provided"), 400
 
         try:
-            session.begin()
             orm_models = []
             for application in body:
                 app_orm = (
                     session.query(JobApplication)
-                    .where(JobApplication.job_id == int(application["application_id"]))
+                    .where(JobApplication.id == int(application["application_id"]))
                     .one()
                 )
                 app_orm.status = application["status"]
-                orm_models.append(orm_models)
+                orm_models.append(app_orm)
 
             session.add_all(orm_models)
             session.commit()
@@ -343,6 +345,6 @@ class JobApplicationController:
             return job_apps, 200
 
         except Exception as e:
-            session.rollback()
             session.close()
-            return models.ErrorMessage("Database exception occurred: ", e), 400
+            print(e)
+            return models.ErrorMessage(f"Database exception occurred: {e}"), 400
