@@ -210,6 +210,13 @@ You know the following rules about student IDs and student cards:
 
 - the 10th digit is the checksum, that you cannot verify as you have not been given the decoding function
 
+A student will submit both their information and a verification document:
+  - Use all previous rules to validate the student ID and document
+The document may be in the form of an id card or transcript, Ensure that:
+  - The name of the document matches the provided name
+  - The ID of the document matches the provided ID
+  - The document contains the Kasetsart Logo on the top left of the document
+
 Staff and Professor ID schemes are unknown for security reasons, to verify their identity you will need to check the verification document.
 The document for Staff and Professors will have the following information:
   - The persons face, clearly visable
