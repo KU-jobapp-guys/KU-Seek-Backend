@@ -316,12 +316,15 @@ class JobApplicationController:
             session.query(JobApplication).where(JobApplication.job_id == job_id).all()
         )
 
+        if not all([applicant.status == "pending" for applicant in job_apps]):
+            return models.ErrorMessage("Invalid job application ID provided"), 400
+
         applicant_ids = [application.id for application in job_apps]
         update_ids = [int(application["application_id"]) for application in body]
 
         if not set(update_ids).issubset(set(applicant_ids)):
             session.close()
-            return models.ErrorMessage("Invalid ID provided"), 400
+            return models.ErrorMessage("Invalid job application ID provided"), 400
 
         if not all([applicant["status"] in VALID_STATUSES for applicant in body]):
             session.close()
