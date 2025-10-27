@@ -483,102 +483,96 @@ components:
 
   schemas:
     Job:
-        type: object
-        required:
-          - id
-          - company_id
-          - title
-          - status
-          - created_at
-        properties:
-          id:
-            type: integer
-            description: The unique identifier for a job
-            example: 1
-          company_id:
-            type: integer
-            description: The ID of the company posting the job
-            example: 5
-          description:
+      type: object
+      required:
+        - jobId
+        - company
+        - role
+        - jobLevel
+        - postTime
+      properties:
+        jobId:
+          type: string
+          description: Frontend-facing job identifier (slug)
+          example: "urban-frontend-1a2b"
+        company:
+          type: string
+          description: Human-friendly company name
+          example: "Urban Mobility Tech"
+        role:
+          type: string
+          description: Job title/role
+          example: "Frontend Developer"
+        jobLevel:
+          type: string
+          description: Job seniority level
+          example: "Mid-level"
+        location:
+          type: string
+          description: Job or company location
+          example: "Bangkok, Thailand"
+        postTime:
+          type: string
+          format: date-time
+          description: When the job was posted (ISO timestamp)
+          example: "2025-08-01T10:00:00Z"
+        description:
+          type: string
+          description: Detailed description of the job
+          example: "Develop and maintain web applications using React and TypeScript."
+        jobType:
+          type: string
+          description: Type of employment
+          example: "Full-time"
+        skills:
+          type: array
+          description: Array of required skill names
+          items:
             type: string
-            description: Detailed description of the job
-            example: "We are looking for a passionate software developer to join our team (Just Kidding)..."
-          title:
+            example: "React"
+        tags:
+          type: array
+          description: Array of tag names associated with this job
+          items:
             type: string
-            maxLength: 50
-            description: The job title/position title
-            example: "Software Developer"
-          salary_min:
-            type: number
-            format: float
-            description: Minimum salary offered
-            example: 30000.0
-          salary_max:
-            type: number
-            format: float
-            description: Maximum salary offered
-            example: 50000.0
-          location:
-            type: string
-            maxLength: 255
-            description: Job location
-            example: "Bangkok, Thailand"
-          work_hours:
-            type: string
-            maxLength: 20
-            description: Working hours
-            example: "9:00 AM - 5:00 PM"
-          job_type:
-            type: string
-            maxLength: 40
-            description: Type of employment
-            example: "full-time"
-          job_level:
-            type: string
-            maxLength: 40
-            description: Type of Job Level. 
-            example: "internship, entry-level, mid-level, Senior-level"
-          status:
-            type: string
-            maxLength: 20
-            description: Current status of the job posting
-            enum: ["pending", "approved", "rejected"]
-            default: "pending"
-            example: "approved"
-          visibility:
-            type: boolean
-            description: Whether the job is visible to students
-            example: true
-          capacity:
-            type: integer
-            description: Number of positions available
-            example: 3
-          end_date:
-            type: string
-            format: date-time
-            description: Application deadline
-            example: "2025-12-31T23:59:59Z"
-          created_at:
-            type: string
-            format: date-time
-            description: When the job was created
-            example: "2025-09-06T10:30:00Z"
-          approved_by:
-            type: integer
-            description: ID of the user who approved this job
-            example: 10
-          skills:
-            type: array
-            description: List of required skills for this job
-            items:
-              $ref: '#/components/schemas/Skill'
-          tags:
-            type: array
-            description: List of tags associated with this job
-            items:
-              $ref: '#/components/schemas/Tag'
-          company:
-            $ref: '#/components/schemas/Company'
+            example: "Remote Work"
+        contacts:
+          type: array
+          description: Contact objects for the job/company
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                description: Contact type (email, phone, website)
+                example: "email"
+              link:
+                type: string
+                description: Contact link or value
+                example: "info@urbanmobilitytech.com"
+        salary_min:
+          type: number
+          format: float
+          description: Minimum salary offered
+          example: 50000
+        salary_max:
+          type: number
+          format: float
+          description: Maximum salary offered
+          example: 70000
+        status:
+          type: string
+          description: Current status of the job posting
+          enum: ["pending", "approved", "rejected"]
+          example: "approved"
+        pendingApplicants:
+          type: integer
+          description: Number of applicants with pending status
+          example: 0
+        totalApplicants:
+          type: integer
+          description: Total number of applicants
+          example: 4
     
     JobFilter:
       type: object
