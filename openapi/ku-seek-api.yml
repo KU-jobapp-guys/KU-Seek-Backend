@@ -394,6 +394,41 @@ paths:
         400:
           description: Invalid request body.
 
+  /application/update/{job_id}:
+    parameters:
+      - name: job_id
+        in: path
+        required: true
+        description: The ID of the job post whose applications to update
+        schema:
+          type: integer
+    patch:
+      summary: Update job application statuses
+      description: Update the status of multiple job applications for a specific job post. Only the company that owns the job can update application statuses.
+      operationId: controllers.controller.update_job_applications_status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ApplicationStatusUpdate'
+      responses:
+        200:
+          description: Application statuses updated successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobApplication'
+        400:
+          description: Invalid request body or application IDs provided.
+        401:
+          description: User is not authenticated
+        403:
+          description: User is not the job owner.
 
 components:
   securitySchemes:
@@ -1019,3 +1054,19 @@ components:
           type: string
           format: binary
           description: Upload new application letter file
+    ApplicationStatusUpdate:
+      type: object
+      required:
+        - application_id
+        - status
+      properties:
+        application_id:
+          type: integer
+          format: uuid
+          description: The unique identifier of the job application
+          example: 12
+        status:
+          type: string
+          enum: ["accepted", "rejected"]
+          description: The new status for the application
+          example: "accepted"
