@@ -8,6 +8,8 @@ from flask_wtf import CSRFProtect
 from controllers.db_controller import BaseController
 from openapi_server import encoder
 from controllers.models.tag_term_model import Terms
+from controllers.management.admin import YesManModel, AiAdminModel
+
 
 if not os.path.exists(".env"):
     print(".env file not found.You may create one from 'sample-env.txt'.")
@@ -35,7 +37,7 @@ except ModuleNotFoundError:
     sys.exit(1)
 
 
-def create_app(engine=None):
+def create_app(engine=None, admin=None):
     """
     Setups and configure the application.
 
@@ -109,11 +111,18 @@ def create_app(engine=None):
                     session.close()
     except Exception:
         print("Warning: failed to seed Terms table")
+    app.app.config["Admin"] = YesManModel()
+    # set an agentic model for validation if provided
+    if admin:
+        app.app.config["Admin"] = admin
 
     return app
 
 
-app = create_app()
+prompt = os.path.join(
+    os.getcwd(), "controllers", "management", "prompts", "validator_prompt.txt"
+)
+app = create_app(admin=AiAdminModel(prompt_file=prompt, model="gemini-2.0-flash"))
 
 if __name__ == "__main__":
     app.run(port=8000, debug=True, use_reloader=False)
