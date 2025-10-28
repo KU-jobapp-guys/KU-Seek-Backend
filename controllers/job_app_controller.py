@@ -214,7 +214,7 @@ class JobApplicationController:
                     session, [j_app.job], single_response=True
                 )
             except Exception:
-                    mapped_job = {
+                mapped_job = {
                     "jobId": str(j_app.job.id) if j_app.job else None,
                     "company": None,
                     "role": j_app.job.title if j_app.job else None,

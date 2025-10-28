@@ -514,9 +514,7 @@ class JobController:
                 contacts.append({"type": contact_type, "link": link})
 
             post_time = (
-                job.created_at.isoformat()
-                if getattr(job, "created_at", None)
-                else None
+                job.created_at.isoformat() if getattr(job, "created_at", None) else None
             )
 
             job_id_slug = str(job.id)
