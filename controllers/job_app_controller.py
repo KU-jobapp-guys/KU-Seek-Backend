@@ -13,7 +13,7 @@ from werkzeug.utils import secure_filename
 from .models.job_model import Job, JobApplication
 from .models.user_model import Student, Company
 from .models.file_model import File
-
+from .models.profile_model import Profile
 
 ALLOWED_FILE_FORMATS = config(
     "ALLOWED_FILE_FORMATS", cast=Csv(), default="application/pdf, application/msword"
@@ -140,25 +140,39 @@ class JobApplicationController:
             file_type="resume",
         )
 
-        # commit transaction
-        resume.save(resume_file_path)
-        letter.save(letter_file_path)
-        session.add_all([letter_model, resume_model])
-        session.commit()
+        # commit transaction with rollback on error
+        try:
+            resume.save(resume_file_path)
+            letter.save(letter_file_path)
+            session.add_all([letter_model, resume_model])
+            session.commit()
 
-        # update job application with the file ids
-        session.refresh(letter_model)
-        session.refresh(resume_model)
-        job_application.resume = resume_model.id
-        job_application.letter_of_application = letter_model.id
+            # update job application with the file ids
+            session.refresh(letter_model)
+            session.refresh(resume_model)
+            job_application.resume = resume_model.id
+            job_application.letter_of_application = letter_model.id
 
-        session.add(job_application)
-        session.commit()
+            session.add(job_application)
+            session.commit()
 
-        job_app_data = job_application.to_dict()
-        session.close()
+            job_app_data = job_application.to_dict()
+            session.close()
 
-        return job_app_data, 200
+            return job_app_data, 200
+
+        except Exception as e:
+            # rollback database transaction
+            session.rollback()
+            session.close()
+
+            # cleanup saved files on error
+            if os.path.exists(resume_file_path):
+                os.remove(resume_file_path)
+            if os.path.exists(letter_file_path):
+                os.remove(letter_file_path)
+
+            return models.ErrorMessage("Failed to create job application: ", e), 404
 
     @role_required(["Student"])
     def fetch_user_job_applications(self):
@@ -167,6 +181,12 @@ class JobApplicationController:
         token_info = decode(jwt=user_token, key=SECRET_KEY, algorithms=["HS512"])
 
         session = self.db.get_session()
+
+        profile = (
+            session.query(Profile)
+            .where(Profile.user_id == UUID(token_info["uid"]))
+            .one_or_none()
+        )
 
         student = (
             session.query(Student)
@@ -187,11 +207,13 @@ class JobApplicationController:
 
         formatted_apps = [
             models.JobApplication(
+                id=j_app.id,
                 applicant={
                     "user_id": str(j_app.student_id),
                     "first_name": j_app.first_name,
                     "last_name": j_app.last_name,
                     "contact_email": j_app.contact_email,
+                    "location": profile.location
                 },
                 job_details={
                     "job_id": str(j_app.job.id),
@@ -244,24 +266,36 @@ class JobApplicationController:
             session.query(JobApplication).where(JobApplication.job_id == job_id).all()
         )
 
-        formatted_apps = [
-            models.JobApplication(
-                applicant={
-                    "user_id": str(j_app.student_id),
-                    "first_name": j_app.first_name,
-                    "last_name": j_app.last_name,
-                    "contact_email": j_app.contact_email,
-                },
-                resume=j_app.resume,
-                letter_of_application=j_app.letter_of_application,
-                years_of_experience=j_app.years_of_experience,
-                expected_salary=j_app.expected_salary,
-                phone_number=j_app.phone_number,
-                status=j_app.status,
-                applied_at=j_app.applied_at,
+        formatted_apps = []
+        for j_app in job_apps:
+            applicant_profile = (
+                session.query(Profile)
+                .join(Student, Profile.user_id == Student.user_id)
+                .filter(Student.id == j_app.student_id)
+                .one_or_none()
             )
-            for j_app in job_apps
-        ]
+
+            formatted_apps.append(
+                models.JobApplication(
+                    id=j_app.id,
+                    applicant={
+                        "user_id": str(j_app.student_id),
+                        "first_name": j_app.first_name,
+                        "last_name": j_app.last_name,
+                        "contact_email": j_app.contact_email,
+                        "location": (
+                            applicant_profile.location if applicant_profile else None
+                        ),
+                    },
+                    resume=j_app.resume,
+                    letter_of_application=j_app.letter_of_application,
+                    years_of_experience=j_app.years_of_experience,
+                    expected_salary=j_app.expected_salary,
+                    phone_number=j_app.phone_number,
+                    status=j_app.status,
+                    applied_at=j_app.applied_at,
+                )
+            )
 
         session.close()
 

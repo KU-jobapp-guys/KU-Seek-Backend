@@ -1,6 +1,7 @@
 """Module containing the base class for all controllers."""
 
 import sys
+from abc import ABC, abstractmethod
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 from decouple import config
@@ -11,14 +12,28 @@ OPENAPI_STUB_DIR = config("OPENAPI_STUB_DIR", default="swagger_server")
 sys.path.append(OPENAPI_STUB_DIR)
 
 
-class BaseController:
+class AbstractDatabaseController(ABC):
+    """Interface for database controllers."""
+
+    @abstractmethod
+    def _get_database():
+        """Get an instance of the database engine. This method is abstract."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_session():
+        """Return a session for ORM database calls. This method is abstract."""
+        raise NotImplementedError
+
+
+class BaseController(AbstractDatabaseController):
     """Base class for creating controllers."""
 
     def __init__(self):
         """Initialize the class."""
-        self.pool = self.__get_database()
+        self.pool = self._get_database()
 
-    def __get_database(self):
+    def _get_database(self):
         """Get a database instance."""
         host = config("DB_HOST", default="127.0.0.1")
         port = config("DB_PORT", cast=int, default="1234")
