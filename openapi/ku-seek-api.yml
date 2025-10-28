@@ -344,7 +344,7 @@ paths:
               schema: 
                 type: array
                 items:
-                  $ref: '#/components/schemas/JobApplication'
+                  $ref: '#/components/schemas/StudentApplication'
         400:
           description: Invalid credentials
 
@@ -1061,6 +1061,57 @@ components:
           type: string
           format: date-time
           example: "2025-10-07T18:30:00Z"
+
+    StudentApplication:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        applicant:
+          type: object
+          properties:
+            first_name:
+              type: string
+              example: "Prima"
+            last_name:
+              type: string
+              example: "Chantira"
+            contact_email:
+              type: string
+              example: "prima@example.com"
+            location:
+              type: string
+              example: "Khon Kaen, Thailand"
+            user_id:
+              type: string
+              example: "1"
+        applied_at:
+          type: string
+          format: date-time
+          example: "2025-08-10T09:00:00Z"
+        expected_salary:
+          type: string
+          example: "45,000 THB/month"
+        phone_number:
+          type: string
+          example: "0812345678"
+        resume:
+          type: string
+          example: "/uploads/resumes/prima_resume.pdf"
+        letter_of_application:
+          type: string
+          example: "/uploads/letters/prima_letter.pdf"
+        status:
+          type: string
+          example: "pending"
+          enum: ["pending", "approved", "rejected"]
+        years_of_experience:
+          type: string
+          example: "1 year"
+        job:
+          $ref: '#/components/schemas/Job'
+
 
     ApplicationSubmission:
       type: object

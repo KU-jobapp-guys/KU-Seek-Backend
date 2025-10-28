@@ -7,6 +7,7 @@ from .decorators import role_required
 from flask import request
 from decouple import config, Csv
 from sqlalchemy.orm import joinedload
+from .job_controller import JobController
 from swagger_server.openapi_server import models
 from werkzeug.utils import secure_filename
 from .models.job_model import Job, JobApplication
@@ -203,30 +204,42 @@ class JobApplicationController:
             .all()
         )
 
-        formatted_apps = [
-            models.JobApplication(
-                id=j_app.id,
-                applicant={
+        job_controller = JobController(self.db)
+
+        formatted_apps = []
+        for j_app in job_apps:
+            mapped_job = None
+            try:
+                mapped_job = job_controller._JobController__job_with_company_terms_tags(
+                    session, [j_app.job], single_response=True
+                )
+            except Exception:
+                    mapped_job = {
+                    "jobId": str(j_app.job.id) if j_app.job else None,
+                    "company": None,
+                    "role": j_app.job.title if j_app.job else None,
+                }
+
+            app_obj = {
+                "id": j_app.id,
+                "applicant": {
                     "user_id": str(j_app.student_id),
                     "first_name": j_app.first_name,
                     "last_name": j_app.last_name,
                     "contact_email": j_app.contact_email,
-                    "location": profile.location
+                    "location": (profile.location if profile else None),
                 },
-                job_details={
-                    "job_id": str(j_app.job.id),
-                    "job_title": j_app.job.title,
-                },
-                resume=j_app.resume,
-                letter_of_application=j_app.letter_of_application,
-                years_of_experience=j_app.years_of_experience,
-                expected_salary=j_app.expected_salary,
-                phone_number=j_app.phone_number,
-                status=j_app.status,
-                applied_at=j_app.applied_at,
-            )
-            for j_app in job_apps
-        ]
+                "job": mapped_job,
+                "resume": j_app.resume,
+                "letter_of_application": j_app.letter_of_application,
+                "years_of_experience": j_app.years_of_experience,
+                "expected_salary": j_app.expected_salary,
+                "phone_number": j_app.phone_number,
+                "status": j_app.status,
+                "applied_at": j_app.applied_at,
+            }
+
+            formatted_apps.append(app_obj)
 
         session.close()
 
