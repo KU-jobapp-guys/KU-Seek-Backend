@@ -12,7 +12,7 @@ from werkzeug.utils import secure_filename
 from .models.job_model import Job, JobApplication
 from .models.user_model import Student, Company
 from .models.file_model import File
-
+from .models.profile_model import Profile
 
 ALLOWED_FILE_FORMATS = config(
     "ALLOWED_FILE_FORMATS", cast=Csv(), default="application/pdf, application/msword"
@@ -180,6 +180,12 @@ class JobApplicationController:
 
         session = self.db.get_session()
 
+        profile = (
+            session.query(Profile)
+            .where(Profile.user_id == UUID(token_info["uid"]))
+            .one_or_none()
+        )
+
         student = (
             session.query(Student)
             .where(Student.user_id == UUID(token_info["uid"]))
@@ -199,11 +205,13 @@ class JobApplicationController:
 
         formatted_apps = [
             models.JobApplication(
+                id=j_app.id,
                 applicant={
                     "user_id": str(j_app.student_id),
                     "first_name": j_app.first_name,
                     "last_name": j_app.last_name,
                     "contact_email": j_app.contact_email,
+                    "location": profile.location
                 },
                 job_details={
                     "job_id": str(j_app.job.id),
@@ -256,24 +264,36 @@ class JobApplicationController:
             session.query(JobApplication).where(JobApplication.job_id == job_id).all()
         )
 
-        formatted_apps = [
-            models.JobApplication(
-                applicant={
-                    "user_id": str(j_app.student_id),
-                    "first_name": j_app.first_name,
-                    "last_name": j_app.last_name,
-                    "contact_email": j_app.contact_email,
-                },
-                resume=j_app.resume,
-                letter_of_application=j_app.letter_of_application,
-                years_of_experience=j_app.years_of_experience,
-                expected_salary=j_app.expected_salary,
-                phone_number=j_app.phone_number,
-                status=j_app.status,
-                applied_at=j_app.applied_at,
+        formatted_apps = []
+        for j_app in job_apps:
+            applicant_profile = (
+                session.query(Profile)
+                .join(Student, Profile.user_id == Student.user_id)
+                .filter(Student.id == j_app.student_id)
+                .one_or_none()
             )
-            for j_app in job_apps
-        ]
+
+            formatted_apps.append(
+                models.JobApplication(
+                    id=j_app.id,
+                    applicant={
+                        "user_id": str(j_app.student_id),
+                        "first_name": j_app.first_name,
+                        "last_name": j_app.last_name,
+                        "contact_email": j_app.contact_email,
+                        "location": (
+                            applicant_profile.location if applicant_profile else None
+                        ),
+                    },
+                    resume=j_app.resume,
+                    letter_of_application=j_app.letter_of_application,
+                    years_of_experience=j_app.years_of_experience,
+                    expected_salary=j_app.expected_salary,
+                    phone_number=j_app.phone_number,
+                    status=j_app.status,
+                    applied_at=j_app.applied_at,
+                )
+            )
 
         session.close()
 

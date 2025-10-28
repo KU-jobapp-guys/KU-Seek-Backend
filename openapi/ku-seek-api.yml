@@ -1005,9 +1005,13 @@ components:
     JobApplication:
       type: object
       properties:
+        id:
+          type: integer
+          nullable: false
         applicant:
           type: object
           properties:
+            
             user_id:
               type: string
               nullable: false
@@ -1020,6 +1024,9 @@ components:
               nullable: false
               example: "Doe"
             contact_email:
+              type: string
+              nullable: false
+            location:
               type: string
               nullable: false
         job_details:
