@@ -533,7 +533,7 @@ class JobController:
                 "skills": skills_list,
                 "salary_min": job.salary_min,
                 "salary_max": job.salary_max,
-                "status": "approved",
+                "status": "accepted",
                 "pendingApplicants": pending_applicants,
                 "totalApplicants": total_applicants,
             }
