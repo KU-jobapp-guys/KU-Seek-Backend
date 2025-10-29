@@ -46,6 +46,16 @@ paths:
                     type: string
         400:
           description: Invalid refresh token provided in header
+  
+  /auth/logout:
+    post:
+      summary: Logout a user from the system
+      operationId: controllers.auth_controller.logout
+      responses:
+        200:
+          description: Logout successfull
+        401:
+          description: User not authenticated
 
   /auth/oauth:
     post:
