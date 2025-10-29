@@ -31,6 +31,9 @@ ALGORITHM = "HS512"
 
 BASE_FILE_PATH = config("BASE_FILE_PATH", default="content")
 
+REFRESH_EXP_TIME = config("REFRESH_TOKEN_EXPIRY_MIN", default=30)
+ACCESS_EXP_TIME = config("ACCESS_TOKEN_EXPIRY_MIN", default=5)
+
 
 def get_auth_user_id(request):
     """Get the authenticated user ID to verify the user's identity for the operation."""
@@ -316,7 +319,7 @@ class AuthenticationController:
         # Refresh token payload
         refresh_id = random.getrandbits(32)
         iat = int(datetime.now(UTC).timestamp())
-        exp = int((datetime.now(UTC) + timedelta(days=30)).timestamp())
+        exp = int((datetime.now(UTC) + timedelta(hours=30)).timestamp())
 
         payload = {"uid": str(uid), "refresh": refresh_id, "iat": iat, "exp": exp}
 
