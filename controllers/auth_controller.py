@@ -75,6 +75,15 @@ def get_new_access_token():
     auth_controller = AuthenticationController(current_app.config["Database"])
     return auth_controller.refresh_access_token(refresh_token)
 
+def logout():
+    """
+    Logout a user, clearing JWT tokens, headers, and active sessions in the database.
+
+    Logout a user from all devices and sessions. The user's refresh token is used
+    as proof of authentication for determining which user is logged in.
+    """
+    pass
+
 
 def handle_authentication(body: Dict):
     """
@@ -219,12 +228,27 @@ class AuthenticationController:
 
         session.close()
         return False
+    
+    def logout_user(self, refresh_token: str) -> bool:
+        """
+        Logout a user from the system.
+
+        Logout the user with the provided refresh_token.
+        This method returns nothing if the proof of authentication
+        is invalid, or there are no active sessions in the database.
+
+        Args:
+            refresh_token: A JWT, containing the user's session
+
+        returns A boolean denoting whether the logout is successful
+        """
+        pass
 
     def login_user(self, uid: str) -> Dict[str, str]:
         """
         Login a user into the system.
 
-        Login the use with the provided user id,
+        Login the user with the provided user id,
         then return access and refresh tokens for proof of authentication.
 
         Args:
