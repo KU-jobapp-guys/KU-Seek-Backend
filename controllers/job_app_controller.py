@@ -59,9 +59,9 @@ class JobApplicationController:
             session.close()
             return models.ErrorMessage("Job not found."), 400
 
-        if not len(current_applicants) < job.capacity:
-            session.close()
-            return models.ErrorMessage("Invalid job provided."), 400
+        # if not len(current_applicants) < job.capacity:
+        #     session.close()
+        #     return models.ErrorMessage("Invalid job provided."), 400
 
         if str(student.id) in [
             str(applicant.student_id) for applicant in current_applicants
