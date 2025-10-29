@@ -73,7 +73,7 @@ def get_csrf_token():
 def get_new_access_token():
     """Return a new access token for authorizaation."""
     refresh_token = request.cookies.get("refresh_token")
-    auth_controller = AuthenticationController(current_app.config["Database"])
+    auth_controller = AuthenticationController(current_app.config["Database"], current_app.config["Admin"])
     return auth_controller.refresh_access_token(refresh_token)
 
 
@@ -85,7 +85,7 @@ def logout():
     as proof of authentication for determining which user is logged in.
     """
     refresh_token = request.cookies.get("refresh_token")
-    auth_controller = AuthenticationController(current_app.config["Database"])
+    auth_controller = AuthenticationController(current_app.config["Database"], current_app.config["Admin"])
     return auth_controller.logout_user(refresh_token)
 
 
