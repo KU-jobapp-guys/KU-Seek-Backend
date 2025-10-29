@@ -21,6 +21,7 @@ from .models.user_model import User, Student, Company, Professor
 from .models.token_model import Token
 from .management.admin import AdminModel
 from .management.email import EmailSender
+from uuid import UUID
 from werkzeug.utils import secure_filename
 
 
@@ -75,6 +76,7 @@ def get_new_access_token():
     auth_controller = AuthenticationController(current_app.config["Database"])
     return auth_controller.refresh_access_token(refresh_token)
 
+
 def logout():
     """
     Logout a user, clearing JWT tokens, headers, and active sessions in the database.
@@ -82,7 +84,9 @@ def logout():
     Logout a user from all devices and sessions. The user's refresh token is used
     as proof of authentication for determining which user is logged in.
     """
-    pass
+    refresh_token = request.cookies.get("refresh_token")
+    auth_controller = AuthenticationController(current_app.config["Database"])
+    return auth_controller.logout_user(refresh_token)
 
 
 def handle_authentication(body: Dict):
@@ -228,7 +232,7 @@ class AuthenticationController:
 
         session.close()
         return False
-    
+
     def logout_user(self, refresh_token: str) -> bool:
         """
         Logout a user from the system.
@@ -242,7 +246,52 @@ class AuthenticationController:
 
         returns A boolean denoting whether the logout is successful
         """
-        pass
+        try:
+            payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+            uid = payload.get("uid")
+            refresh_id = payload.get("refresh_id")
+        except jwt.ExpiredSignatureError:
+            raise ProblemException(
+                status=401, title="Unauthorized", detail="Token expired"
+            )
+        except jwt.InvalidTokenError:
+            raise ProblemException(
+                status=401, title="Unauthorized", detail="Invalid token"
+            )
+
+        try:
+            session = self.db.get_session()
+            # check if the refresh token exists
+            session.query(Token).where(
+                Token.uid == UUID(uid), Token.refresh_id == refresh_id
+            ).one_or_none()
+            if not refresh_token:
+                session.close()
+                raise ProblemException(
+                    status=401, title="Unauthorized", detail="Invalid token"
+                )
+
+            session.query(Token).where(Token.uid == UUID(uid)).delete()
+            session.commit()
+            session.close()
+
+            response = make_response(
+            {"Detail": "Successfully logged out."}, 200
+            )
+
+            # set the refresh token to expire immediately
+            response.set_cookie(
+                "refresh_token", max_age=0, httponly=True
+            )
+
+            return response
+
+        except Exception as e:
+            session.rollback()
+            session.close()
+            raise ProblemException(
+                status=500, title="Server Error", detail=f"Database Error occured: {e}"
+            )
 
     def login_user(self, uid: str) -> Dict[str, str]:
         """
