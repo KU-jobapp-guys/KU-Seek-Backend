@@ -166,3 +166,9 @@ def fetch_job_applications_from_job(job_id: int) -> Optional[Dict]:
     """Fetch all job applications related to a job post by job ID."""
     app_manager = JobApplicationController(current_app.config["Database"])
     return app_manager.fetch_job_application_from_job_post(job_id)
+
+
+def update_job_applications_status(job_id: int, body: list[Dict]) -> Optional[Dict]:
+    """Update multiple job applications' status from the provided job."""
+    app_manager = JobApplicationController(current_app.config["Database"])
+    return app_manager.update_job_applications_status(job_id, body)
