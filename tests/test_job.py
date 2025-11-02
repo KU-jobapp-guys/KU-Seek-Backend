@@ -373,7 +373,7 @@ class JobTestCase(RoutingTestCase):
         self.assertEqual(res.status_code, 200)
         data = res.json
 
-        self.assertEqual(len(data), 2)
+        self.assertEqual(len(data), 3)
 
         all_jobs_res = self.client.get("/api/v1/jobs")
         all_jobs_data = all_jobs_res.json
@@ -381,3 +381,54 @@ class JobTestCase(RoutingTestCase):
         self.assertEqual(len(data), len(all_jobs_data))
 
         self.assertEqual(data, all_jobs_data)
+
+    def test_filter_is_owner_returns_only_own_jobs(self):
+        """Return only jobs posted by the authenticated company.
+
+        This verifies that when the request body contains "is_owner": true the
+        API filters jobs to those owned by the JWT's company.
+        """
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
+
+        job_payload = {
+            "capacity": 1,
+            "description": "Owner job test.",
+            "end_date": "2026-01-01T23:59:59Z",
+            "job_level": "Mid-level",
+            "job_type": "full-time",
+            "location": "Bangkok, Thailand",
+            "salary_max": 50000,
+            "salary_min": 30000,
+            "skill_names": ["React"],
+            "tag_names": ["OwnerTest"],
+            "title": "Owner Job",
+            "work_hours": "9:00 AM - 5:00 PM",
+        }
+
+        post_res = self.client.post(
+            "/api/v1/jobs",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json=job_payload,
+        )
+
+        self.assertEqual(post_res.status_code, 201)
+        posted_job = post_res.json
+
+        res = self.client.post(
+            "/api/v1/jobs/search",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json={"is_owner": True},
+        )
+
+        self.assertEqual(res.status_code, 200)
+        data = res.json
+        self.assertGreater(len(data), 0)
+
+        for job in data:
+            self.assertEqual(job.get("company"), posted_job.get("company"))
+
+        job_ids = [j.get("jobId") for j in data]
+        self.assertIn(posted_job.get("jobId"), job_ids)

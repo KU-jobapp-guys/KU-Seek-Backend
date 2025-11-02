@@ -328,12 +328,31 @@ class JobController:
             "capacity",
             "end_date",
         }
-        allowed_company_fields = {"company_name", "company_industry", "company_type"}
+        allowed_company_fields = {
+            "company_name",
+            "company_industry",
+            "company_type",
+            "user_id",
+        }
         allowed_special_fields = {"skill_names", "tag_names"}
 
         all_allowed_fields = (
             allowed_job_fields | allowed_company_fields | allowed_special_fields
         )
+
+        def _is_empty_filter(d: Dict) -> bool:
+            if not d:
+                return True
+            for v in d.values():
+                if v is None or v == "":
+                    continue
+                if isinstance(v, list) and len(v) == 0:
+                    continue
+                return False
+            return True
+
+        if _is_empty_filter(body):
+            return self.get_all_jobs("")
 
         session = self.db.get_session()
 
@@ -347,6 +366,30 @@ class JobController:
                 )
 
             query = session.query(Job).join(Company, Job.company_id == Company.id)
+
+            owner_user_id = body.pop("user_id", None)
+            if owner_user_id:
+                try:
+                    # Accept UUID string or UUID instance
+                    if isinstance(owner_user_id, str):
+                        from uuid import UUID as _UUID
+
+                        owner_uuid = _UUID(owner_user_id)
+                    else:
+                        owner_uuid = owner_user_id
+                except Exception:
+                    session.close()
+                    raise ValueError("Invalid user_id format. Expected UUID string.")
+                company_obj = (
+                    session.query(Company)
+                    .where(Company.user_id == owner_uuid)
+                    .one_or_none()
+                )
+                if not company_obj:
+                    session.close()
+                    raise ValueError("Company not found for provided user_id")
+
+                query = query.filter(Job.company_id == company_obj.id)
 
             skill_names = body.pop("skill_names", None)
             tag_names = body.pop("tag_names", None)
@@ -393,7 +436,17 @@ class JobController:
                     query = query.filter(getattr(Company, key).ilike(f"%{val}%"))
 
                 elif key in allowed_job_fields:
-                    query = query.filter(getattr(Job, key).ilike(f"%{val}%"))
+                    if key == "location":
+                        from sqlalchemy import or_
+
+                        query = query.filter(
+                            or_(
+                                Job.location.ilike(f"%{val}%"),
+                                Company.full_location.ilike(f"%{val}%"),
+                            )
+                        )
+                    else:
+                        query = query.filter(getattr(Job, key).ilike(f"%{val}%"))
 
             # Filter by skills if provided
             if skill_names:
@@ -465,7 +518,7 @@ class JobController:
 
             company_name = company.company_name if company else None
 
-            location = company.full_location or job.location
+            location = job.location or company.full_location
 
             job_skills = (
                 session.query(JobSkills).filter(JobSkills.job_id == job.id).all()

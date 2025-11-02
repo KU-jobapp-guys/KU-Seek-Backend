@@ -109,6 +109,9 @@ def get_filtered_jobs(body: Dict):
     """Return filtered Jobs."""
     try:
         job_manager = JobController(current_app.config["Database"])
+        if body.get("is_owner"):
+            body.pop("is_owner")
+            body["user_id"] = get_auth_user_id(request)
         filtered_jobs = job_manager.get_filtered_job(body)
         return jsonify(filtered_jobs), 200
     except ValueError as e:
