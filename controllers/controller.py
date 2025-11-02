@@ -234,3 +234,7 @@ def post_tag(body: Dict):
         return jsonify({"message": str(e)}), 400
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+def update_job_applications_status(job_id: int, body: list[Dict]) -> Optional[Dict]:
+    """Update multiple job applications' status from the provided job."""
+    app_manager = JobApplicationController(current_app.config["Database"])
+    return app_manager.update_job_applications_status(job_id, body)

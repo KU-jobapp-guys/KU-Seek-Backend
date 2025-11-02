@@ -1,6 +1,7 @@
 """Module containing endpoints for job applications."""
 
 import os
+from typing import Dict
 from uuid import UUID
 from jwt import decode
 from .decorators import role_required
@@ -20,6 +21,7 @@ ALLOWED_FILE_FORMATS = config(
 )
 BASE_FILE_PATH = config("BASE_FILE_PATH", default="content")
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
+VALID_STATUSES = ["accepted", "rejected"]
 
 
 class JobApplicationController:
@@ -30,7 +32,7 @@ class JobApplicationController:
         self.db = database
 
     @role_required(["Student"])
-    def create_job_application(self, body, job_id):
+    def create_job_application(self, body, job_id: int):
         """Create a new job application from the request body."""
         user_token = request.headers.get("access_token")
         token_info = decode(jwt=user_token, key=SECRET_KEY, algorithms=["HS512"])
@@ -246,7 +248,7 @@ class JobApplicationController:
         return formatted_apps, 200
 
     @role_required(["Company"])
-    def fetch_job_application_from_job_post(self, job_id):
+    def fetch_job_application_from_job_post(self, job_id: int):
         """Fetch all job applications for a specific job post."""
         user_token = request.headers.get("access_token")
         token_info = decode(jwt=user_token, key=SECRET_KEY, algorithms=["HS512"])
@@ -311,3 +313,89 @@ class JobApplicationController:
         session.close()
 
         return formatted_apps, 200
+
+    @role_required(["Company"])
+    def update_job_applications_status(self, job_id: int, body: list[Dict]):
+        """
+        Update the status of multiple job applications.
+
+        Update the status of all job applications sent in the request body,
+        and queues an email notifying students about their job application
+        status.
+
+        Args:
+            job_id: The job id for the job application's applied job
+            body: The request body, in the format of a list of JSON
+                  with the following attribues:
+                    {application_id: str, status: str}
+
+        returns A copy of a list of updated job applications
+        """
+        user_token = request.headers.get("access_token")
+        token_info = decode(jwt=user_token, key=SECRET_KEY, algorithms=["HS512"])
+
+        if not body:
+            return models.ErrorMessage("No job applications provided"), 400
+
+        session = self.db.get_session()
+
+        company = (
+            session.query(Company)
+            .where(Company.user_id == UUID(token_info["uid"]))
+            .one_or_none()
+        )
+
+        if not company:
+            session.close()
+            return models.ErrorMessage("Company not found"), 400
+
+        job = session.query(Job).where(Job.id == job_id).one_or_none()
+
+        if not job:
+            session.close()
+            return models.ErrorMessage("Invalid job provided"), 400
+
+        if job.company_id != company.id:
+            session.close()
+            return models.ErrorMessage("User is not the job owner"), 403
+
+        job_apps = (
+            session.query(JobApplication).where(JobApplication.job_id == job_id).all()
+        )
+
+        if not all([applicant.status == "pending" for applicant in job_apps]):
+            session.close()
+            return models.ErrorMessage("Invalid job application ID provided"), 400
+
+        applicant_ids = [application.id for application in job_apps]
+        update_ids = [int(application["application_id"]) for application in body]
+
+        if not set(update_ids).issubset(set(applicant_ids)):
+            session.close()
+            return models.ErrorMessage("Invalid job application ID provided"), 400
+
+        if not all([applicant["status"] in VALID_STATUSES for applicant in body]):
+            session.close()
+            return models.ErrorMessage("Invalid status provided"), 400
+
+        try:
+            orm_models = []
+            for application in body:
+                app_orm = (
+                    session.query(JobApplication)
+                    .where(JobApplication.id == int(application["application_id"]))
+                    .one()
+                )
+                app_orm.status = application["status"]
+                orm_models.append(app_orm)
+
+            session.add_all(orm_models)
+            session.commit()
+            job_apps = [model.to_dict() for model in orm_models]
+            session.close()
+            return job_apps, 200
+
+        except Exception as e:
+            session.close()
+            print(e)
+            return models.ErrorMessage(f"Database exception occurred: {e}"), 400
