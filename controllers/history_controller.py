@@ -77,6 +77,7 @@ class HistoryController:
             raise ProblemException("'job_id' is a required property")
 
         def _ensure_trim(session, student_id: int):
+            """Ensure the history table for a student is trimmed to 15 rows."""
             total = (
                 session.query(StudentHistories)
                 .where(StudentHistories.student_id == student_id)
@@ -89,7 +90,7 @@ class HistoryController:
             oldest = (
                 session.query(StudentHistories)
                 .where(StudentHistories.student_id == student_id)
-                .order_by(StudentHistories.viewed_at.desc())
+                .order_by(StudentHistories.viewed_at)
                 .limit(to_delete)
                 .all()
             )
