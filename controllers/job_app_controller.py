@@ -10,8 +10,9 @@ from sqlalchemy.orm import joinedload
 from swagger_server.openapi_server import models
 from werkzeug.utils import secure_filename
 from .models.job_model import Job, JobApplication
-from .models.user_model import Student, Company
+from .models.user_model import Student, Company, User
 from .models.file_model import File
+from .models.email_model import MailQueue, MailParameter
 
 
 ALLOWED_FILE_FORMATS = config(
@@ -37,7 +38,7 @@ class JobApplicationController:
         form = request.form
         session = self.db.get_session()
 
-        job = session.query(Job).where(Job.id == job_id).one_or_none()
+        job: Job = session.query(Job).where(Job.id == job_id).one_or_none()
         current_applicants = (
             session.query(JobApplication).where(JobApplication.job_id == job_id).all()
         )
@@ -155,6 +156,38 @@ class JobApplicationController:
             session.commit()
 
             job_app_data = job_application.to_dict()
+
+            # queue mail to be sent to the company
+            company = session.query(Company).where(Company.id == job.company_id).one()
+            company_user = session.query(User).where(User.id == company.user_id).one()
+            current_mail = (
+                session.query(MailQueue)
+                .where(
+                    MailQueue.recipient == company_user.email,
+                    MailQueue.subject == f"New applicants for {job.title}",
+                )
+                .one_or_none()
+            )
+            if current_mail:
+                applicant_count = int(current_mail.get_param("ApplicantCount"))
+                applicant_count += 1
+                current_mail.set_param("ApplicantCount", str(applicant_count))
+                session.commit()
+                session.close()
+                
+                return job_app_data, 200
+
+            mail = MailQueue(
+                recipient=company_user.email,
+                subject=f"New applicants for {job.title}",
+                template="new_applicants",
+                parameters=[
+                    MailParameter(key="ApplicantCount", value="1"),
+                    MailParameter(key="JobTitle", value=f"{job.title}"),
+                ],
+            )
+            session.add(mail)
+            session.commit()
             session.close()
 
             return job_app_data, 200

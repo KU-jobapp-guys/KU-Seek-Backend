@@ -20,7 +20,7 @@ from datetime import datetime, timedelta, UTC
 from .models.user_model import User, Student, Company, Professor
 from .models.token_model import Token
 from .management.admin import AdminModel
-from .management.email import EmailSender
+from .management.email.email_sender import EmailSender
 from werkzeug.utils import secure_filename
 
 
