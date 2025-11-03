@@ -1,4 +1,5 @@
 """Simple serialization helpers for controllers."""
+
 from typing import Any
 import re
 
@@ -26,8 +27,8 @@ def camelize(obj: Any) -> Any:
 
 
 def _camel_to_snake(s: str) -> str:
-    s1 = re.sub('(.)([A-Z][a-z]+)', r"\1_\2", s)
-    s2 = re.sub('([a-z0-9])([A-Z])', r"\1_\2", s1)
+    s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", s)
+    s2 = re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1)
     return s2.replace("-", "_").lower()
 
 
