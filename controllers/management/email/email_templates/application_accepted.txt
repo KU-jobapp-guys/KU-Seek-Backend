@@ -1,0 +1,24 @@
+Congratulations! {{CompanyName}} Has Accepted Your Application
+
+Hello {{UserName}},
+
+Good news! Your application for the position of "{{JobTitle}}" at {{CompanyName}} has been accepted.
+
+The employer is interested in moving forward with your application. 
+Expect to receive further communication from them soon regarding interview information, dates, and steps to take.
+
+You can view the application details and next steps from your dashboard:
+{{ApplicationLink}}
+
+Congratulations again and best of luck with your journey ahead!
+
+Best regards,  
+KU-Seek Team
+
+---
+
+You’re receiving this email because you applied for a job through {{PlatformName}}.  
+If you wish to stop receiving application status updates, you can unsubscribe here: {{UnsubscribeLink}}
+
+———————————————
+© 2025 KU-Seek. All rights reserved.
