@@ -71,6 +71,17 @@ class MailQueue(BaseModel):
         lazy="joined",
     )
 
+    def get_param(self, key: str):
+        """Return the value of a parameter, or None if missing."""
+        param = next((p for p in self.parameters if p.key == key), None)
+        return param.value if param else None
+
+    def set_param(self, key: str, value: str):
+        """Update a parameter."""
+        existing = next((p for p in self.parameters if p.key == key), None)
+        if existing:
+            existing.value = value
+
 
 class MailParameter(BaseModel):
     """Mail template parameter model."""
