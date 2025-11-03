@@ -3,14 +3,16 @@
 import threading
 from typing import Optional
 from controllers.db_controller import AbstractDatabaseController
-from .email_sender import WelcomeEmailStrategy, CompanyNotificationEmailStrategy
+from controllers.models.email_model import (
+    MailRecord,
+    MailQueue,
+    MailStatus,
+)
+from .email_sender import GmailEmailStrategy
 
 
 class EmailScheduler:
     """Background scheduler for processing and sending pending emails."""
-
-    WELCOME_EMAIL_STRATEGY = WelcomeEmailStrategy()
-    COMPANY_EMAIL_STRATEGY = CompanyNotificationEmailStrategy()
 
     def __init__(
         self, database: AbstractDatabaseController, interval_seconds: int = 300
@@ -34,10 +36,99 @@ class EmailScheduler:
         while not self._stop_flag.is_set():
             try:
                 session = self._database.get_session()
+                
+                gmail_strategy = GmailEmailStrategy()
+                
+                # resend failed emails with retry_count < 3
+                failed_emails = (
+                    session.query(MailRecord)
+                    .filter(
+                        MailRecord.status.in_([
+                            MailStatus.MAILWAIT,
+                            MailStatus.MAILSOFTERROR
+                        ]),
+                        MailRecord.retry_count < 3
+                    )
+                    .all()
+                )
+                
+                for mail_record in failed_emails:
+                    try:
+                        # Attempt to resend
+                        gmail_strategy.send_email(
+                            recipient=mail_record.recipient,
+                            topic=mail_record.topic,
+                            email_file=mail_record.body,
+                            template_args=[]  # Body is already rendered
+                        )
+                        
+                        # Mark as sent
+                        mail_record.status = MailStatus.MAILSENT
+                        session.commit()
+                        
+                    except Exception as e:
+                        mail_record.retry_count += 1
+                        
+                        # On 3rd retry failure, mark as hard error
+                        if mail_record.retry_count >= 3:
+                            mail_record.status = MailStatus.MAILHARDERROR
+                        else:
+                            mail_record.status = MailStatus.MAILSOFTERROR
+                        
+                        session.commit()
+                
+                # process mail queue
+                queued_emails = session.query(MailQueue).all()
+                
+                for queued_mail in queued_emails:
+                    try:
+                        template_args = [
+                            (param.key, param.value)
+                            for param in queued_mail.parameters
+                        ]
+                        
+                        # Send the email
+                        gmail_strategy.send_email(
+                            recipient=queued_mail.recipient,
+                            topic=queued_mail.topic,
+                            email_file=queued_mail.template,
+                            template_args=template_args
+                        )
+                        
+                        # Create a mail record for successful send
+                        mail_record = MailRecord(
+                            recipient=queued_mail.recipient,
+                            topic=queued_mail.topic,
+                            body=queued_mail.template,
+                            status=MailStatus.MAILSENT,
+                            retry_count=0
+                        )
+                        session.add(mail_record)
+                        
+                        # Remove from queue
+                        session.delete(queued_mail)
+                        session.commit()
+                        
+                    except Exception as e:
+                        # Create a mail record for failed send
+                        mail_record = MailRecord(
+                            recipient=queued_mail.recipient,
+                            topic=queued_mail.topic,
+                            body=queued_mail.template,
+                            status=MailStatus.MAILSOFTERROR,
+                        )
+                        session.add(mail_record)
+                        
+                        # Remove from queue
+                        session.delete(queued_mail)
+                        session.commit()
+                
                 session.close()
 
             except Exception as e:
-                pass
+                # Log exception when its real
+                session.rollback()
+                session.close()
 
             # Sleep for the interval, but check stop flag periodically
             self._stop_flag.wait(timeout=self.interval_seconds)
