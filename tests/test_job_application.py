@@ -373,13 +373,13 @@ class JobApplicationTestCase(RoutingTestCase):
             session.add(job_application)
             session.commit()
             session.refresh(job_application)
-            job_applicationId = job_application.id
+            job_application_id = job_application.id
         finally:
             session.close()
 
         jwt = generate_jwt(self.company_id, secret=SECRET_KEY)
 
-        data = [{"applicationId": job_applicationId, "status": "accepted"}]
+        data = [{"applicationId": job_application_id, "status": "accepted"}]
 
         csrf = self.client.get("/api/v1/csrf-token")
         res = self.client.patch(
