@@ -29,7 +29,9 @@ class MailRecord(BaseModel):
 
     topic: Mapped[str] = MappedColumn(String(100), nullable=False)
 
-    body: Mapped[str] = MappedColumn(Text, nullable=False)
+    text_body: Mapped[str] = MappedColumn(Text, nullable=False)
+
+    html_body: Mapped[str] = MappedColumn(Text, nullable=False)
 
     created_at: Mapped[datetime] = MappedColumn(
         DateTime, default=func.utc_timestamp(), nullable=False
