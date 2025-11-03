@@ -1,6 +1,8 @@
 """Email scheduler for sending pending notifications."""
 
 import threading
+import os
+
 from typing import Optional
 from controllers.db_controller import AbstractDatabaseController
 from controllers.models.email_model import (
@@ -8,7 +10,7 @@ from controllers.models.email_model import (
     MailQueue,
     MailStatus,
 )
-from .email_sender import GmailEmailStrategy
+from .email_sender import GmailEmailStrategy, EmailSender
 
 
 class EmailScheduler:
@@ -36,99 +38,132 @@ class EmailScheduler:
         while not self._stop_flag.is_set():
             try:
                 session = self._database.get_session()
-                
+
                 gmail_strategy = GmailEmailStrategy()
-                
+                email_sender = EmailSender(gmail_strategy)
+
                 # resend failed emails with retry_count < 3
                 failed_emails = (
                     session.query(MailRecord)
                     .filter(
-                        MailRecord.status.in_([
-                            MailStatus.MAILWAIT,
-                            MailStatus.MAILSOFTERROR
-                        ]),
-                        MailRecord.retry_count < 3
+                        MailRecord.status.in_(
+                            [MailStatus.MAILWAIT, MailStatus.MAILSOFTERROR]
+                        ),
+                        MailRecord.retry_count < 3,
                     )
                     .all()
                 )
-                
+
                 for mail_record in failed_emails:
                     try:
-                        # Attempt to resend
-                        gmail_strategy.send_email(
+                        # Attempt to resend using raw body content
+                        email_sender.send_email_raw(
                             recipient=mail_record.recipient,
                             topic=mail_record.topic,
-                            email_file=mail_record.body,
-                            template_args=[]  # Body is already rendered
+                            text_body=mail_record.text_body,
+                            html_body=mail_record.html_body,
                         )
-                        
+
                         # Mark as sent
                         mail_record.status = MailStatus.MAILSENT
                         session.commit()
-                        
+
                     except Exception as e:
                         mail_record.retry_count += 1
-                        
+
                         # On 3rd retry failure, mark as hard error
                         if mail_record.retry_count >= 3:
                             mail_record.status = MailStatus.MAILHARDERROR
                         else:
                             mail_record.status = MailStatus.MAILSOFTERROR
-                        
+
                         session.commit()
-                
+
                 # process mail queue
                 queued_emails = session.query(MailQueue).all()
-                
+
                 for queued_mail in queued_emails:
                     try:
                         template_args = [
-                            (param.key, param.value)
-                            for param in queued_mail.parameters
+                            (param.key, param.value) for param in queued_mail.parameters
                         ]
-                        
-                        # Send the email
-                        gmail_strategy.send_email(
+
+                        # Send the email using template
+                        email_sender.send_email(
                             recipient=queued_mail.recipient,
                             topic=queued_mail.topic,
-                            email_file=queued_mail.template,
-                            template_args=template_args
+                            email=queued_mail.template,
+                            template_args=template_args,
                         )
-                        
+
+                        # Get the rendered content for the mail record
+                        # Read and render templates to store in mail record
+                        email_file = os.path.join(
+                            os.getcwd(),
+                            "controllers",
+                            "management",
+                            "email_templates",
+                            queued_mail.template,
+                        )
+
+                        with open(email_file + ".html", "r", encoding="utf-8") as f:
+                            html_body = f.read()
+                            html_body = html_body.replace(
+                                "{{UserName}}", queued_mail.recipient
+                            )
+                            for param in template_args:
+                                html_body = html_body.replace(
+                                    "{{" + param[0] + "}}", param[1]
+                                )
+
+                        with open(email_file + ".txt", "r", encoding="utf-8") as f:
+                            text_body = f.read()
+                            text_body = text_body.replace(
+                                "{{UserName}}", queued_mail.recipient
+                            )
+                            for param in template_args:
+                                html_body = html_body.replace(
+                                    "{{" + param[0] + "}}", param[1]
+                                )
+
                         # Create a mail record for successful send
                         mail_record = MailRecord(
                             recipient=queued_mail.recipient,
                             topic=queued_mail.topic,
-                            body=queued_mail.template,
+                            text_body=text_body,
+                            html_body=html_body,
                             status=MailStatus.MAILSENT,
-                            retry_count=0
+                            retry_count=0,
                         )
                         session.add(mail_record)
-                        
+
                         # Remove from queue
                         session.delete(queued_mail)
                         session.commit()
-                        
+
                     except Exception as e:
-                        # Create a mail record for failed send
+                        # Store template path if rendering failed
                         mail_record = MailRecord(
                             recipient=queued_mail.recipient,
                             topic=queued_mail.topic,
-                            body=queued_mail.template,
+                            text_body=text_body,
+                            html_body=html_body,
                             status=MailStatus.MAILSOFTERROR,
+                            retry_count=1,
                         )
                         session.add(mail_record)
-                        
+
                         # Remove from queue
                         session.delete(queued_mail)
                         session.commit()
-                
+
                 session.close()
 
             except Exception as e:
                 # Log exception when its real
-                session.rollback()
-                session.close()
+                if "session" in locals():
+                    session.rollback()
+                    session.close()
 
             # Sleep for the interval, but check stop flag periodically
             self._stop_flag.wait(timeout=self.interval_seconds)

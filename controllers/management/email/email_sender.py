@@ -21,6 +21,13 @@ class EmailStrategy(ABC):
         """Send an email to a recipient."""
         raise NotImplementedError
 
+    @abstractmethod
+    def send_email_raw(
+        self, recipient: str, topic: str, text_body: str, html_body: str
+    ):
+        """Send an email with raw body content."""
+        raise NotImplementedError
+
 
 class GmailEmailStrategy(EmailStrategy):
     """Class for sending emails via Gmail's SMTP."""
@@ -73,7 +80,7 @@ class GmailEmailStrategy(EmailStrategy):
                 text_content = f.read()
                 text_content = text_content.replace("{{UserName}}", recipient)
                 for arg in template_args:
-                    html_content = html_content.replace(arg[0], arg[1])
+                    html_content = html_content.replace("{{" + arg[0] + "}}", arg[1])
         except IOError as e:
             raise IOError("Plain text file could not be read.", e)
 
@@ -85,6 +92,39 @@ class GmailEmailStrategy(EmailStrategy):
         # the email will prefer the last provided part
         part1 = MIMEText(text, "plain")
         part2 = MIMEText(html, "html")
+        msg.attach(part1)
+        msg.attach(part2)
+
+        # Send the email.
+        try:
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp_server:
+                smtp_server.login(SERVER_EMAIL, EMAIL_PW)
+                smtp_server.sendmail(self.email, recipient, msg.as_string())
+                smtp_server.quit()
+        except Exception as e:
+            raise ValueError("Email could not be sent.", e)
+
+    def send_email_raw(
+        self, recipient: str, topic: str, text_body: str, html_body: str
+    ):
+        """
+        Send an email to the recipient, with raw body content.
+
+        Sends an email to the provided recipient with the provided text and html body.
+
+        Args:
+            recipient: The recipient's email
+            topic: The topic/subject to address the email with
+            text_body: The email body, in plaintext
+            html_body: The email body, in HTML5
+        """
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = topic
+        msg["From"] = self.email
+        msg["To"] = recipient
+
+        part1 = MIMEText(text_body, "plain")
+        part2 = MIMEText(html_body, "html")
         msg.attach(part1)
         msg.attach(part2)
 
@@ -114,3 +154,9 @@ class EmailSender:
     ):
         """Send an email to the recipient."""
         self.strategy.send(recipient, topic, email, template_args)
+
+    def send_email_raw(
+        self, recipient: str, topic: str, text_body: str, html_body: str
+    ):
+        """Send an email with raw body content."""
+        self.strategy.send(recipient, topic, text_body, html_body)
