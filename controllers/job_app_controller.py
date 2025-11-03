@@ -344,7 +344,7 @@ class JobApplicationController:
             job_id: The job id for the job application's applied job
             body: The request body, in the format of a list of JSON
                   with the following attribues:
-                    {application_id: str, status: str}
+                    {applicationId: str, status: str}
 
         returns A copy of a list of updated job applications
         """
