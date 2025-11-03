@@ -36,6 +36,8 @@ class EmailScheduler:
         """Background worker that processes emails at regular intervals."""
         # TODO: Integrate logging
         while not self._stop_flag.is_set():
+            # this should REALLY be a log in the logfile but no logger :(
+            print("Running email batch job", flush=True)
             try:
                 session = self._database.get_session()
 
@@ -102,6 +104,7 @@ class EmailScheduler:
                             os.getcwd(),
                             "controllers",
                             "management",
+                            "email",
                             "email_templates",
                             queued_mail.template,
                         )
@@ -142,6 +145,7 @@ class EmailScheduler:
                         session.commit()
 
                     except Exception as e:
+                        print(f"Error: {e}", flush=True)
                         # Store template path if rendering failed
                         mail_record = MailRecord(
                             recipient=queued_mail.recipient,
@@ -158,6 +162,7 @@ class EmailScheduler:
                         session.commit()
 
                 session.close()
+                print("Finished email batch job", flush=True)
 
             except Exception as e:
                 # Log exception when its real

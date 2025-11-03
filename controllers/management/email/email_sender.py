@@ -63,7 +63,12 @@ class GmailEmailStrategy(EmailStrategy):
         msg["To"] = recipient
 
         email_file = os.path.join(
-            os.getcwd(), "controllers", "management", "email_templates", email_file
+            os.getcwd(),
+            "controllers",
+            "management",
+            "email",
+            "email_templates",
+            email_file,
         )
 
         try:
@@ -153,10 +158,10 @@ class EmailSender:
         template_args: list[tuple[str, str]],
     ):
         """Send an email to the recipient."""
-        self.strategy.send(recipient, topic, email, template_args)
+        self.strategy.send_email(recipient, topic, email, template_args)
 
     def send_email_raw(
         self, recipient: str, topic: str, text_body: str, html_body: str
     ):
         """Send an email with raw body content."""
-        self.strategy.send(recipient, topic, text_body, html_body)
+        self.strategy.send_email_raw(recipient, topic, text_body, html_body)
