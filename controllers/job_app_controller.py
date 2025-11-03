@@ -14,6 +14,7 @@ from .models.job_model import Job, JobApplication
 from .models.user_model import Student, Company, User
 from .models.file_model import File
 from .models.email_model import MailQueue, MailParameter
+from .management.email.email_sender import EmailSender
 
 
 ALLOWED_FILE_FORMATS = config(
@@ -176,7 +177,7 @@ class JobApplicationController:
                 current_mail.set_param("ApplicantCount", str(applicant_count))
                 session.commit()
                 session.close()
-                
+
                 return job_app_data, 200
 
             mail = MailQueue(
@@ -393,6 +394,25 @@ class JobApplicationController:
             session.commit()
             job_apps = [model.to_dict() for model in orm_models]
             session.close()
+
+            # handle emails
+
+            for application in job_apps:
+                if application["status"] == "accepted":
+                    mail_file = "application_accepted"
+                    subject = "Application Accepted"
+                else:
+                    mail_file = "application_rejected"
+                    subject = "Application Rejected"
+                try:
+                    email = EmailSender()
+                    email.send_email(
+                        application["contact_email"], subject, mail_file
+                    )
+                except Exception:
+                    # logger here
+                    pass
+
             return job_apps, 200
 
         except Exception as e:
