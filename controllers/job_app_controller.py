@@ -38,14 +38,6 @@ class JobApplicationController:
         user_token = request.headers.get("access_token")
         token_info = decode(jwt=user_token, key=SECRET_KEY, algorithms=["HS512"])
 
-        # debug: show content type and incoming keys to help diagnose client issues
-        try:
-            print("[create_job_application] CONTENT-TYPE:", request.content_type)
-            print("[create_job_application] FORM keys:", list(request.form.keys()))
-            print("[create_job_application] FILE keys:", list(request.files.keys()))
-        except Exception:
-            pass
-
         form = decamelize(request.form)
         files = decamelize(request.files)
 

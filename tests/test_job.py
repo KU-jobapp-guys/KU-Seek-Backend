@@ -431,8 +431,6 @@ class JobTestCase(RoutingTestCase):
             json={"isOwner": True},
         )
 
-        print("SKY", res.json)
-
         self.assertEqual(res.status_code, 200)
         data = res.json
         self.assertGreater(len(data), 0)
