@@ -64,7 +64,7 @@ class GmailEmailStrategy(EmailStrategy):
                 html_content = f.read()
                 html_content = html_content.replace("{{UserName}}", recipient)
                 for arg in template_args:
-                    html_content = html_content.replace(arg[0], arg[1])
+                    html_content = html_content.replace("{{" + arg[0] + "}}", arg[1])
         except IOError as e:
             raise IOError("HTML file could not be read.", e)
 
