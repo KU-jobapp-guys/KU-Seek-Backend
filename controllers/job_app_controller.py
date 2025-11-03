@@ -406,9 +406,7 @@ class JobApplicationController:
                     subject = "Application Rejected"
                 try:
                     email = EmailSender()
-                    email.send_email(
-                        application["contact_email"], subject, mail_file
-                    )
+                    email.send_email(application["contact_email"], subject, mail_file)
                 except Exception:
                     # logger here
                     pass
