@@ -182,7 +182,7 @@ class JobApplicationController:
 
             mail = MailQueue(
                 recipient=company_user.email,
-                subject=f"New applicants for {job.title}",
+                topic=f"New applicants for {job.title}",
                 template="new_applicants",
                 parameters=[
                     MailParameter(key="ApplicantCount", value="1"),
