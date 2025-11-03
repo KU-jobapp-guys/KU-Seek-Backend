@@ -109,9 +109,9 @@ def get_filtered_jobs(body: Dict):
     """Return filtered Jobs."""
     try:
         job_manager = JobController(current_app.config["Database"])
-        if body.get("is_owner"):
-            body.pop("is_owner")
-            body["user_id"] = get_auth_user_id(request)
+        if body.get("isOwner"):
+            body.pop("isOwner")
+            body["userId"] = get_auth_user_id(request)
         filtered_jobs = job_manager.get_filtered_job(body)
         return jsonify(filtered_jobs), 200
     except ValueError as e:
@@ -157,10 +157,10 @@ def delete_bookmark_jobs(job_id: int):
         return jsonify({"message": str(e)}), 500
 
 
-def create_job_application(body, job_id: int) -> Optional[Dict]:
+def create_job_application(job_id: int) -> Optional[Dict]:
     """Create a job application in the database."""
     app_manager = JobApplicationController(current_app.config["Database"])
-    return app_manager.create_job_application(body, job_id)
+    return app_manager.create_job_application(job_id)
 
 
 def fetch_user_job_applications() -> Optional[Dict]:

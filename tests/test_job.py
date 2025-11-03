@@ -72,8 +72,8 @@ class JobTestCase(RoutingTestCase):
             "pendingApplicants",
             "postTime",
             "role",
-            "salary_max",
-            "salary_min",
+            "salaryMax",
+            "salaryMin",
             "skills",
             "status",
             "totalApplicants",
@@ -109,16 +109,16 @@ class JobTestCase(RoutingTestCase):
             json={
                 "capacity": 2,
                 "description": "We are looking for an experienced Python developer.",
-                "end_date": "2025-12-31T23:59:59Z",
-                "job_level": "Senior-level",
-                "job_type": "full-time",
+                "endDate": "2025-12-31T23:59:59Z",
+                "jobLevel": "Senior-level",
+                "jobType": "full-time",
                 "location": "Bangkok, Thailand",
-                "salary_max": 120000,
-                "salary_min": 80000,
-                "skill_names": ["Python", "Django", "SQL"],
-                "tag_names": ["Remote", "Backend"],
+                "salaryMax": 120000,
+                "salaryMin": 80000,
+                "skillNames": ["Python", "Django", "SQL"],
+                "tagNames": ["Remote", "Backend"],
                 "title": "Senior Python Developer",
-                "work_hours": "9:00 AM - 5:00 PM",
+                "workHours": "9:00 AM - 5:00 PM",
             },
         )
 
@@ -132,16 +132,16 @@ class JobTestCase(RoutingTestCase):
         job_payload = {
             "capacity": 4,
             "description": "We are looking for someone please help us.",
-            "end_date": "2026-08-06T23:59:59Z",
-            "job_level": "Junior-level",
-            "job_type": "full-time",
+            "endDate": "2026-08-06T23:59:59Z",
+            "jobLevel": "Junior-level",
+            "jobType": "full-time",
             "location": "Osaka, Japan",
-            "salary_max": 20000,
-            "salary_min": 15000,
-            "skill_names": ["Django"],
-            "tag_names": ["Backend", "Fullstack"],
+            "salaryMax": 20000,
+            "salaryMin": 15000,
+            "skillNames": ["Django"],
+            "tagNames": ["Backend", "Fullstack"],
             "title": "Junior Slave Developer",
-            "work_hours": "6:00 AM - 8:00 PM",
+            "workHours": "6:00 AM - 8:00 PM",
         }
 
         jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
@@ -157,8 +157,8 @@ class JobTestCase(RoutingTestCase):
         data = res.json
         self.assertEqual(data["role"], job_payload["title"])
         self.assertIsInstance(data["company"], str)
-        self.assertEqual(data["salary_min"], job_payload["salary_min"])
-        self.assertEqual(data["salary_max"], job_payload["salary_max"])
+        self.assertEqual(data["salaryMin"], job_payload["salaryMin"])
+        self.assertEqual(data["salaryMax"], job_payload["salaryMax"])
 
     def test_job_post_missing_required_fields(self):
         """Test posting a job without required fields should fail."""
@@ -169,12 +169,12 @@ class JobTestCase(RoutingTestCase):
         invalid_payload = {
             "capacity": 2,
             "description": "This should fail due to missing fields.",
-            "end_date": "2025-12-31T23:59:59Z",
-            "job_level": "Senior-level",
-            "job_type": "full-time",
+            "endDate": "2025-12-31T23:59:59Z",
+            "jobLevel": "Senior-level",
+            "jobType": "full-time",
             "location": "Bangkok, Thailand",
-            "salary_max": 120000,
-            "work_hours": "9:00 AM - 5:00 PM",
+            "salaryMax": 120000,
+            "workHours": "9:00 AM - 5:00 PM",
         }
 
         jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
@@ -195,13 +195,13 @@ class JobTestCase(RoutingTestCase):
         filter_list = {
             "capacity": 1,
             "title": "Ghost Job",
-            "end_date": "2025-12-31T23:59:59Z",
-            "job_level": "Entry-level",
-            "job_type": "full-time",
+            "endDate": "2025-12-31T23:59:59Z",
+            "jobLevel": "Entry-level",
+            "jobType": "full-time",
             "location": "Nowhere",
-            "salary_min": 10000,
-            "salary_max": 20000,
-            "work_hours": "9:00 AM - 5:00 PM",
+            "salaryMin": 10000,
+            "salaryMax": 20000,
+            "workHours": "9:00 AM - 5:00 PM",
         }
 
         res = self.client.post(
@@ -230,7 +230,7 @@ class JobTestCase(RoutingTestCase):
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token},
-            json={"salary_min": "not_a_number"},
+            json={"salaryMin": "not_a_number"},
         )
         self.assertEqual(res.status_code, 400)
 
@@ -246,7 +246,7 @@ class JobTestCase(RoutingTestCase):
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token},
-            json={"end_date": "invalid-date"},
+            json={"endDate": "invalid-date"},
         )
         self.assertEqual(res.status_code, 400)
 
@@ -254,19 +254,27 @@ class JobTestCase(RoutingTestCase):
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token},
-            json={"skill_names": "should_be_array"},
+            json={"skillNames": "should_be_array"},
         )
         self.assertEqual(res.status_code, 400)
-        self.assertIn("skill_names must be an array", res.json["message"])
+        jb = res.json or {}
+        if "message" in jb:
+            self.assertIn("skill_names must be an array", jb["message"])
+        else:
+            self.assertIn("is not of type 'array'", str(jb.get("detail", "")))
 
         # Test invalid tag_names (not an array)
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token},
-            json={"tag_names": "should_be_array"},
+            json={"tagNames": "should_be_array"},
         )
         self.assertEqual(res.status_code, 400)
-        self.assertIn("tag_names must be an array", res.json["message"])
+        jb = res.json or {}
+        if "message" in jb:
+            self.assertIn("tag_names must be an array", jb["message"])
+        else:
+            self.assertIn("is not of type 'array'", str(jb.get("detail", "")))
 
     def test_filter_job_returns_correct_filtered_data(self):
         """Test that filtered jobs return the correct matching data."""
@@ -300,19 +308,19 @@ class JobTestCase(RoutingTestCase):
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token},
-            json={"salary_min": 80000},
+            json={"salaryMin": 80000},
         )
         self.assertEqual(res.status_code, 200)
         data = res.json
         self.assertGreater(len(data), 0)
         for job in data:
-            self.assertGreaterEqual(job["salary_min"], 80000)
+            self.assertGreaterEqual(job["salaryMin"], 80000)
 
         # Filter by job_level - should return jobs with "Junior-level"
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token},
-            json={"job_level": "Junior-level"},
+            json={"jobLevel": "Junior-level"},
         )
         self.assertEqual(res.status_code, 200)
         data = res.json
@@ -323,7 +331,7 @@ class JobTestCase(RoutingTestCase):
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token},
-            json={"company_name": "TechCorp"},
+            json={"companyName": "TechCorp"},
         )
         self.assertEqual(res.status_code, 200)
         data = res.json
@@ -337,7 +345,7 @@ class JobTestCase(RoutingTestCase):
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token},
-            json={"job_type": "full-time", "location": "Bangkok"},
+            json={"jobType": "full-time", "location": "Bangkok"},
         )
         self.assertEqual(res.status_code, 200)
         data = res.json
@@ -396,16 +404,16 @@ class JobTestCase(RoutingTestCase):
         job_payload = {
             "capacity": 1,
             "description": "Owner job test.",
-            "end_date": "2026-01-01T23:59:59Z",
-            "job_level": "Mid-level",
-            "job_type": "full-time",
+            "endDate": "2026-01-01T23:59:59Z",
+            "jobLevel": "Mid-level",
+            "jobType": "full-time",
             "location": "Bangkok, Thailand",
-            "salary_max": 50000,
-            "salary_min": 30000,
-            "skill_names": ["React"],
-            "tag_names": ["OwnerTest"],
+            "salaryMax": 50000,
+            "salaryMin": 30000,
+            "skillNames": ["React"],
+            "tagNames": ["OwnerTest"],
             "title": "Owner Job",
-            "work_hours": "9:00 AM - 5:00 PM",
+            "workHours": "9:00 AM - 5:00 PM",
         }
 
         post_res = self.client.post(
@@ -420,8 +428,10 @@ class JobTestCase(RoutingTestCase):
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token, "access_token": jwt},
-            json={"is_owner": True},
+            json={"isOwner": True},
         )
+
+        print("SKY", res.json)
 
         self.assertEqual(res.status_code, 200)
         data = res.json

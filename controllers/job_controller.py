@@ -78,6 +78,26 @@ class JobController:
         Raises:
             ValueError: If required fields are missing or invalid
         """
+        camel_map = {
+            "salaryMin": "salary_min",
+            "salaryMax": "salary_max",
+            "jobLevel": "job_level",
+            "jobType": "job_type",
+            "workHours": "work_hours",
+            "skillNames": "skill_names",
+            "tagNames": "tag_names",
+            "endDate": "end_date",
+            "isOwner": "is_owner",
+            "companyName": "company_name",
+            "companyIndustry": "company_industry",
+            "companyType": "company_type",
+            "userId": "user_id",
+        }
+        mapped_body = {}
+        for k, v in (body or {}).items():
+            mapped_body[camel_map.get(k, k)] = v
+        body = mapped_body
+
         required_fields = [
             "title",
             "salary_min",
@@ -200,7 +220,19 @@ class JobController:
                 session.close()
                 return []
 
-            result = [bookmark.to_dict() for bookmark in user_bookmarked_jobs]
+            result = []
+            for bookmark in user_bookmarked_jobs:
+                b = bookmark.to_dict()
+                result.append(
+                    {
+                        "id": b.get("id"),
+                        "jobId": b.get("job_id"),
+                        "studentId": b.get("student_id"),
+                        "createdAt": b.get("created_at").isoformat()
+                        if b.get("created_at")
+                        else None,
+                    }
+                )
             session.close()
             return result
         except Exception as e:
@@ -213,6 +245,12 @@ class JobController:
 
         Corresponds to: POST /api/v1/bookmarks
         """
+        camel_map = {"jobId": "job_id"}
+        mapped_body = {}
+        for k, v in (body or {}).items():
+            mapped_body[camel_map.get(k, k)] = v
+        body = mapped_body
+
         if isinstance(user_id, str):
             try:
                 user_id = uuid.UUID(user_id)
@@ -245,7 +283,12 @@ class JobController:
 
             session.close()
 
-            return result
+            return {
+                "id": result.get("id"),
+                "jobId": result.get("job_id"),
+                "studentId": result.get("student_id"),
+                "createdAt": result.get("created_at"),
+            }
 
         except Exception as e:
             session.close()
@@ -298,7 +341,12 @@ class JobController:
 
             session.close()
 
-            return result
+            return {
+                "id": result.get("id"),
+                "jobId": result.get("job_id"),
+                "studentId": result.get("student_id"),
+                "createdAt": result.get("created_at"),
+            }
 
         except Exception as e:
             session.rollback()
@@ -339,6 +387,25 @@ class JobController:
         all_allowed_fields = (
             allowed_job_fields | allowed_company_fields | allowed_special_fields
         )
+
+        camel_map = {
+            "salaryMin": "salary_min",
+            "salaryMax": "salary_max",
+            "jobLevel": "job_level",
+            "jobType": "job_type",
+            "workHours": "work_hours",
+            "skillNames": "skill_names",
+            "tagNames": "tag_names",
+            "endDate": "end_date",
+            "companyName": "company_name",
+            "companyIndustry": "company_industry",
+            "companyType": "company_type",
+            "userId": "user_id",
+        }
+        mapped_body = {}
+        for k, v in (body or {}).items():
+            mapped_body[camel_map.get(k, k)] = v
+        body = mapped_body
 
         def _is_empty_filter(d: Dict) -> bool:
             if not d:
@@ -582,9 +649,9 @@ class JobController:
                 "description": job.description,
                 "jobType": job.job_type,
                 "skills": skills_list,
-                "salary_min": job.salary_min,
-                "salary_max": job.salary_max,
-                "status": job.status,
+                "salaryMin": job.salary_min,
+                "salaryMax": job.salary_max,
+                "status": "accepted",
                 "pendingApplicants": pending_applicants,
                 "totalApplicants": total_applicants,
             }
