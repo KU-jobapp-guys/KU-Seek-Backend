@@ -7,8 +7,10 @@ from .job_app_controller import JobApplicationController
 from .auth_controller import get_auth_user_id
 from .job_controller import JobController
 from typing import Dict, Optional
+from custom_logger import get_logger
 from flask import current_app
 
+logger = get_logger()
 
 def get_all_tasks():
     """Return all tasks."""
@@ -56,7 +58,9 @@ def create_profile(body: Dict) -> Optional[Dict]:
     """Add UserProfile to the database."""
     try:
         profile_manager = ProfileController(current_app.config["Database"])
-        new_profile = profile_manager.create_profile(get_auth_user_id(request), body)
+        uid = get_auth_user_id(request)
+        new_profile = profile_manager.create_profile(uid, body)
+        logger.info("Profile has been created.", user=uid)
         return jsonify(new_profile), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
@@ -68,10 +72,12 @@ def update_profile(body: Dict) -> Optional[Dict]:
     """Update User Profile data."""
     try:
         profile_manager = ProfileController(current_app.config["Database"])
+        uid = get_auth_user_id(request)
         profile_updated_data = profile_manager.update_profile(
-            get_auth_user_id(request), body
+            uid, body
         )
-
+        logger.info("Profile has been updated.", user=uid)
+        logger.debug(f"Profile updated with these fields: {body.items()}", user=uid)
         return jsonify(profile_updated_data), 200
     except ValueError as e:
         return jsonify({"message": str(e)}), 404
@@ -93,7 +99,9 @@ def post_job(body: Dict):
     """Add new Job."""
     try:
         job_manager = JobController(current_app.config["Database"])
-        new_job = job_manager.post_job(get_auth_user_id(request), body)
+        uid = get_auth_user_id(request)
+        new_job = job_manager.post_job(uid, body)
+        logger.info(f"Job:{new_job["id"]} has been posted.", user=uid)
         return jsonify(new_job), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
@@ -127,9 +135,11 @@ def post_bookmark_jobs(body: Dict):
     """Add new bookmark."""
     try:
         job_manager = JobController(current_app.config["Database"])
+        uid = get_auth_user_id(request)
         bookmarked_jobs = job_manager.post_bookmark_jobs(
-            get_auth_user_id(request), body
+            uid, body
         )
+        logger.info(f"Bookmark:{bookmarked_jobs["id"]} for Job:{bookmarked_jobs["job_id"]} has been created.", user=uid)
         return jsonify(bookmarked_jobs), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
@@ -143,6 +153,7 @@ def delete_bookmark_jobs(job_id: int):
         user_id = get_auth_user_id(request)
         job_manager = JobController(current_app.config["Database"])
         deleted_bookmark = job_manager.delete_bookmark_jobs(user_id, job_id)
+        logger.info(f"Bookmark:{deleted_bookmark["id"]} for Job:{job_id} has been deleted.", user=user_id)
         return jsonify(deleted_bookmark), 200
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
@@ -153,7 +164,9 @@ def delete_bookmark_jobs(job_id: int):
 def create_job_application(body, job_id: int) -> Optional[Dict]:
     """Create a job application in the database."""
     app_manager = JobApplicationController(current_app.config["Database"])
-    return app_manager.create_job_application(body, job_id)
+    job_application = app_manager.create_job_application(body, job_id)
+    logger.info(f"Student: {job_application['student_id']} - Job Application:{job_application['id']} for Job:{job_id} has been created.")
+    return job_application
 
 
 def fetch_user_job_applications() -> Optional[Dict]:
