@@ -1,3 +1,5 @@
+"""Custom KwAdapter for logging."""
+
 import logging
 import logging.config
 from pathlib import Path
@@ -12,7 +14,10 @@ _LOCK = threading.RLock()
 _ADAPTER = None
 
 class KwAdapter(logging.LoggerAdapter):
+    """Key word adapter to take kwargs from logging function."""
+
     def process(self, msg, kwargs):
+        """Process kwargs from logging function."""
         extra = kwargs.pop("extra", {})
         user = kwargs.pop("user", None)
         if user is not None:
@@ -20,10 +25,10 @@ class KwAdapter(logging.LoggerAdapter):
         kwargs["extra"] = extra
         return msg, kwargs
 
-def get_logger(name=None):
+def get_logger():
+    """Get the selected logger from app.py."""
     global _ADAPTER
-    if name is None:
-        name = _DEFAULT_LOGGER_NAME
+    name = _DEFAULT_LOGGER_NAME
     with _LOCK:
         if _ADAPTER is None:
             _ADAPTER = KwAdapter(logging.getLogger(name), {})
