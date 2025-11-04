@@ -7,10 +7,9 @@ from flask_cors import CORS
 from flask_wtf import CSRFProtect
 from controllers.db_controller import BaseController
 from controllers.management.admin import YesManModel, AiAdminModel
-from controllers.ku_seek_logging.custom_logger import get_logger
 
 
-logger = get_logger('KU_SEEK_LOGGER_DEV')
+LOGGER = "KU_SEEK_LOGGER_DEV"
 
 if not os.path.exists(".env"):
     print(".env file not found.You may create one from 'sample-env.txt'.")
