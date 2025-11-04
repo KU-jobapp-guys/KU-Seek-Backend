@@ -46,9 +46,9 @@ class Student(BaseModel):
         Integer, ForeignKey("educations.id", ondelete="SET NULL"), nullable=True
     )
 
-    gpa: Mapped[float] = MappedColumn(DECIMAL(3, 2), nullable=False)
+    gpa: Mapped[float] = MappedColumn(DECIMAL(3, 2), nullable=True)
 
-    interests: Mapped[str] = MappedColumn(Text, nullable=False)
+    interests: Mapped[str] = MappedColumn(Text, nullable=True)
 
 
 class Professor(BaseModel):
@@ -62,19 +62,19 @@ class Professor(BaseModel):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
-    department: Mapped[str] = MappedColumn(String(255), nullable=False)
+    department: Mapped[str] = MappedColumn(String(255), nullable=True)
 
-    position: Mapped[str] = MappedColumn(String(255), nullable=False)
+    position: Mapped[str] = MappedColumn(String(255), nullable=True)
 
-    office_location: Mapped[str] = MappedColumn(String(255), nullable=False)
+    office_location: Mapped[str] = MappedColumn(String(255), nullable=True)
 
     education_id: Mapped[Optional[int]] = MappedColumn(
         Integer, ForeignKey("educations.id", ondelete="SET NULL"), nullable=True
     )
 
-    research_interests: Mapped[str] = MappedColumn(Text, nullable=False)
+    research_interests: Mapped[str] = MappedColumn(Text, nullable=True)
 
-    description: Mapped[str] = MappedColumn(Text, nullable=False)
+    description: Mapped[str] = MappedColumn(Text, nullable=True)
 
 
 class Company(BaseModel):
@@ -90,14 +90,14 @@ class Company(BaseModel):
 
     company_name: Mapped[str] = MappedColumn(String(255), nullable=False)
 
-    company_type: Mapped[str] = MappedColumn(String(255), nullable=False)
+    company_type: Mapped[str] = MappedColumn(String(255), nullable=True)
 
-    company_industry: Mapped[str] = MappedColumn(String(255), nullable=False)
+    company_industry: Mapped[str] = MappedColumn(String(255), nullable=True)
 
     company_overview: Mapped[str] = MappedColumn(Text, nullable=True)
 
     company_size: Mapped[str] = MappedColumn(String(255), nullable=False)
 
-    company_website: Mapped[str] = MappedColumn(String(255), nullable=False)
+    company_website: Mapped[str] = MappedColumn(String(255), nullable=True)
 
-    full_location: Mapped[str] = MappedColumn(String(255), nullable=False)
+    full_location: Mapped[str] = MappedColumn(String(255), nullable=True)
