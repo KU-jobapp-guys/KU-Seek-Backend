@@ -174,7 +174,8 @@ def create_job_application(body, job_id: int) -> Optional[Dict]:
     if job_application[1] == 200:
         logger.info(
             f"Student: {job_application[0]['student_id']} - "
-            f"Job Application:{job_application[0]['id']} for Job:{job_id} has been created.")
+            f"Job Application:{job_application[0]['id']} "
+            f"for Job:{job_id} has been created.")
         logger.debug(job_application)
     else:
         logger.warning(
