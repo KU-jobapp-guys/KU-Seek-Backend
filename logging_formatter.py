@@ -2,6 +2,7 @@
 
 import logging
 
+
 class OptionalUserFormatter(logging.Formatter):
     """Custom formatter for logging."""
 

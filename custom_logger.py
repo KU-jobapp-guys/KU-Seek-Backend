@@ -13,6 +13,7 @@ _DEFAULT_LOGGER_NAME = LOGGER
 _LOCK = threading.RLock()
 _ADAPTER = None
 
+
 class KwAdapter(logging.LoggerAdapter):
     """Key word adapter to take kwargs from logging function."""
 
@@ -24,6 +25,7 @@ class KwAdapter(logging.LoggerAdapter):
             extra["user"] = user
         kwargs["extra"] = extra
         return msg, kwargs
+
 
 def get_logger():
     """Get the selected logger from app.py."""

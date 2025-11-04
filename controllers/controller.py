@@ -12,6 +12,7 @@ from flask import current_app
 
 logger = get_logger()
 
+
 def get_all_tasks():
     """Return all tasks."""
     task_manager = TaskController(current_app.config["Database"])
@@ -73,9 +74,7 @@ def update_profile(body: Dict) -> Optional[Dict]:
     try:
         profile_manager = ProfileController(current_app.config["Database"])
         uid = get_auth_user_id(request)
-        profile_updated_data = profile_manager.update_profile(
-            uid, body
-        )
+        profile_updated_data = profile_manager.update_profile(uid, body)
         logger.info("Profile has been updated.", user=uid)
         logger.debug(f"{body}", user=uid)
         return jsonify(profile_updated_data), 200
@@ -136,13 +135,13 @@ def post_bookmark_jobs(body: Dict):
     try:
         job_manager = JobController(current_app.config["Database"])
         uid = get_auth_user_id(request)
-        bookmarked_jobs = job_manager.post_bookmark_jobs(
-            uid, body
-        )
+        bookmarked_jobs = job_manager.post_bookmark_jobs(uid, body)
         logger.info(
             f"Bookmark:{bookmarked_jobs['id']} "
             f"for Job:{bookmarked_jobs['job_id']} "
-            f"has been created.", user=uid)
+            f"has been created.",
+            user=uid,
+        )
         logger.debug(bookmarked_jobs)
         return jsonify(bookmarked_jobs), 201
     except ValueError as e:
@@ -158,8 +157,9 @@ def delete_bookmark_jobs(job_id: int):
         job_manager = JobController(current_app.config["Database"])
         deleted_bookmark = job_manager.delete_bookmark_jobs(user_id, job_id)
         logger.info(
-            f"Bookmark:{deleted_bookmark['id']} for Job:{job_id} "
-            f"has been deleted.", user=user_id)
+            f"Bookmark:{deleted_bookmark['id']} for Job:{job_id} has been deleted.",
+            user=user_id,
+        )
         return jsonify(deleted_bookmark), 200
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
@@ -175,12 +175,11 @@ def create_job_application(body, job_id: int) -> Optional[Dict]:
         logger.info(
             f"Student: {job_application[0]['student_id']} - "
             f"Job Application:{job_application[0]['id']} "
-            f"for Job:{job_id} has been created.")
+            f"for Job:{job_id} has been created."
+        )
         logger.debug(job_application)
     else:
-        logger.warning(
-            f"{job_application}"
-        )
+        logger.warning(f"{job_application}")
     return job_application
 
 
