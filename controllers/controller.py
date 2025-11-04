@@ -77,7 +77,7 @@ def update_profile(body: Dict) -> Optional[Dict]:
             uid, body
         )
         logger.info("Profile has been updated.", user=uid)
-        logger.debug(f"Profile updated with these fields: {body.items()}", user=uid)
+        logger.debug(f"{body}", user=uid)
         return jsonify(profile_updated_data), 200
     except ValueError as e:
         return jsonify({"message": str(e)}), 404
@@ -101,7 +101,7 @@ def post_job(body: Dict):
         job_manager = JobController(current_app.config["Database"])
         uid = get_auth_user_id(request)
         new_job = job_manager.post_job(uid, body)
-        logger.info(f"Job:{new_job["id"]} has been posted.", user=uid)
+        logger.info(f"Job:{new_job['id']} has been posted.", user=uid)
         return jsonify(new_job), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
@@ -139,7 +139,11 @@ def post_bookmark_jobs(body: Dict):
         bookmarked_jobs = job_manager.post_bookmark_jobs(
             uid, body
         )
-        logger.info(f"Bookmark:{bookmarked_jobs["id"]} for Job:{bookmarked_jobs["job_id"]} has been created.", user=uid)
+        logger.info(
+            f"Bookmark:{bookmarked_jobs['id']} "
+            f"for Job:{bookmarked_jobs['job_id']} "
+            f"has been created.", user=uid)
+        logger.debug(bookmarked_jobs)
         return jsonify(bookmarked_jobs), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
@@ -153,7 +157,9 @@ def delete_bookmark_jobs(job_id: int):
         user_id = get_auth_user_id(request)
         job_manager = JobController(current_app.config["Database"])
         deleted_bookmark = job_manager.delete_bookmark_jobs(user_id, job_id)
-        logger.info(f"Bookmark:{deleted_bookmark["id"]} for Job:{job_id} has been deleted.", user=user_id)
+        logger.info(
+            f"Bookmark:{deleted_bookmark['id']} for Job:{job_id} "
+            f"has been deleted.", user=user_id)
         return jsonify(deleted_bookmark), 200
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
@@ -165,7 +171,15 @@ def create_job_application(body, job_id: int) -> Optional[Dict]:
     """Create a job application in the database."""
     app_manager = JobApplicationController(current_app.config["Database"])
     job_application = app_manager.create_job_application(body, job_id)
-    logger.info(f"Student: {job_application['student_id']} - Job Application:{job_application['id']} for Job:{job_id} has been created.")
+    if job_application[1] == 200:
+        logger.info(
+            f"Student: {job_application[0]['student_id']} - "
+            f"Job Application:{job_application[0]['id']} for Job:{job_id} has been created.")
+        logger.debug(job_application)
+    else:
+        logger.warning(
+            f"{job_application}"
+        )
     return job_application
 
 
