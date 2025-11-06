@@ -3,13 +3,16 @@
 import logging
 import logging.config
 from pathlib import Path
+from dotenv import load_dotenv
 import threading
-from app import LOGGER
+import os
+
+load_dotenv()
 
 LOGGING_CONF = Path(__file__).with_name("logging.conf")
 logging.config.fileConfig(LOGGING_CONF, disable_existing_loggers=False)
 
-_DEFAULT_LOGGER_NAME = LOGGER
+_DEFAULT_LOGGER_NAME = os.getenv("LOGGER")
 _LOCK = threading.RLock()
 _ADAPTER = None
 

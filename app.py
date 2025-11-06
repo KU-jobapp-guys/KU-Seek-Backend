@@ -9,8 +9,6 @@ from controllers.db_controller import BaseController
 from controllers.management.admin import YesManModel, AiAdminModel
 
 
-LOGGER = "KU_SEEK_LOGGER_DEV"
-
 if not os.path.exists(".env"):
     print(".env file not found.You may create one from 'sample-env.txt'.")
     sys.exit(1)
