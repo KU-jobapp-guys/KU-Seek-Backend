@@ -3,18 +3,15 @@
 import logging
 import logging.config
 from pathlib import Path
-from dotenv import load_dotenv
+from decouple import config
 import threading
 import os
 
-load_dotenv()
 
 LOGGING_CONF = Path(__file__).with_name("logging.conf")
 logging.config.fileConfig(LOGGING_CONF, disable_existing_loggers=False)
 
-_DEFAULT_LOGGER_NAME = os.getenv("LOGGER")
-_LOCK = threading.RLock()
-_ADAPTER = None
+LOGGER_NAME = config("LOGGER", default="KU_SEEK_LOGGER_PROD")
 
 
 class KwAdapter(logging.LoggerAdapter):
@@ -32,11 +29,5 @@ class KwAdapter(logging.LoggerAdapter):
 
 def get_logger():
     """Get the selected logger from app.py."""
-    global _ADAPTER
-    name = _DEFAULT_LOGGER_NAME
-    with _LOCK:
-        if _ADAPTER is None:
-            _ADAPTER = KwAdapter(logging.getLogger(name), {})
-        else:
-            _ADAPTER.logger = logging.getLogger(name)
-        return _ADAPTER
+    return KwAdapter(logging.getLogger(LOGGER_NAME))
+        
