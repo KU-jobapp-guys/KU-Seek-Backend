@@ -7,7 +7,7 @@ from .job_app_controller import JobApplicationController
 from .auth_controller import get_auth_user_id
 from .job_controller import JobController
 from typing import Dict, Optional
-from custom_logger import get_logger
+from logger.custom_logger import get_logger
 from flask import current_app
 
 logger = get_logger()
