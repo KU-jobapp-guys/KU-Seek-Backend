@@ -51,6 +51,7 @@ class JobApplicationTestCase(RoutingTestCase):
         session.refresh(company)
         session.refresh(student)
         cls.user_id = user.id
+        cls.student_id = student.id
         cls.company_id = company_user.id
 
         # create 3 jobs in the database
@@ -118,6 +119,8 @@ class JobApplicationTestCase(RoutingTestCase):
         )
         session.add(job_application)
         session.commit()
+        session.refresh(job_application)
+        cls.job_app_id = job_application.id
         session.close()
 
         cls.test_dir = os.path.join(os.getcwd(), "content", "test")
@@ -283,3 +286,229 @@ class JobApplicationTestCase(RoutingTestCase):
         )
 
         self.assertEqual(res.status_code, 400)
+
+    def test_update_job_application_without_auth(self):
+        """A user must authenticate to use the job application update API."""
+        csrf = self.client.get("/api/v1/csrf-token")
+        res = self.client.patch(
+            "/api/v1/application/update/1",
+            json=[],
+            headers={"X-CSRFToken": csrf.json["csrf_token"]},
+        )
+        self.assertEqual(res.status_code, 401)
+
+    def test_update_job_application_with_invalid_role(self):
+        """Only company users can update job applicant status."""
+        jwt = generate_jwt(self.user_id, secret=SECRET_KEY)
+
+        data = [{"application_id": self.job_app_id, "status": "accepted"}]
+
+        csrf = self.client.get("/api/v1/csrf-token")
+        res = self.client.patch(
+            "/api/v1/application/update/1",
+            json=data,
+            headers={"access_token": jwt, "X-CSRFToken": csrf.json["csrf_token"]},
+        )
+        self.assertEqual(res.status_code, 403)
+        self.assertIn("User does not have auth", res.json["message"])
+
+    def test_update_job_application_for_unowned_job(self):
+        """A company may only update applications for jobs they own."""
+        # Create another company, job and job application
+        session = self.database.get_session()
+        try:
+            other_company_user = User(
+                google_uid="5555", email="other@company.com", type="Company"
+            )
+            session.add(other_company_user)
+            session.commit()
+            session.refresh(other_company_user)
+
+            other_company = Company(
+                user_id=other_company_user.id,
+                company_name="Other Corp",
+                company_type="Private",
+                company_industry="Finance",
+                company_size="11-50",
+                company_website="https://www.other.com",
+                full_location="Bangkok, Thailand",
+            )
+            session.add(other_company)
+            session.commit()
+            session.refresh(other_company)
+
+            other_job = Job(
+                company_id=other_company.id,
+                title="Different Job",
+                salary_min=0,
+                salary_max=0,
+                location="Other street",
+                work_hours="8",
+                job_type="finance",
+                job_level="internship",
+                status="approved",
+                visibility=True,
+                capacity=2,
+                end_date=datetime.now() + timedelta(hours=1),
+            )
+            session.add(other_job)
+            session.commit()
+            session.refresh(other_job)
+            other_job_id = other_job.id
+
+            job_application = JobApplication(
+                job_id=other_job_id,
+                student_id=self.student_id,
+                first_name="John",
+                last_name="Doe",
+                contact_email="faker@gmail.com",
+                resume="some real file id",
+                letter_of_application="some other real file id",
+                years_of_experience="3",
+                expected_salary="50000 < 80000",
+                phone_number="0123456789",
+                status="pending",
+                applied_at=datetime.now(),
+            )
+            session.add(job_application)
+            session.commit()
+            session.refresh(job_application)
+            job_application_id = job_application.id
+        finally:
+            session.close()
+
+        jwt = generate_jwt(self.company_id, secret=SECRET_KEY)
+
+        data = [{"application_id": job_application_id, "status": "accepted"}]
+
+        csrf = self.client.get("/api/v1/csrf-token")
+        res = self.client.patch(
+            f"/api/v1/application/update/{other_job_id}",
+            json=data,
+            headers={"access_token": jwt, "X-CSRFToken": csrf.json["csrf_token"]},
+        )
+        self.assertEqual(res.status_code, 403)
+        self.assertIn("User is not the job owner", res.json["message"])
+
+    def test_update_job_application_for_invalid_application(self):
+        """Only valid job applications can be updated."""
+        jwt = generate_jwt(self.company_id, secret=SECRET_KEY)
+
+        # Use a non-existent application ID
+        data = [{"application_id": 99999999999, "status": "accepted"}]
+
+        csrf = self.client.get("/api/v1/csrf-token")
+        res = self.client.patch(
+            "/api/v1/application/update/1",
+            json=data,
+            headers={"access_token": jwt, "X-CSRFToken": csrf.json["csrf_token"]},
+        )
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("Invalid job application ID provided", res.json["message"])
+
+    def test_update_one_job_application(self):
+        """A company can update a job application."""
+        # Get the existing application ID from job 1
+
+        jwt = generate_jwt(self.company_id, secret=SECRET_KEY)
+
+        data = [{"application_id": self.job_app_id, "status": "accepted"}]
+
+        csrf = self.client.get("/api/v1/csrf-token")
+        res = self.client.patch(
+            "/api/v1/application/update/1",
+            json=data,
+            headers={"access_token": jwt, "X-CSRFToken": csrf.json["csrf_token"]},
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(len(res.json), 1)
+
+        # Verify the status was updated in the database
+        session = self.database.get_session()
+        try:
+            updated_app = (
+                session.query(JobApplication)
+                .where(JobApplication.id == self.job_app_id)
+                .one()
+            )
+            self.assertEqual(updated_app.status, "accepted")
+        finally:
+            session.close()
+
+    def test_update_multiple_job_applications(self):
+        """A company can update multiple job applications at once."""
+        # Create additional applications for job 2
+        session = self.database.get_session()
+
+        # Create a second student
+        user2 = User(google_uid="11111", email="student2@gmail.com", type="Student")
+        session.add(user2)
+        session.commit()
+        session.refresh(user2)
+
+        student2 = Student(
+            user_id=user2.id,
+            nisit_id="S87654321",
+            gpa=3.50,
+            interests="Data Science, ML",
+        )
+        session.add(student2)
+        session.commit()
+        session.refresh(student2)
+
+        # Create second application
+        job_application2 = JobApplication(
+            job_id=2,
+            student_id=student2.id,
+            first_name="Jane",
+            last_name="Smith",
+            contact_email="jane@gmail.com",
+            resume="file_id_2",
+            letter_of_application="file_id_3",
+            years_of_experience="1",
+            expected_salary="40000",
+            phone_number="0987654321",
+            status="pending",
+            applied_at=datetime.now(),
+        )
+        session.add(job_application2)
+        session.commit()
+
+        # Get both application IDs
+        job_apps = session.query(JobApplication).where(JobApplication.job_id == 2).all()
+        app_ids = [app.id for app in job_apps]
+        session.close()
+
+        jwt = generate_jwt(self.company_id, secret=SECRET_KEY)
+
+        data = [
+            {"application_id": app_ids[0], "status": "accepted"},
+            {"application_id": app_ids[1], "status": "rejected"},
+        ]
+
+        csrf = self.client.get("/api/v1/csrf-token")
+        res = self.client.patch(
+            "/api/v1/application/update/2",
+            json=data,
+            headers={"access_token": jwt, "X-CSRFToken": csrf.json["csrf_token"]},
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(len(res.json), 2)
+
+        # Verify both statuses were updated
+        session = self.database.get_session()
+        try:
+            app1 = (
+                session.query(JobApplication)
+                .where(JobApplication.id == app_ids[0])
+                .one()
+            )
+            app2 = (
+                session.query(JobApplication)
+                .where(JobApplication.id == app_ids[1])
+                .one()
+            )
+            self.assertEqual(app1.status, "accepted")
+            self.assertEqual(app2.status, "rejected")
+        finally:
+            session.close()

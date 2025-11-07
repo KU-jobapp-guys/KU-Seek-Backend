@@ -169,6 +169,12 @@ def fetch_job_applications_from_job(job_id: int) -> Optional[Dict]:
     return app_manager.fetch_job_application_from_job_post(job_id)
 
 
+def update_job_applications_status(job_id: int, body: list[Dict]) -> Optional[Dict]:
+    """Update multiple job applications' status from the provided job."""
+    app_manager = JobApplicationController(current_app.config["Database"])
+    return app_manager.update_job_applications_status(job_id, body)
+
+
 def get_file(file_id: str) -> Response:
     """Get a file for viewing, based on the file id."""
     file_manager = FileController(current_app.config["Database"])
