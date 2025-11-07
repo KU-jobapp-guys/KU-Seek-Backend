@@ -153,8 +153,12 @@ class JobApplicationTestCase(RoutingTestCase):
         # destroy the /content/test directory along with the test files
         shutil.rmtree(cls.test_dir)
         content_dir = os.path.join(os.getcwd(), "content")
-        os.remove(content_dir + "/letter.pdf")
-        os.remove(content_dir + "/resume.pdf")
+        letter_file_path = os.path.join(content_dir, "letter.pdf")
+        resume_file_path = os.path.join(content_dir, "resume.pdf")
+        if os.path.exists(resume_file_path):
+            os.remove(resume_file_path)
+        if os.path.exists(os.path.join(content_dir, "resume.pdf")):
+            os.remove(letter_file_path)
 
     def test_invalid_role_access(self):
         """A User with an unauthorized role cannot access the Job Application APIs."""

@@ -167,7 +167,7 @@ class JobApplicationController:
                 session.query(MailQueue)
                 .where(
                     MailQueue.recipient == company_user.email,
-                    MailQueue.subject == f"New applicants for {job.title}",
+                    MailQueue.topic == f"New applicants for {job.title}",
                 )
                 .one_or_none()
             )
@@ -205,6 +205,7 @@ class JobApplicationController:
                 os.remove(resume_file_path)
             if os.path.exists(letter_file_path):
                 os.remove(letter_file_path)
+            print(e)
 
             return models.ErrorMessage(f"Failed to create job application: {e}"), 404
 
