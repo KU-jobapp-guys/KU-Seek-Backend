@@ -46,6 +46,16 @@ paths:
                     type: string
         400:
           description: Invalid refresh token provided in header
+  
+  /auth/logout:
+    post:
+      summary: Logout a user from the system
+      operationId: controllers.auth_controller.logout
+      responses:
+        200:
+          description: Logout successfull
+        401:
+          description: User not authenticated
 
   /auth/oauth:
     post:
@@ -54,7 +64,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               properties:
@@ -382,7 +392,7 @@ paths:
               schema: 
                 type: array
                 items:
-                  $ref: '#/components/schemas/JobApplication'
+                  $ref: '#/components/schemas/StudentApplication'
         400:
           description: Invalid credentials
 
@@ -432,6 +442,120 @@ paths:
         400:
           description: Invalid request body.
 
+  /application/update/{job_id}:
+    parameters:
+      - name: job_id
+        in: path
+        required: true
+        description: The ID of the job post whose applications to update
+        schema:
+          type: integer
+    patch:
+      summary: Update job application statuses
+      description: Update the status of multiple job applications for a specific job post. Only the company that owns the job can update application statuses.
+      operationId: controllers.controller.update_job_applications_status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ApplicationStatusUpdate'
+      responses:
+        200:
+          description: Application statuses updated successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobApplication'
+        400:
+          description: Invalid request body or application IDs provided.
+        401:
+          description: User is not authenticated
+        403:
+          description: User is not the job owner.
+
+  /tags:
+    post:
+      summary: Create a new tag or return existing tag id
+      operationId: controllers.controller.post_tag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagInput'
+      responses:
+        200:
+          description: Existing tag returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        201:
+          description: New tag created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+
+  /tags/{tag_id}:
+    parameters:
+      - name: tag_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get a tag by id
+      operationId: controllers.controller.get_tag_by_id
+      responses:
+        200:
+          description: Tag found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        404:
+          description: Tag not found
+
+  /terms:
+    get:
+      summary: Get all terms
+      operationId: controllers.controller.get_all_terms
+      responses:
+        200:
+          description: A list of terms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Term'
+
+  /terms/{term_id}:
+    parameters:
+      - name: term_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get a term by id
+      operationId: controllers.controller.get_term_by_id
+      responses:
+        200:
+          description: Term found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Term'
+        404:
+          description: Term not found
+
 
 components:
   securitySchemes:
@@ -442,102 +566,96 @@ components:
 
   schemas:
     Job:
-        type: object
-        required:
-          - id
-          - company_id
-          - title
-          - status
-          - created_at
-        properties:
-          id:
-            type: integer
-            description: The unique identifier for a job
-            example: 1
-          company_id:
-            type: integer
-            description: The ID of the company posting the job
-            example: 5
-          description:
+      type: object
+      required:
+        - jobId
+        - company
+        - role
+        - jobLevel
+        - postTime
+      properties:
+        jobId:
+          type: string
+          description: Frontend-facing job identifier (slug)
+          example: "urban-frontend-1a2b"
+        company:
+          type: string
+          description: Human-friendly company name
+          example: "Urban Mobility Tech"
+        role:
+          type: string
+          description: Job title/role
+          example: "Frontend Developer"
+        jobLevel:
+          type: string
+          description: Job seniority level
+          example: "Mid-level"
+        location:
+          type: string
+          description: Job or company location
+          example: "Bangkok, Thailand"
+        postTime:
+          type: string
+          format: date-time
+          description: When the job was posted (ISO timestamp)
+          example: "2025-08-01T10:00:00Z"
+        description:
+          type: string
+          description: Detailed description of the job
+          example: "Develop and maintain web applications using React and TypeScript."
+        jobType:
+          type: string
+          description: Type of employment
+          example: "Full-time"
+        skills:
+          type: array
+          description: Array of required skill names
+          items:
             type: string
-            description: Detailed description of the job
-            example: "We are looking for a passionate software developer to join our team (Just Kidding)..."
-          title:
+            example: "React"
+        tags:
+          type: array
+          description: Array of tag names associated with this job
+          items:
             type: string
-            maxLength: 50
-            description: The job title/position title
-            example: "Software Developer"
-          salary_min:
-            type: number
-            format: float
-            description: Minimum salary offered
-            example: 30000.0
-          salary_max:
-            type: number
-            format: float
-            description: Maximum salary offered
-            example: 50000.0
-          location:
-            type: string
-            maxLength: 255
-            description: Job location
-            example: "Bangkok, Thailand"
-          work_hours:
-            type: string
-            maxLength: 20
-            description: Working hours
-            example: "9:00 AM - 5:00 PM"
-          job_type:
-            type: string
-            maxLength: 40
-            description: Type of employment
-            example: "full-time"
-          job_level:
-            type: string
-            maxLength: 40
-            description: Type of Job Level. 
-            example: "internship, entry-level, mid-level, Senior-level"
-          status:
-            type: string
-            maxLength: 20
-            description: Current status of the job posting
-            enum: ["pending", "approved", "rejected"]
-            default: "pending"
-            example: "approved"
-          visibility:
-            type: boolean
-            description: Whether the job is visible to students
-            example: true
-          capacity:
-            type: integer
-            description: Number of positions available
-            example: 3
-          end_date:
-            type: string
-            format: date-time
-            description: Application deadline
-            example: "2025-12-31T23:59:59Z"
-          created_at:
-            type: string
-            format: date-time
-            description: When the job was created
-            example: "2025-09-06T10:30:00Z"
-          approved_by:
-            type: integer
-            description: ID of the user who approved this job
-            example: 10
-          skills:
-            type: array
-            description: List of required skills for this job
-            items:
-              $ref: '#/components/schemas/Skill'
-          tags:
-            type: array
-            description: List of tags associated with this job
-            items:
-              $ref: '#/components/schemas/Tag'
-          company:
-            $ref: '#/components/schemas/Company'
+            example: "Remote Work"
+        contacts:
+          type: array
+          description: Contact objects for the job/company
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                description: Contact type (email, phone, website)
+                example: "email"
+              link:
+                type: string
+                description: Contact link or value
+                example: "info@urbanmobilitytech.com"
+        salaryMin:
+          type: number
+          format: float
+          description: Minimum salary offered
+          example: 50000
+        salaryMax:
+          type: number
+          format: float
+          description: Maximum salary offered
+          example: 70000
+        status:
+          type: string
+          description: Current status of the job posting
+          enum: ["pending", "approved", "rejected"]
+          example: "approved"
+        pendingApplicants:
+          type: integer
+          description: Number of applicants with pending status
+          example: 0
+        totalApplicants:
+          type: integer
+          description: Total number of applicants
+          example: 4
     
     JobFilter:
       type: object
@@ -546,11 +664,11 @@ components:
           type: string
           maxLength: 50
           description: The job title/position title
-        salary_min:
+        salaryMin:
           type: number
           format: float
           description: Minimum salary offered
-        salary_max:
+        salaryMax:
           type: number
           format: float
           description: Maximum salary offered
@@ -558,27 +676,29 @@ components:
           type: string
           maxLength: 255
           description: Job location
-        work_hours:
+        workHours:
           type: string
           maxLength: 20
           description: Working hours
-        job_type:
+        jobType:
           type: string
           maxLength: 40
           description: Type of employment
-        job_level:
+        jobLevel:
+          type: string
+          maxLength: 40
+          description: Type of Job Level.
+          example: "internship, entry-level, mid-level, Senior-level"
+        skillNames:
+          type: array
+          items:
             type: string
-            maxLength: 40
-            description: Type of Job Level. 
-            example: "internship, entry-level, mid-level, Senior-level"
-        skill_name:
-          type: string
-          maxLength: 40
-          description: Skill Name
-        tag_name:
-          type: string
-          maxLength: 40
-          description: Tag Name
+          description: Array of skill names to filter by
+        tagNames:
+          type: array
+          items:
+            type: string
+          description: Array of tag names to filter by
         capacity:
           type: integer
           description: Number of positions available
@@ -587,40 +707,116 @@ components:
             format: date-time
             description: Application deadline
             example: "2025-12-31T23:59:59Z"
-        company_name:
+        company_id:
+          type: string
+        companyName:
           type: string
           maxLength: 255
           description: Company Name
-        company_type:
+        companyType:
           type: string
           maxLength: 50
           description: Company Type
-        company_industry:
+        companyIndustry:
           type: string
           maxLength: 100
           description: Company Industry
+        isOwner:
+          type: boolean
+          description: Job that company post by themself (need JWT)
+          default: false
       
-
+  
     JobPost:
       type: object
-
-    StudentHistory:
-      type: object
-      required:
-        - job_id
-        - student_id
-        - viewed_at
+        - title
+        - salaryMin
+        - salaryMax
+        - location
+        - workHours
+        - jobType
+        - jobLevel
+        - capacity
+        - endDate
       properties:
-        job_id:
+        description:
+          type: string
+          description: Detailed description of the job
+          example: "We are looking for an experienced Python developer to join our dynamic team..."
+        title:
+          type: string
+          maxLength: 50
+          description: The job title/position title
+          example: "Senior Python Developer"
+        salaryMin:
+          type: number
+          format: float
+          description: Minimum salary offered
+          example: 80000.0
+        salaryMax:
+          type: number
+          format: float
+          description: Maximum salary offered
+          example: 120000.0
+        location:
+          type: string
+          maxLength: 255
+          description: Job location
+          example: "Bangkok, Thailand"
+        workHours:
+          type: string
+          maxLength: 20
+          description: Working hours
+          example: "9:00 AM - 5:00 PM"
+        jobType:
+          type: string
+          maxLength: 40
+          description: Type of employment
+          example: "full-time"
+        jobLevel:
+          type: string
+          maxLength: 40
+          description: Type of Job Level
+          example: "Senior-level"
+        capacity:
           type: integer
-          example: 1
-        student_id:
-          type: integer
-          example: 1
-        viewed_at:
+          description: Number of positions available
+          example: 2
+        endDate:
           type: string
           format: date-time
-          description: ISO 8601 timestamp when the student viewed the job
+          description: Application deadline
+          example: "2025-12-31T23:59:59Z"
+        skillNames:
+          type: array
+          description: Array of skill names (strings). Missing names will be created.
+          items:
+            type: string
+          example: ["Python", "Django"]
+        tagNames:
+          type: array
+          description: Array of tag names (strings). Missing names will be created.
+          items:
+            type: string
+          example: ["Remote", "Backend"]
+
+   StudentHistory:
+        type: object
+        required:
+          - job_id
+          - student_id
+          - viewed_at
+        properties:
+          job_id:
+            type: integer
+            example: 1
+          student_id:
+            type: integer
+            example: 1
+          viewed_at:
+            type: string
+            format: date-time
+            description: ISO 8601 timestamp when the student viewed the job
 
     StudentHistoryInput:
       type: object
@@ -742,6 +938,8 @@ components:
           description: The access token
         email:
           description: The account email
+        type:
+          description: The account type
     error_message:
       type: object
       properties:
@@ -763,25 +961,25 @@ components:
     BookmarkInput:
       type: object
       required:
-        - job_id
+        - jobId
       properties:
-        job_id:
+        jobId:
           type: integer
-          description: The job_id
+          description: The job id (frontend camelCase)
     
     BookmarkOutput:
       type: object
       properties:
-        "id":
+        id:
           type: integer
           description: id of bookmark job
-        job_id:
+        jobId:
           type: integer
-          description: The job_id
-        student_id:
+          description: The job id (frontend camelCase)
+        studentId:
           type: integer
-          description: The student_id
-        create_at:
+          description: The student id (frontend camelCase)
+        createdAt:
           type: string
           description: date that this bookmark got created
  
@@ -923,80 +1121,125 @@ components:
     JobApplication:
       type: object
       properties:
+        id:
+          type: integer
+          nullable: false
         applicant:
           type: object
           properties:
-            user_id:
+            userId:
               type: string
               nullable: false
-            first_name:
+            firstName:
               type: string
-              nullable: false
               example: "John"
-            last_name:
+            lastName:
               type: string
-              nullable: false
               example: "Doe"
-            contact_email:
+            contactEmail:
               type: string
-              nullable: false
-        job_details:
+            location:
+              type: string
+        jobDetails:
           type: object
           properties:
-            job_id:
+            jobId:
               type: string
-              nullable: false
-            job_title:
+            jobTitle:
               type: string
-              nullable: false
         resume:
           type: string
-          nullable: false
-        letter_of_application:
+        letterOfApplication:
           type: string
-          nullable: false
-        years_of_experience:
+        yearsOfExperience:
           type: string
-          nullable: false
-        expected_salary:
+        expectedSalary:
           type: string
-          nullable: false
-        phone_number:
+        phoneNumber:
           type: string
-          nullable: false
         status:
           type: string
           enum: ["pending", "accepted", "rejected"]
-          example: "pending"
-        applied_at:
+        appliedAt:
           type: string
           format: date-time
           example: "2025-10-07T18:30:00Z"
 
+    StudentApplication:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        applicant:
+          type: object
+          properties:
+            firstName:
+              type: string
+              example: "Prima"
+            lastName:
+              type: string
+              example: "Chantira"
+            contactEmail:
+              type: string
+              example: "prima@example.com"
+            location:
+              type: string
+              example: "Khon Kaen, Thailand"
+            userId:
+              type: string
+              example: "1"
+        appliedAt:
+          type: string
+          format: date-time
+          example: "2025-08-10T09:00:00Z"
+        expectedSalary:
+          type: string
+          example: "45,000 THB/month"
+        phoneNumber:
+          type: string
+          example: "0812345678"
+        resume:
+          type: string
+          example: "/uploads/resumes/prima_resume.pdf"
+        letterOfApplication:
+          type: string
+          example: "/uploads/letters/prima_letter.pdf"
+        status:
+          type: string
+          example: "pending"
+          enum: ["pending", "approved", "rejected"]
+        yearsOfExperience:
+          type: string
+          example: "1 year"
+        job:
+          $ref: '#/components/schemas/Job'
+
+
     ApplicationSubmission:
       type: object
       required:
-        - first_name
-        - last_name
+        - firstName
+        - lastName
         - email
       properties:
-        first_name:
+        firstName:
           type: string
           example: John
-        last_name:
+        lastName:
           type: string
           example: Doe
         email:
           type: string
           format: email
           example: john.doe@example.com
-        years_of_experience:
+        yearsOfExperience:
           type: string
           example: "2"
-        expected_salary:
+        expectedSalary:
           type: string
           example: "15000"
-        phone_number:
+        phoneNumber:
           type: string
           example: "0812345678"
         resume:
@@ -1006,7 +1249,46 @@ components:
               description: Upload new resume file
             - type: string
               description: Existing resume file ID
-        application_letter:
+        applicationLetter:
           type: string
           format: binary
           description: Upload new application letter file
+
+    TagInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 40
+          example: "Remote Work"
+
+    Term:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Python"
+        type:
+          type: string
+          example: "Programming Language"
+    ApplicationStatusUpdate:
+      type: object
+      required:
+        - applicationId
+        - status
+      properties:
+        applicationId:
+          type: integer
+          format: uuid
+          description: The unique identifier of the job application 
+          example: 12
+        status:
+          type: string
+          enum: ["accepted", "rejected"]
+          description: The new status for the application
+          example: "accepted"

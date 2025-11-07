@@ -6,6 +6,9 @@ from decouple import config, Csv
 from flask_cors import CORS
 from flask_wtf import CSRFProtect
 from controllers.db_controller import BaseController
+from openapi_server import encoder
+from controllers.models.tag_term_model import Terms
+from controllers.management.admin import YesManModel, AiAdminModel
 
 
 if not os.path.exists(".env"):
@@ -33,10 +36,8 @@ except ModuleNotFoundError:
     )
     sys.exit(1)
 
-from openapi_server import encoder  # noqa: E402
 
-
-def create_app(engine=None):
+def create_app(engine=None, admin=None):
     """
     Setups and configure the application.
 
@@ -73,10 +74,55 @@ def create_app(engine=None):
     if engine:
         app.app.config["Database"] = engine
 
+    # One-time (idempotent) seeding of common Terms into the database.
+    # This runs on app start and will only insert missing terms.
+    terms_list = [
+        "React",
+        "Vue",
+        "Angular",
+        "Node.js",
+        "Python",
+        "Django",
+        "Machine Learning",
+        "AWS",
+        "SQL",
+    ]
+
+    try:
+        with app.app.app_context():
+            db = app.app.config.get("Database")
+            if db and hasattr(db, "get_session"):
+                session = db.get_session()
+                added = 0
+                try:
+                    for name in terms_list:
+                        exists = session.query(Terms).filter(Terms.name == name).first()
+                        if exists:
+                            continue
+                        term = Terms(name=name, type="skill")
+                        session.add(term)
+                        added += 1
+                    if added:
+                        session.commit()
+                except Exception:
+                    session.rollback()
+                    raise
+                finally:
+                    session.close()
+    except Exception:
+        print("Warning: failed to seed Terms table")
+    app.app.config["Admin"] = YesManModel()
+    # set an agentic model for validation if provided
+    if admin:
+        app.app.config["Admin"] = admin
+
     return app
 
 
-app = create_app()
+prompt = os.path.join(
+    os.getcwd(), "controllers", "management", "prompts", "validator_prompt.txt"
+)
+app = create_app(admin=AiAdminModel(prompt_file=prompt, model="gemini-2.0-flash"))
 
 if __name__ == "__main__":
     app.run(port=8000, debug=True, use_reloader=False)
