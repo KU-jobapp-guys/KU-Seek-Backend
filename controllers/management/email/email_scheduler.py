@@ -70,7 +70,7 @@ class EmailScheduler:
                         mail_record.status = MailStatus.MAILSENT
                         session.commit()
 
-                    except Exception as e:
+                    except Exception:
                         mail_record.retry_count += 1
 
                         # On 3rd retry failure, mark as hard error
@@ -164,7 +164,7 @@ class EmailScheduler:
                 session.close()
                 print("Finished email batch job", flush=True)
 
-            except Exception as e:
+            except Exception:
                 # Log exception when its real
                 if "session" in locals():
                     session.rollback()

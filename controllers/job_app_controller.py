@@ -206,7 +206,7 @@ class JobApplicationController:
             if os.path.exists(letter_file_path):
                 os.remove(letter_file_path)
 
-            return models.ErrorMessage("Failed to create job application: ", e), 404
+            return models.ErrorMessage(f"Failed to create job application: {e}"), 404
 
     @role_required(["Student"])
     def fetch_user_job_applications(self):
