@@ -157,7 +157,7 @@ def delete_bookmark_jobs(job_id: int):
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
-      
+
 def get_professor_connection():
     """Return professor connection."""
     try:
