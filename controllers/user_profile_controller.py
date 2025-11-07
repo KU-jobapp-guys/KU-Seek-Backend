@@ -37,11 +37,22 @@ class ProfileController:
             )
 
             if not profile:
+                print(f"Profile for user_id={user_id} not found")
                 raise ValueError(f"Profile for user_id={user_id} not found")
 
-            return profile.to_dict()
+            profile_obj = {
+                "id": str(profile.user_id),
+                "firstName": profile.first_name,
+                "lastName": profile.last_name,
+                "about": profile.about,
+                "location": profile.location,
+                "email": profile.email,
+                "contactEmail": profile.contact_email,
+            }
+            return profile_obj
 
         except SQLAlchemyError as e:
+            print(f"Error fetching profile for user_id={user_id}: {e}")
             raise RuntimeError(f"Error fetching profile for user_id={user_id}: {e}")
 
         finally:
@@ -101,6 +112,7 @@ class ProfileController:
         user_uuid = UUID(user_id)
 
         if not body:
+            print("Request body cannot be empty.")
             raise ProblemException("Request body cannot be empty.")
 
         session = self.db.get_session()
@@ -109,6 +121,7 @@ class ProfileController:
                 session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
             )
             if not profile:
+                print(f"Profile for user_id={user_id} not found")
                 raise ValueError(f"Profile for user_id={user_id} not found")
 
             for key, value in body.items():

@@ -796,6 +796,8 @@ components:
           description: The account email
         type:
           description: The account type
+        user_id:
+          description: The user id
     error_message:
       type: object
       properties:

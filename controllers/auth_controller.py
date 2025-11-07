@@ -18,6 +18,7 @@ from jwt import encode, decode
 from swagger_server.openapi_server import models
 from datetime import datetime, timedelta, UTC
 from .models.user_model import User, Student, Company, Professor
+from .models.profile_model import Profile
 from .models.token_model import Token
 from .management.admin import AdminModel
 from .management.email import EmailSender
@@ -56,6 +57,7 @@ class UserCredentials(TypedDict):
     google_uid: str
     email: str
     user_type: str
+    user_id: str
 
 
 def get_csrf_token():
@@ -163,7 +165,7 @@ def handle_authentication(body: Dict):
             user = auth_controller.get_user(id_info["sub"])
             if user is None:
                 raise ValueError("User was not found")
-            user_jwt, refresh, user_type = auth_controller.login_user(user)
+            user_jwt, refresh, user_type, user_id = auth_controller.login_user(user)
 
         else:
             user_info = form.get("user_info")
@@ -188,7 +190,7 @@ def handle_authentication(body: Dict):
             user_info["google_uid"] = id_info["sub"]
             user_info["user_type"] = validation_res["role"]
             user = auth_controller.register_user(user_info, validation_res["role"])
-            user_jwt, refresh, user_type = auth_controller.login_user(user)
+            user_jwt, refresh, user_type, user_id = auth_controller.login_user(user)
 
             # send a registration email
             if user_info["user_type"] == "student":
@@ -203,9 +205,9 @@ def handle_authentication(body: Dict):
             except Exception:
                 # implement logging later
                 pass
-
+        
         response = make_response(
-            models.UserCredentials(user_jwt, id_info["email"], user_type).to_dict(), 200
+            models.UserCredentials(user_jwt, id_info["email"], user_type, user_id).to_dict(), 200
         )
         # set the refresh token as a HttpOnly cookie
         response.set_cookie(
@@ -331,9 +333,10 @@ class AuthenticationController:
         session.commit()
         user = session.query(User).where(User.id == uid).one()
         user_type = user.type.value.lower()
+        user_id = str(uid)
         session.close()
 
-        return auth_token, refresh_token, user_type
+        return auth_token, refresh_token, user_type, user_id
 
     def get_user(self, google_uid):
         """Return the user id with the matching google_uid."""
@@ -359,8 +362,8 @@ class AuthenticationController:
 
         Returns: The user's id in the database
         """
-        keys = list(UserCredentials.__annotations__.keys())
-        valid_keys = all(key in credentials for key in keys)
+        required_keys = ["google_uid", "email", "user_type"]
+        valid_keys = all(key in credentials for key in required_keys)
         if not valid_keys:
             raise TypeError("Invalid credentials.")
 
