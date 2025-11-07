@@ -2,7 +2,7 @@
 
 from typing import List, Dict
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from connexion.exceptions import ProblemException
 from flask import request
 from .decorators import role_required
@@ -77,7 +77,12 @@ class HistoryController:
             raise ProblemException("'job_id' is a required property")
 
         def _ensure_trim(session, student_id: int):
-            """Ensure the history table for a student is trimmed to 15 rows."""
+            """Ensure the history table for a student is trimmed to 15 rows.
+
+            Keep the newest 15 entries (order by viewed_at desc) and delete
+            the rest. This is deterministic even when timestamps are very
+            close or equal.
+            """
             total = (
                 session.query(StudentHistories)
                 .where(StudentHistories.student_id == student_id)
@@ -86,15 +91,18 @@ class HistoryController:
             if total <= 15:
                 return
 
-            to_delete = total - 15
-            oldest = (
+            histories_desc = (
                 session.query(StudentHistories)
                 .where(StudentHistories.student_id == student_id)
-                .order_by(StudentHistories.viewed_at)
-                .limit(to_delete)
+                .order_by(
+                    StudentHistories.viewed_at.desc(),
+                    StudentHistories.job_id.desc(),
+                )
                 .all()
             )
-            for row in oldest:
+
+            # Delete anything after the first 15 (keep the newest 15)
+            for row in histories_desc[15:]:
                 session.delete(row)
 
             session.commit()
@@ -124,7 +132,7 @@ class HistoryController:
             )
 
             if existing:
-                existing.viewed_at = datetime.utcnow()
+                existing.viewed_at = datetime.now(timezone.utc)
                 session.commit()
                 session.refresh(existing)
                 _ensure_trim(session, student.id)
@@ -137,7 +145,11 @@ class HistoryController:
                     else None,
                 }
 
-            history = StudentHistories(job_id=job_id, student_id=student.id)
+            history = StudentHistories(
+                job_id=job_id,
+                student_id=student.id,
+                viewed_at=datetime.now(timezone.utc),
+            )
             session.add(history)
             session.commit()
             session.refresh(history)
