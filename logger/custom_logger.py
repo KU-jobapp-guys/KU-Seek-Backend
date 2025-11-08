@@ -30,4 +30,3 @@ class KwAdapter(logging.LoggerAdapter):
 def get_logger():
     """Get the selected logger from app.py."""
     return KwAdapter(logging.getLogger(LOGGER_NAME))
-        
