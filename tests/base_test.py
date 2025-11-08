@@ -1,21 +1,26 @@
 """Module containing simple testcase for app setup and tear down."""
 
 import unittest
-from controllers.db_controller import BaseController
+from controllers.db_controller import AbstractDatabaseController
 from sqlalchemy import create_engine, text
+from sqlalchemy.orm import Session
 from controllers.models import BaseModel
 from app import create_app
 from decouple import config
 
 
-class TestingController(BaseController):
+class TestingController(AbstractDatabaseController):
     """Controller that controlls the test database."""
 
     def __init__(self):
-        """Instantiate from parent class and redifine the database engine."""
-        super().__init__()
+        """Instantiate the class."""
+        self.pool = self._get_database()
 
     def _get_testing_database(self):
+        """Generate a fresh testing database."""
+        self.pool = self._get_database()
+
+    def _get_database(self):
         """Create a database for testing."""
         host = config("DB_HOST", default="127.0.0.1")
         port = config("DB_PORT", cast=int, default="1234")
@@ -49,10 +54,14 @@ class TestingController(BaseController):
                 max_overflow=0,
                 pool_timeout=10,
             )
-            self.pool = db_engine
             BaseModel.metadata.create_all(db_engine)
+            return db_engine
         except Exception as e:
             raise ConnectionRefusedError("Could not create testing database,", e)
+
+    def get_session(self):
+        """Return a session object for ORM usage."""
+        return Session(self.pool)
 
     def _destroy_testing_database(self):
         """Destory the created testing database."""
