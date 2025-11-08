@@ -45,9 +45,13 @@ class ProfileController:
                 "firstName": profile.first_name,
                 "lastName": profile.last_name,
                 "about": profile.about,
+                "age": profile.age,
+                "gender": profile.gender,
                 "location": profile.location,
                 "email": profile.email,
                 "contactEmail": profile.contact_email,
+                "phoneNumber": profile.phone_number,
+                "userType": profile.user_type,
             }
             return profile_obj
 
