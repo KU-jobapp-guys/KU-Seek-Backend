@@ -808,11 +808,95 @@ components:
           description: Total number of applicants
           example: 4
 
+    Education:
+      type: object
+      required:
+        - id
+        - user_id
+        - curriculum_name
+        - university
+        - major
+        - year_of_study
+        - graduate_year
+      properties:
+        id:
+          type: integer
+          description: The unique identifier for an education record
+          example: 1
+        user_id:
+          type: string
+          format: uuid
+          description: The unique identifier for the user (foreign key to User table)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        curriculum_name:
+          type: string
+          description: The name of the curriculum or degree program
+          example: "Computer Science"
+        university:
+          type: string
+          description: The university name
+          example: "Kasetsart University"
+        major:
+          type: string
+          description: The major or field of study
+          example: "Computer Science"
+        year_of_study:
+          type: string
+          format: date
+          description: The start or year of study
+          example: "2020-08-01"
+        graduate_year:
+          type: string
+          format: date
+          description: The graduation year or date
+          example: "2024-05-15"
+
+    EducationInput:
+      type: object
+      required:
+        - curriculum_name
+        - user_id
+        - university
+        - major
+        - year_of_study
+        - graduate_year
+      properties:
+        curriculum_name:
+          type: string
+          description: The name of the curriculum or degree program
+          example: "Computer Science"
+        user_id:
+          type: string
+          format: uuid
+          description: The unique identifier for the user (foreign key to User table)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        university:
+          type: string
+          description: The university name
+          example: "Kasetsart University"
+        major:
+          type: string
+          description: The major or field of study
+          example: "Computer Science"
+        year_of_study:
+          type: string
+          format: date
+          description: The start or year of study
+          example: "2020-08-01"
+        graduate_year:
+          type: string
+          format: date
+          description: The graduation year or date
+          example: "2024-05-15"
+
     EducationPatch:
       type: object
       properties:
         curriculum_name:
           type: string
+        user_id:
+          type: string
+          format: uuid
         university:
           type: string
         major:

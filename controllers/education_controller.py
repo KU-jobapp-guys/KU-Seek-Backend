@@ -53,6 +53,7 @@ class EducationController:
             "major",
             "year_of_study",
             "graduate_year",
+            "user_id"
         ]
         missing = [f for f in required if f not in body]
         if missing:
