@@ -4,8 +4,6 @@ import logging
 import logging.config
 from pathlib import Path
 from decouple import config
-import threading
-import os
 
 
 LOGGING_CONF = Path(__file__).with_name("logging.conf")
