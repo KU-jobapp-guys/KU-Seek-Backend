@@ -58,7 +58,7 @@ class BaseController(AbstractDatabaseController):
         except Exception as e:
             raise ConnectionRefusedError("Could not connect to database,", e)
 
-    def get_session(self):
+    def get_session(self) -> Session:
         """Return a session object for ORM usage."""
         return Session(self.pool)
 
