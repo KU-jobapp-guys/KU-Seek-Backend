@@ -246,4 +246,4 @@ def update_job_applications_status(job_id: int, body: list[Dict]) -> Optional[Di
 def get_all_companies():
     """GET all the company data."""
     company_manager = CompanyController(current_app.config["Database"])
-    return company_manager.get_all_company()
+    return company_manager.get_all_companies()

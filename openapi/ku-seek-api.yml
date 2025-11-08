@@ -1247,59 +1247,16 @@ components:
     Company:
       type: object
       properties:
-        companyId:
+        "companyId":
           type: integer
-          description: The unique identifier for a company (frontend camelCase)
-          example: 1
-        userId:
+          description: The id of company.
+        "companyName":
           type: string
-          format: uuid
-          description: The user ID associated with this company (frontend camelCase)
-          example: "550e8400-e29b-41d4-a716-446655440000"
-        name:
+          description: Name of the company.
+        "jobCount":
+          type: integer
+          description: Total job company 
+        "profilePhoto":
           type: string
-          description: Human-friendly company name
-          example: "Tech Solutions Ltd."
-        profile:
-          type: object
-          nullable: true
-          description: Profile data for the company user (if available)
-          properties:
-            userId:
-              type: string
-              format: uuid
-              example: "550e8400-e29b-41d4-a716-446655440000"
-            firstName:
-              type: string
-              example: "Alice"
-            lastName:
-              type: string
-              example: "Cooper"
-            contactEmail:
-              type: string
-              format: email
-              example: "contact@techsolutions.com"
-            location:
-              type: string
-              example: "Bangkok, Thailand"
-        companyType:
-          type: string
-          description: Type of company
-          example: "Technology"
-        companyIndustry:
-          type: string
-          description: Industry sector
-          example: "Software Development"
-        companySize:
-          type: string
-          description: Size of the company
-          example: "50-100 employees"
-        companyWebsite:
-          type: string
-          format: uri
-          description: Company website URL
-          example: "https://www.techsolutions.com"
-        fullLocation:
-          type: string
-          description: Full address of the company
-          example: "123 Tech Street, Bangkok, Thailand 10110"
+          description: Profile photo of the company
+          

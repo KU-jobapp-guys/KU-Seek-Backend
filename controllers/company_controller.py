@@ -1,12 +1,10 @@
 """Module for handing Job API path logic."""
 
-import uuid
-
 from typing import List, Dict
 from .models.user_model import Company
+from .models.job_model import Job
 from .models.profile_model import Profile
 from .decorators import role_required
-from .serialization import camelize
 from swagger_server.openapi_server import models
 
 
@@ -33,24 +31,33 @@ class CompanyController:
 
             company_data = []
             for company in companies:
-                cdict = company.to_dict()
-
                 profile = (
                     session.query(Profile)
                     .filter(Profile.user_id == company.user_id)
                     .one_or_none()
                 )
 
-                if profile:
-                    cdict["profile"] = profile.to_dict()
-                else:
-                    cdict["profile"] = None
+                job_count = (
+                    session.query(Job)
+                    .filter(Job.company_id == company.id)
+                    .count()
+                )
 
-                company_data.append(cdict)
+                pr = profile.to_dict() if profile else {}
+
+                mapped = {
+                    "companyId": str(company.id),
+                    "companyName": company.company_name or "",
+                    "jobCount": job_count,
+                    "profilePhoto": pr.get("profile_img") or "",
+                }
+
+                company_data.append(mapped)
 
             session.close()
-            return camelize(company_data), 200
+            return company_data, 200
         
         except Exception as e:
             session.close()
             return models.ErrorMessage(f"Database exception occurred: {e}"), 400
+        
