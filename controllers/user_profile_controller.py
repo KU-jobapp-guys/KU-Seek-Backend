@@ -119,7 +119,11 @@ class ProfileController:
             print("Request body cannot be empty.")
             raise ProblemException("Request body cannot be empty.")
 
-        camel_map = {"firstName": "first_name", "lastName": "last_name", "phoneNumber": "phone_number"}
+        camel_map = {
+            "firstName": "first_name",
+            "lastName": "last_name",
+            "phoneNumber": "phone_number",
+        }
         mapped_body = {}
         for k, v in (body or {}).items():
             mapped_body[camel_map.get(k, k)] = v
