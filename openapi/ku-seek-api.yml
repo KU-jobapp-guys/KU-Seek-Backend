@@ -11,6 +11,8 @@ servers:
 paths:
   /csrf-token:
     get:
+      tags:
+        - Authentication
       summary: Get a csrf-token for form validation
       operationId: controllers.auth_controller.get_csrf_token
       responses:
@@ -26,6 +28,8 @@ paths:
 
   /refresh:
     get:
+      tags:
+        - Authentication
       summary: Get a new access token from a refesh token
       operationId: controllers.auth_controller.get_new_access_token
       parameters:
@@ -59,6 +63,8 @@ paths:
 
   /auth/oauth:
     post:
+      tags:
+        - Authentication
       summary: Login or Register a user and return user credentials.
       operationId: controllers.auth_controller.handle_authentication
       requestBody:
@@ -99,6 +105,8 @@ paths:
                   $ref: '#/components/schemas/Company'
   /jobs:
     get:
+      tags:
+        - Job Post
       summary: Get all jobs in the database if have job_id it will return only one job.
       operationId: controllers.controller.get_all_jobs
       parameters:
@@ -118,6 +126,8 @@ paths:
                   $ref: '#/components/schemas/Job'
   
     post:
+      tags:
+        - Job Post
       summary: Post new job to the database.
       operationId: controllers.controller.post_job
       requestBody:
@@ -139,6 +149,8 @@ paths:
     
   /jobs/search:
     post:
+      tags:
+        - Job Post
       summary: Get filtered jobs from the database
       operationId: controllers.controller.get_filtered_jobs
       requestBody:
@@ -160,6 +172,8 @@ paths:
    
   /bookmarks:
     get:
+      tags:
+        - Bookmark
       summary: Get all bookmarked jobs in the database
       operationId: controllers.controller.get_bookmark_jobs
       responses:
@@ -172,6 +186,8 @@ paths:
                 items:
                   $ref: '#/components/schemas/Job'
     post:
+      tags:
+        - Bookmark
       summary: Add new bookmarked job to the database
       operationId: controllers.controller.post_bookmark_jobs 
       requestBody:
@@ -189,6 +205,8 @@ paths:
                   $ref: '#/components/schemas/BookmarkOutput'
     
     delete:
+      tags:
+        - Bookmark
       summary: Delete bookmarked job in the database
       operationId: controllers.controller.delete_bookmark_jobs 
       parameters:
@@ -285,6 +303,8 @@ paths:
 
   /users/{user_id}/profile:
     get:
+      tags:
+        - Profile
       summary: Get the user profile data
       operationId: controllers.controller.get_user_profile
       parameters:
@@ -306,6 +326,8 @@ paths:
   /users/profile:
         
     post:
+      tags:
+        - Profile
       summary: Create an user profile
       operationId: controllers.controller.create_profile
  
@@ -331,6 +353,8 @@ paths:
           description: Profile already exists for user
 
     patch:
+      tags:
+        - Profile
       summary: Update an existing user profile
       operationId: controllers.controller.update_profile
       
@@ -357,6 +381,8 @@ paths:
 
   /application:
     get:
+      tags:
+        - Job Application
       summary: Get user job applications
       description: Retrieve the user's submitted job applications using the access token.
       operationId: controllers.controller.fetch_user_job_applications
@@ -381,6 +407,8 @@ paths:
         schema:
           type: string
     get:
+      tags:
+        - Job Application
       summary: Get applications by job ID
       description: Retrieve all job applications for a specific job.
       operationId: controllers.controller.fetch_job_applications_from_job
@@ -397,6 +425,8 @@ paths:
           description: "Invalid job or credentials provided."
 
     post:
+      tags:
+        - Job Application
       summary: Create new job application
       description: Create a new job application.
       operationId: controllers.controller.create_job_application
@@ -453,6 +483,100 @@ paths:
           description: User is not authenticated
         403:
           description: User is not the job owner.
+  /file/{file_id}:
+    get:
+      tags:
+        - File
+      summary: View a file in the browser
+      description: Retrieve and display a file for viewing in the browser. Requires authentication.
+      operationId: controllers.controller.get_file
+      parameters:
+        - name: file_id
+          in: path
+          description: The unique identifier of the file to retrieve
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: File retrieved successfully
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/msword:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+        400:
+          description: Database error occurred
+        404:
+          description: File not found (either database record or physical file)
+
+
+  /file/download/{file_id}:
+    get:
+      tags:
+        - File
+      summary: Download a file
+      description: Download a file as an attachment. Requires authentication.
+      operationId: controllers.controller.download_file
+      parameters:
+        - name: file_id
+          in: path
+          description: The unique identifier of the file to download
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: File download successful
+          headers:
+            Content-Disposition:
+              description: Indicates the file should be downloaded as an attachment
+              schema:
+                type: string
+                example: attachment; filename="document.pdf"
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/msword:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+        400:
+          description: Database error occurred
+        404:
+          description: File not found (either database record or physical file)
 
   /tags:
     post:

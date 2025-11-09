@@ -1,6 +1,6 @@
 """Module containing endpoints for operations."""
 
-from flask import request, jsonify
+from flask import request, jsonify, Response
 from .task_controller import TaskController
 from .user_profile_controller import ProfileController
 from .job_app_controller import JobApplicationController
@@ -8,6 +8,7 @@ from .auth_controller import get_auth_user_id
 from connexion.exceptions import ProblemException
 from .job_controller import JobController
 from .company_controller import CompanyController
+from .file_controller import FileController
 from typing import Dict, Optional
 from flask import current_app
 from .skills_controller import SkillsController
@@ -247,3 +248,15 @@ def get_all_companies():
     """GET all the company data."""
     company_manager = CompanyController(current_app.config["Database"])
     return company_manager.get_all_companies()
+
+
+def get_file(file_id: str) -> Response:
+    """Get a file for viewing, based on the file id."""
+    file_manager = FileController(current_app.config["Database"])
+    return file_manager.get_file(file_id)
+
+
+def download_file(file_id: str) -> Response:
+    """Get a file for downloading, based on the file id."""
+    file_manager = FileController(current_app.config["Database"])
+    return file_manager.download_file(file_id)
