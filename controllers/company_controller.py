@@ -15,7 +15,6 @@ class CompanyController:
         """Initialize the class."""
         self.db = database
 
-    @role_required(["Student"])
     def get_all_companies(self) -> List[Dict]:
         """
         Return all company in companies table.

@@ -1247,16 +1247,15 @@ components:
     Company:
       type: object
       properties:
-        "companyId":
+        companyId:
           type: integer
           description: The id of company.
-        "companyName":
+        companyName:
           type: string
           description: Name of the company.
-        "jobCount":
+        jobCount:
           type: integer
           description: Total job company 
-        "profilePhoto":
+        profilePhoto:
           type: string
           description: Profile photo of the company
-          
