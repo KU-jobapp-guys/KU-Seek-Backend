@@ -72,14 +72,12 @@ class ProfileController:
                     .one_or_none()
                 )
                 if company:
-                    profile_obj["companyName"] = company.name
-
+                    profile_obj["name"] = company.company_name
             return profile_obj
 
         except SQLAlchemyError as e:
             print(f"Error fetching profile for user_id={user_id}: {e}")
             raise RuntimeError(f"Error fetching profile for user_id={user_id}: {e}")
-
         finally:
             session.close()
 
