@@ -37,9 +37,7 @@ class CompanyController:
                 )
 
                 job_count = (
-                    session.query(Job)
-                    .filter(Job.company_id == company.id)
-                    .count()
+                    session.query(Job).filter(Job.company_id == company.id).count()
                 )
 
                 pr = profile.to_dict() if profile else {}
@@ -55,8 +53,7 @@ class CompanyController:
 
             session.close()
             return company_data, 200
-        
+
         except Exception as e:
             session.close()
             return models.ErrorMessage(f"Database exception occurred: {e}"), 400
-        
