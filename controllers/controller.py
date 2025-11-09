@@ -103,7 +103,7 @@ def post_job(body: Dict):
         job_manager = JobController(current_app.config["Database"])
         uid = get_auth_user_id(request)
         new_job = job_manager.post_job(uid, body)
-        logger.info(f"Job:{new_job['id']} has been posted.", user=uid)
+        logger.info(f"Job:{new_job['jobId']} has been posted.", user=uid)
         return jsonify(new_job), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
@@ -146,7 +146,7 @@ def post_bookmark_jobs(body: Dict):
         bookmarked_jobs = job_manager.post_bookmark_jobs(uid, body)
         logger.info(
             f"Bookmark:{bookmarked_jobs['id']} "
-            f"for Job:{bookmarked_jobs['job_id']} "
+            f"for Job:{bookmarked_jobs['jobId']} "
             f"has been created.",
             user=uid,
         )
@@ -181,7 +181,7 @@ def create_job_application(job_id: int) -> Optional[Dict]:
     job_application = app_manager.create_job_application(job_id)
     if job_application[1] == 200:
         logger.info(
-            f"Student: {job_application[0]['student_id']} - "
+            f"Student: {job_application[0]['studentId']} - "
             f"Job Application:{job_application[0]['id']} "
             f"for Job:{job_id} has been created."
         )
