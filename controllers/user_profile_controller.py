@@ -56,7 +56,7 @@ class ProfileController:
                 "userType": profile.user_type,
             }
 
-            if profile.user_type == 'student':
+            if profile.user_type == "student":
                 student = (
                     session.query(Student)
                     .filter(Student.user_id == user_uuid)
@@ -64,8 +64,8 @@ class ProfileController:
                 )
                 if student:
                     profile_obj["gpa"] = student.gpa
-                                
-            elif profile.user_type == 'company':
+
+            elif profile.user_type == "company":
                 company = (
                     session.query(Company)
                     .filter(Company.user_id == user_uuid)
@@ -137,36 +137,32 @@ class ProfileController:
         if not body:
             print("Request body cannot be empty.")
             raise ProblemException("Request body cannot be empty.")
-        
+
         camel_map = {
             "firstName": "first_name",
             "lastName": "last_name",
             "phoneNumber": "phone_number",
             "contactEmail": "contact_email",
         }
-        
+
         mapped_body = {}
         for k, v in (body or {}).items():
             mapped_body[camel_map.get(k, k)] = v
-        
+
         session = self.db.get_session()
         try:
-            user = (
-                session.query(User)
-                .where(User.id == user_uuid)
-                .one_or_none()
-            )
+            user = session.query(User).where(User.id == user_uuid).one_or_none()
 
             if not user:
                 raise ValueError(f"User for user_id={user_id} not found")
-            
+
             models_to_update = [Profile]
-        
+
             if user.type == UserTypes.STUDENT:
                 models_to_update.append(Student)
             elif user.type == UserTypes.COMPANY:
                 models_to_update.append(Company)
-            
+
             # Update all relevant models
             for model_class in models_to_update:
                 self._update_model_fields(
@@ -195,15 +191,13 @@ class ProfileController:
             .where(model_class.user_id == user_id)
             .one_or_none()
         )
-        print(f'updating {model_class.__name__} table')
 
         if not instance:
             raise ValueError(f"{model_class.__name__} for user_id={user_id} not found")
-        
+
         # Update only fields that exist on the model
         for key, value in data.items():
             if hasattr(instance, key):
                 setattr(instance, key, value)
-        
-        
+
         return instance
