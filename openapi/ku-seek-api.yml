@@ -102,7 +102,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Company'
+                  $ref: '#/components/schemas/AllCompanyOutput'
   /jobs:
     get:
       tags:
@@ -1368,7 +1368,7 @@ components:
           description: The new status for the application
           example: "accepted"
 
-    Company:
+    AllCompanyOutput:
       type: object
       properties:
         companyId:
