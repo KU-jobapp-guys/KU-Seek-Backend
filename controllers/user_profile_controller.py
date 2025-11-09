@@ -16,6 +16,66 @@ class ProfileController:
         """Initialize the class."""
         self.db = database
 
+    def get_user_setting(self, user_id: str) -> Optional[Dict]:
+        """
+        Return a user setting in the database.
+
+        Retrieves a user setting from the MySQL database.
+
+        Returns:
+            The user setting dictionary if found, otherwise None.
+        """
+        session = self.db.get_session()
+        try:
+            user_uuid = UUID(user_id)
+
+            profile = (
+                session.query(Profile)
+                .filter(Profile.user_id == user_uuid)
+                .one_or_none()
+            )
+
+            if not profile:
+                print(f"Profile for user_id={user_id} not found")
+                raise ValueError(f"Profile for user_id={user_id} not found")
+
+            profile_obj = {
+                "id": str(profile.user_id),
+                "firstName": profile.first_name,
+                "lastName": profile.last_name,
+                "age": profile.age,
+                "gender": profile.gender,
+                "location": profile.location,
+                "email": profile.email,
+                "contactEmail": profile.contact_email,
+                "phoneNumber": profile.phone_number,
+            }
+
+            if profile.user_type == "student":
+                student = (
+                    session.query(Student)
+                    .filter(Student.user_id == user_uuid)
+                    .one_or_none()
+                )
+                if student:
+                    profile_obj["gpa"] = student.gpa
+
+            elif profile.user_type == "company":
+                company = (
+                    session.query(Company)
+                    .filter(Company.user_id == user_uuid)
+                    .one_or_none()
+                )
+                if company:
+                    profile_obj["name"] = company.company_name
+            return profile_obj
+
+        except SQLAlchemyError as e:
+            print(f"Error fetching profile for user_id={user_id}: {e}")
+            raise RuntimeError(f"Error fetching profile for user_id={user_id}: {e}")
+        finally:
+            session.close()
+
     def get_profile_by_uid(self, user_id: str) -> Optional[Dict]:
         """
         Return a user profile in the database with the corresponding id.
@@ -43,17 +103,12 @@ class ProfileController:
                 raise ValueError(f"Profile for user_id={user_id} not found")
 
             profile_obj = {
-                "id": str(profile.user_id),
                 "firstName": profile.first_name,
                 "lastName": profile.last_name,
                 "about": profile.about,
-                "age": profile.age,
                 "gender": profile.gender,
+                "age": profile.age,
                 "location": profile.location,
-                "email": profile.email,
-                "contactEmail": profile.contact_email,
-                "phoneNumber": profile.phone_number,
-                "userType": profile.user_type,
             }
 
             if profile.user_type == "student":
@@ -63,8 +118,8 @@ class ProfileController:
                     .one_or_none()
                 )
                 if student:
-                    profile_obj["gpa"] = student.gpa
-
+                    profile_obj["interests"] = student.interests
+                    
             elif profile.user_type == "company":
                 company = (
                     session.query(Company)
