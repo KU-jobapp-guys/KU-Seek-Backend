@@ -4,7 +4,6 @@ from typing import List, Dict
 from .models.user_model import Company
 from .models.job_model import Job
 from .models.profile_model import Profile
-from .decorators import role_required
 from swagger_server.openapi_server import models
 
 
