@@ -3,6 +3,8 @@
 from typing import Optional, Dict
 from connexion.exceptions import ProblemException
 from .models.profile_model import Profile
+from .models.user_model import User, UserTypes, Student, Company
+
 from uuid import UUID
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -53,6 +55,25 @@ class ProfileController:
                 "phoneNumber": profile.phone_number,
                 "userType": profile.user_type,
             }
+
+            if profile.user_type == 'student':
+                student = (
+                    session.query(Student)
+                    .filter(Student.user_id == user_uuid)
+                    .one_or_none()
+                )
+                if student:
+                    profile_obj["gpa"] = student.gpa
+                                
+            elif profile.user_type == 'company':
+                company = (
+                    session.query(Company)
+                    .filter(Company.user_id == user_uuid)
+                    .one_or_none()
+                )
+                if company:
+                    profile_obj["companyName"] = company.name
+
             return profile_obj
 
         except SQLAlchemyError as e:
@@ -110,45 +131,79 @@ class ProfileController:
     def update_profile(self, user_id: str, body: Dict) -> Optional[Dict]:
         """
         Update fields in the UserProfile table dynamically.
-
         PATCH /users/profile
         """
         user_uuid = UUID(user_id)
-
         if not body:
             print("Request body cannot be empty.")
             raise ProblemException("Request body cannot be empty.")
-
+        
         camel_map = {
             "firstName": "first_name",
             "lastName": "last_name",
             "phoneNumber": "phone_number",
+            "contactEmail": "contact_email",
         }
+        
         mapped_body = {}
         for k, v in (body or {}).items():
             mapped_body[camel_map.get(k, k)] = v
-        body = mapped_body
-
+        
         session = self.db.get_session()
         try:
-            profile = (
-                session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
+            user = (
+                session.query(User)
+                .where(User.id == user_uuid)
+                .one_or_none()
             )
-            if not profile:
-                print(f"Profile for user_id={user_id} not found")
-                raise ValueError(f"Profile for user_id={user_id} not found")
 
-            for key, value in body.items():
-                if hasattr(profile, key):
-                    setattr(profile, key, value)
+            if not user:
+                raise ValueError(f"User for user_id={user_id} not found")
+            
+            models_to_update = [Profile]
+        
+            if user.type == UserTypes.STUDENT:
+                models_to_update.append(Student)
+            elif user.type == UserTypes.COMPANY:
+                models_to_update.append(Company)
+            
+            # Update all relevant models
+            for model_class in models_to_update:
+                self._update_model_fields(
+                    session=session,
+                    model_class=model_class,
+                    user_id=user_uuid,
+                    data=mapped_body,
+                )
 
             session.commit()
 
         except SQLAlchemyError as e:
             session.rollback()
             raise RuntimeError(f"{e}")
-
         finally:
             session.close()
-
         return self.get_profile_by_uid(user_id)
+
+    def _update_model_fields(self, session, model_class, user_id: UUID, data: Dict):
+        """
+        Helper function to update fields on any model instance.
+        """
+
+        instance = (
+            session.query(model_class)
+            .where(model_class.user_id == user_id)
+            .one_or_none()
+        )
+        print(f'updating {model_class.__name__} table')
+
+        if not instance:
+            raise ValueError(f"{model_class.__name__} for user_id={user_id} not found")
+        
+        # Update only fields that exist on the model
+        for key, value in data.items():
+            if hasattr(instance, key):
+                setattr(instance, key, value)
+        
+        
+        return instance
