@@ -290,6 +290,8 @@ paths:
 
   /users/me:
     get:
+      tags:
+        - Profile
       summary: Get the currently authenticated user's porfile
       operationId: controllers.controller.get_self_profile
       responses:
@@ -328,6 +330,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserProfile'
+
+  /users/images:
+    post:
+      tags:
+        - Profile
+      summary: Upload user profile and banner images
+      operationId: controllers.controller.upload_profile_images
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProfileImageInput'
+      
+      responses:
+        200:
+          description: Files uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfileImageConfirmation'
+
+        401:
+          description: Authentication error
   
   /users/profile:
         
@@ -1116,6 +1144,28 @@ components:
           type: string
           description: The phone number of the user
           example: "0812345678"
+    
+    ProfileImageInput:
+      properties:
+        profile_img:
+          type: string
+          format: binary
+          description: The profile image file
+        banner_img:
+          type: string
+          format: binary
+          description: The banner image file
+    
+    ProfileImageConfirmation:
+      properties:
+        file:
+          type: string
+          description: The file saved
+          example: "profile image"
+        status:
+          type: string
+          description: The file's status
+          example: "ok"
       
     UserProfile:
       type: object
