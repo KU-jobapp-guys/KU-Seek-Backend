@@ -10,10 +10,16 @@ from flask import request
 from uuid import UUID
 from sqlalchemy.exc import SQLAlchemyError
 from decouple import config
+import os
+from werkzeug.utils import secure_filename
+from .models.file_model import File
 
 SECRET_KEY = config("SECRET_KEY", default="good-key123")
 
 ALGORITHM = "HS512"
+
+BASE_FILE_PATH = config("BASE_FILE_PATH", default="content")
+SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
 
 
 class ProfileController:
@@ -32,10 +38,11 @@ class ProfileController:
         This method calls the more general get_profile_by_uid to optain the
         user's profile.
 
-        Returns: The user profile dictonary if found, otherwise None. 
+        Returns: The user profile dictonary if found, otherwise None.
         """
         jwt_auth_token = request.headers.get("access_token")
         user_id = decode(jwt_auth_token, SECRET_KEY, algorithms=[ALGORITHM])["uid"]
+        user_id = user_id.replace("'", "")
         return self.get_profile_by_uid(user_id)
 
     def get_profile_by_uid(self, user_id: str) -> Optional[Dict]:
@@ -148,6 +155,7 @@ class ProfileController:
 
         return self.get_profile_by_uid(user_id)
 
+    @login_required
     def update_profile(self, user_id: str, body: Dict) -> Optional[Dict]:
         """
         Update fields in the UserProfile table dynamically.
@@ -200,6 +208,139 @@ class ProfileController:
         finally:
             session.close()
         return self.get_profile_by_uid(user_id)
+
+    @login_required
+    def upload_profile_images(self):
+        """
+        Upload new image files for the profile.
+
+        Handle uploading of user profile and banner images.
+        """
+        jwt_auth_token = request.headers.get("access_token")
+        user_id = decode(jwt_auth_token, SECRET_KEY, algorithms=[ALGORITHM])["uid"]
+        user_uuid = UUID(user_id)
+
+        files = request.files
+        profile_img = files.get("profile_img")
+        banner_img = files.get("banner_img")
+
+        if not profile_img and not banner_img:
+            raise ProblemException("No image files provided")
+
+        session = self.db.get_session()
+        saved_files = []
+
+        try:
+            # Handle profile image
+            if profile_img:
+                # Check if profile image already exists
+                existing_profile_img = (
+                    session.query(File)
+                    .filter(File.owner == user_uuid, File.file_type == "profile_image")
+                    .one_or_none()
+                )
+
+                if existing_profile_img:
+                    # Update existing record
+                    file_name = secure_filename(profile_img.filename)
+                    file_extension = os.path.splitext(file_name)[1]
+                    file_path = (
+                        f"{BASE_FILE_PATH}/{existing_profile_img.id}{file_extension}"
+                    )
+                    full_file_path = os.path.join(os.getcwd(), file_path)
+
+                    existing_profile_img.file_name = file_name
+                    existing_profile_img.file_path = file_path
+
+                    profile_img.save(full_file_path)
+                    saved_files.append((full_file_path, "profile image"))
+                else:
+                    # Create new file record
+                    file_name = secure_filename(profile_img.filename)
+                    profile_img_model = File(
+                        owner=user_uuid,
+                        file_name=file_name,
+                        file_path="temp",
+                        file_type="profile_image",
+                    )
+                    session.add(profile_img_model)
+                    session.flush()  # Get the ID
+
+                    # Save file with ID in name
+                    file_extension = os.path.splitext(file_name)[1]
+                    file_path = (
+                        f"{BASE_FILE_PATH}/{profile_img_model.id}{file_extension}"
+                    )
+                    full_file_path = os.path.join(os.getcwd(), file_path)
+                    profile_img_model.file_path = file_path
+
+                    profile_img.save(full_file_path)
+                    saved_files.append((full_file_path, "profile image"))
+
+            # Handle banner image
+            if banner_img:
+                # Check if banner image already exists
+                existing_banner_img = (
+                    session.query(File)
+                    .filter(File.owner == user_uuid, File.file_type == "banner_image")
+                    .one_or_none()
+                )
+
+                if existing_banner_img:
+                    # Update existing record
+                    file_name = secure_filename(banner_img.filename)
+                    file_extension = os.path.splitext(file_name)[1]
+                    file_path = (
+                        f"{BASE_FILE_PATH}/{existing_banner_img.id}{file_extension}"
+                    )
+                    full_file_path = os.path.join(os.getcwd(), file_path)
+
+                    existing_banner_img.file_name = file_name
+                    existing_banner_img.file_path = file_path
+
+                    banner_img.save(full_file_path)
+                    saved_files.append((full_file_path, "banner image"))
+                else:
+                    # Create new file record
+                    file_name = secure_filename(banner_img.filename)
+                    banner_img_model = File(
+                        owner=user_uuid,
+                        file_name=file_name,
+                        file_path="temp",
+                        file_type="banner_image",
+                    )
+                    session.add(banner_img_model)
+                    session.flush()  # Get the ID
+
+                    # Save file with ID in name
+                    file_extension = os.path.splitext(file_name)[1]
+                    file_path = (
+                        f"{BASE_FILE_PATH}/{banner_img_model.id}{file_extension}"
+                    )
+                    full_file_path = os.path.join(os.getcwd(), file_path)
+                    banner_img_model.file_path = file_path
+
+                    banner_img.save(full_file_path)
+                    saved_files.append((full_file_path, "banner image"))
+
+            session.commit()
+            session.close()
+
+            response = [{"file": file[1], "status": "ok"} for file in saved_files]
+            return response, 200
+
+        except Exception as e:
+            print(str(e))
+            # Rollback database transaction
+            session.rollback()
+            session.close()
+
+            # Cleanup saved files on error
+            for file_path in saved_files:
+                if os.path.exists(file_path[0]):
+                    os.remove(file_path[0])
+
+            raise ProblemException(f"Failed to upload images: {str(e)}")
 
     def _update_model_fields(self, session, model_class, user_id: UUID, data: Dict):
         """

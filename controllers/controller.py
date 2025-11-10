@@ -91,6 +91,16 @@ def update_profile(body: Dict) -> Optional[Dict]:
         return jsonify({"message": str(e)}), 500
 
 
+def upload_profile_images() -> Optional[Dict]:
+    """Upload new profile and banner images."""
+    try:
+        profile_manager = ProfileController(current_app.config["Database"])
+        return profile_manager.upload_profile_images()
+    except Exception as e:
+        print(e)
+        return jsonify({"message": "bad image passed"}), 405
+
+
 def get_all_jobs(job_id: str = ""):
     """Return all Jobs."""
     try:
