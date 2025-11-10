@@ -91,6 +91,8 @@ paths:
 
   /companies:
     get:
+      tags:
+        - Company
       summary: Get all companies in the database.
       operationId: controllers.controller.get_all_companies
 
@@ -103,6 +105,25 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/AllCompanyOutput'
+  /company:
+    get:
+      tags:
+        - Company
+      summary: Get the authenticated user's company profile
+      description: Retrieve the company profile associated with the authenticated user (from the access token).
+      operationId: controllers.controller.get_company
+      responses:
+        200:
+          description: Company profile for the authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllCompanyOutput'
+        401:
+          description: User not authenticated
+        404:
+          description: Company not found
+
   /jobs:
     get:
       tags:
