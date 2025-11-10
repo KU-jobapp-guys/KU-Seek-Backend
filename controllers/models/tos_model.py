@@ -1,7 +1,7 @@
 from .base_model import BaseModel
 from sqlalchemy.orm import Mapped, MappedColumn
 from sqlalchemy import ForeignKey
-from sqlalchemy import Integer, DateTime, Boolean,func
+from sqlalchemy import Integer, DateTime, Boolean, func
 from datetime import datetime
 import uuid
 
@@ -17,9 +17,7 @@ class TOSAgreement(BaseModel):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
-    agree_status: Mapped[bool] = MappedColumn(
-        Boolean, nullable=False
-        )
+    agree_status: Mapped[bool] = MappedColumn(Boolean, nullable=False)
 
     agreed_at: Mapped[datetime] = MappedColumn(
         DateTime, default=func.now(), nullable=False

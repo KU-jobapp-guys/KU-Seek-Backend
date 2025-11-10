@@ -275,9 +275,6 @@ class ORMTestCase(RoutingTestCase):
 
     def test_tos_model(self):
         """Test Education model instantiation, and access it value."""
-        tos = TOSAgreement(
-            user_id=1,
-            agree_status=True
-        )
+        tos = TOSAgreement(user_id=1, agree_status=True)
         assert tos.user_id == 1
         assert tos.agree_status == True
