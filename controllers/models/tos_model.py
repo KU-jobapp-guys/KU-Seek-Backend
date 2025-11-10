@@ -1,3 +1,5 @@
+"""Model for storing TOS agreement."""
+
 from .base_model import BaseModel
 from sqlalchemy.orm import Mapped, MappedColumn
 from sqlalchemy import ForeignKey
