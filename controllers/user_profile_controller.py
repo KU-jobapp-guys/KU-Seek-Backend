@@ -4,9 +4,16 @@ from typing import Optional, Dict
 from connexion.exceptions import ProblemException
 from .models.profile_model import Profile
 from .models.user_model import User, UserTypes, Student, Company
-
+from .decorators import login_required
+from jwt import decode
+from flask import request
 from uuid import UUID
 from sqlalchemy.exc import SQLAlchemyError
+from decouple import config
+
+SECRET_KEY = config("SECRET_KEY", default="good-key123")
+
+ALGORITHM = "HS512"
 
 
 class ProfileController:
@@ -15,6 +22,21 @@ class ProfileController:
     def __init__(self, database):
         """Initialize the class."""
         self.db = database
+
+    @login_required
+    def get_self_profile(self) -> Optional[Dict]:
+        """
+        Return the currently logged in user.
+
+        Retrieves the profile of the currently logged in user.
+        This method calls the more general get_profile_by_uid to optain the
+        user's profile.
+
+        Returns: The user profile dictonary if found, otherwise None. 
+        """
+        jwt_auth_token = request.headers.get("access_token")
+        user_id = decode(jwt_auth_token, SECRET_KEY, algorithms=[ALGORITHM])["uid"]
+        return self.get_profile_by_uid(user_id)
 
     def get_profile_by_uid(self, user_id: str) -> Optional[Dict]:
         """

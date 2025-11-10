@@ -40,6 +40,15 @@ def delete_task(task_id: str):
     return task_manager.delete_task(task_id)
 
 
+def get_self_profile() -> Dict:
+    """GET the current authenticated user profile."""
+    try:
+        profile_manager = ProfileController(current_app.config["Database"])
+        return profile_manager.get_self_profile()
+    except ValueError:
+        return jsonify({"message": "No profile data found."}), 404
+
+
 def get_user_profile(user_id: str) -> Dict:
     """GET UserProfile from the database."""
     try:
