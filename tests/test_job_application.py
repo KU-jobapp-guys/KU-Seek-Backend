@@ -7,7 +7,7 @@ from base_test import RoutingTestCase
 from util_functions import generate_jwt
 from datetime import datetime, timedelta
 from decouple import config
-from controllers.models import User, Job, Company, Student, JobApplication
+from controllers.models import User, Job, Company, Student, JobApplication, File
 
 
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
@@ -148,13 +148,17 @@ class JobApplicationTestCase(RoutingTestCase):
     @classmethod
     def tearDownClass(cls):
         """Tear down the database for this test suite."""
-        super().tearDownClass()
+        # get all files logged in the testing database and delete it
+        session = cls.database.get_session()
+        files = session.query(File).all()
+        for file in files:
+            os.remove(os.getcwd() + "/" + file.file_path)
+
+        session.close()
 
         # destroy the /content/test directory along with the test files
         shutil.rmtree(cls.test_dir)
-        content_dir = os.path.join(os.getcwd(), "content")
-        os.remove(content_dir + "/letter.pdf")
-        os.remove(content_dir + "/resume.pdf")
+        super().tearDownClass()
 
     def test_invalid_role_access(self):
         """A User with an unauthorized role cannot access the Job Application APIs."""
