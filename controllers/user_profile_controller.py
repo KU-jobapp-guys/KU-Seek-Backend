@@ -103,6 +103,7 @@ class ProfileController:
                 raise ValueError(f"Profile for user_id={user_id} not found")
 
             profile_obj = {
+                "id": str(user_uuid),
                 "firstName": profile.first_name,
                 "lastName": profile.last_name,
                 "about": profile.about,
