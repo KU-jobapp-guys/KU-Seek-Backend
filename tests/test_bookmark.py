@@ -39,14 +39,14 @@ class BookmarkTestCase(RoutingTestCase):
         res = self.client.post(
             "/api/v1/bookmarks",
             headers={"X-CSRFToken": csrf_token, "access_token": jwt},
-            json={"job_id": 1},
+            json={"jobId": 1},
         )
 
         data = res.json
 
         self.assertEqual(res.status_code, 201)
-        self.assertEqual(1, data["job_id"])
-        self.assertEqual(1, data["student_id"])
+        self.assertEqual(1, data["jobId"])
+        self.assertEqual(1, data["studentId"])
 
     def test_post_then_delete_bookmarked(self):
         """Test creating a bookmark and then deleting it."""
@@ -57,12 +57,12 @@ class BookmarkTestCase(RoutingTestCase):
         res = self.client.post(
             "/api/v1/bookmarks",
             headers={"X-CSRFToken": csrf_token, "access_token": jwt},
-            json={"job_id": 1},
+            json={"jobId": 1},
         )
 
         self.assertEqual(res.status_code, 201)
         created_data = res.json
-        self.assertEqual(1, created_data["job_id"])
+        self.assertEqual(1, created_data["jobId"])
 
         res = self.client.delete(
             "/api/v1/bookmarks?job_id=1",
@@ -71,8 +71,8 @@ class BookmarkTestCase(RoutingTestCase):
 
         self.assertEqual(res.status_code, 200)
         deleted_data = res.json
-        self.assertEqual(1, deleted_data["job_id"])
-        self.assertEqual(2, deleted_data["student_id"])
+        self.assertEqual(1, deleted_data["jobId"])
+        self.assertEqual(2, deleted_data["studentId"])
 
         res = self.client.get("/api/v1/bookmarks", headers={"access_token": jwt})
         self.assertEqual(res.status_code, 200)
