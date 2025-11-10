@@ -24,6 +24,7 @@ from controllers.models import (
     Student,
     Professor,
     Company,
+    TOSAgreement,
 )
 
 
@@ -271,3 +272,12 @@ class ORMTestCase(RoutingTestCase):
         finally:
             session.rollback()
             session.close()
+
+    def test_tos_model(self):
+        """Test Education model instantiation, and access it value."""
+        tos = TOSAgreement(
+            user_id=1,
+            agree_status=True
+        )
+        assert tos.user_id == 1
+        assert tos.agree_status == True
