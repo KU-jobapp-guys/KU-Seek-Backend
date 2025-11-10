@@ -83,6 +83,7 @@ class ProfileController:
                 "contactEmail": profile.contact_email,
                 "phoneNumber": profile.phone_number,
                 "userType": profile.user_type,
+                "isVerified": profile.is_verified,
             }
 
             if profile.user_type == "student":
