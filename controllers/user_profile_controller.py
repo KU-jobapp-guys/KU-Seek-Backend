@@ -167,6 +167,7 @@ class ProfileController:
             print("Request body cannot be empty.")
             raise ProblemException("Request body cannot be empty.")
 
+        print(body)
         camel_map = {
             "firstName": "first_name",
             "lastName": "last_name",
@@ -243,6 +244,7 @@ class ProfileController:
 
                 if existing_profile_img:
                     # Update existing record
+                    previous_file = existing_profile_img.file_path
                     file_name = secure_filename(profile_img.filename)
                     file_extension = os.path.splitext(file_name)[1]
                     file_path = (
@@ -253,7 +255,11 @@ class ProfileController:
                     existing_profile_img.file_name = file_name
                     existing_profile_img.file_path = file_path
 
-                    profile_img.save(full_file_path)
+                    try:
+                        os.remove(os.getcwd(), previous_file)
+                        profile_img.save(full_file_path)
+                    except IOError:
+                        raise IOError("Could not read/write files")
                     saved_files.append((full_file_path, "profile image"))
                 else:
                     # Create new file record
@@ -289,6 +295,7 @@ class ProfileController:
 
                 if existing_banner_img:
                     # Update existing record
+                    previous_file = existing_banner_img.file_path
                     file_name = secure_filename(banner_img.filename)
                     file_extension = os.path.splitext(file_name)[1]
                     file_path = (
@@ -299,7 +306,11 @@ class ProfileController:
                     existing_banner_img.file_name = file_name
                     existing_banner_img.file_path = file_path
 
-                    banner_img.save(full_file_path)
+                    try:
+                        os.remove(os.getcwd(), previous_file)
+                        banner_img.save(full_file_path)
+                    except IOError:
+                        raise IOError("Could not save/write file.")
                     saved_files.append((full_file_path, "banner image"))
                 else:
                     # Create new file record
@@ -331,7 +342,6 @@ class ProfileController:
             return response, 200
 
         except Exception as e:
-            print(str(e))
             # Rollback database transaction
             session.rollback()
             session.close()
