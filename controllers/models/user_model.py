@@ -16,6 +16,7 @@ class UserTypes(enum.Enum):
     COMPANY = "Company"
     STAFF = "Staff"
     PROFESSOR = "Professor"
+    ADMIN = "Admin"
 
 
 class User(BaseModel):
