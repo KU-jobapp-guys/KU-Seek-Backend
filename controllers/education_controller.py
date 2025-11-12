@@ -4,6 +4,7 @@ from typing import List, Dict, Optional
 from connexion.exceptions import ProblemException
 from .models.profile_model import Education
 from sqlalchemy.exc import SQLAlchemyError
+from uuid import UUID
 
 
 class EducationController:
@@ -13,31 +14,32 @@ class EducationController:
         """Init the class."""
         self.db = database
 
-    def get_educations(self, education_id: Optional[int] = None) -> List[Dict]:
-        """Return all educations or a single education by id.
-
-        If `education_id` is provided, returns a single education dict.
-        """
+    def get_educations_by_user(self, user_id: UUID) -> List[Dict]:
+        """Return all educations belonging to a specific user."""
         session = self.db.get_session()
+        education_obj = []
         try:
-            if education_id:
-                edu = (
-                    session.query(Education)
-                    .where(Education.id == education_id)
-                    .one_or_none()
-                )
-                if not edu:
-                    raise ValueError(f"Education with id={education_id} not found")
-                return edu.to_dict()
+            educations = (
+                session.query(Education)
+                .filter(Education.user_id == user_id)
+                .all()
+            )
 
-            educations = session.query(Education).all()
-            return [e.to_dict() for e in educations]
-
+            for e in educations:
+                education_obj.append({
+                    "id": e.id,
+                    "curriculumName": e.curriculum_name,
+                    "university": e.university,
+                    "major": e.major,
+                    "yearOfStudy": e.year_of_study.year,
+                    "graduateYear": e.graduate_year.year,
+                })
+            return education_obj
         except SQLAlchemyError as e:
-            session.close()
-            raise RuntimeError(str(e))
+            raise RuntimeError(f"Error fetching educations for user {user_id}: {e}")
         finally:
             session.close()
+
 
     def post_education(self, body: Dict) -> Dict:
         """Create a new education record.

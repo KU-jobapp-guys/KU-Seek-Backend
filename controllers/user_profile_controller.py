@@ -4,6 +4,7 @@ from typing import Optional, Dict
 from connexion.exceptions import ProblemException
 from .models.profile_model import Profile
 from .models.user_model import User, UserTypes, Student, Company
+from .education_controller import EducationController
 
 from uuid import UUID
 from sqlalchemy.exc import SQLAlchemyError
@@ -15,6 +16,7 @@ class ProfileController:
     def __init__(self, database):
         """Initialize the class."""
         self.db = database
+        self.education_controller = EducationController(database)
 
     def get_user_setting(self, user_id: str) -> Optional[Dict]:
         """
@@ -120,6 +122,9 @@ class ProfileController:
                 )
                 if student:
                     profile_obj["interests"] = student.interests
+                    profile_obj["educations"] = (
+                        self.education_controller.get_educations_by_user(user_uuid) or []
+                        )
                     
             elif profile.user_type == "company":
                 company = (
@@ -134,6 +139,9 @@ class ProfileController:
         except SQLAlchemyError as e:
             print(f"Error fetching profile for user_id={user_id}: {e}")
             raise RuntimeError(f"Error fetching profile for user_id={user_id}: {e}")
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            raise RuntimeError(f"Unexpected error: {e}")
         finally:
             session.close()
 
