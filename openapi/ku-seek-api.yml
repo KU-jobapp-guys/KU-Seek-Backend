@@ -208,7 +208,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BookmarkOutput"
-
   /test/tasks:
     get:
       summary: Get all tasks in the database
@@ -286,6 +285,19 @@ paths:
         404:
           description: Task not found
 
+  /settings:
+    get:
+      summary: Get user setting
+      description: Retrieve the user's personal information.
+      operationId: controllers.controller.get_user_setting
+      responses:
+        200:
+          description: Return the user profile data created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
   /users/{user_id}/profile:
     get:
       tags:
@@ -339,16 +351,14 @@ paths:
     patch:
       tags:
         - Profile
-      summary: Update an existing user profile
+      summary: Update existing user profile and settings
       operationId: controllers.controller.update_profile
-
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/UserProfileInput"
-
       responses:
         200:
           description: User profile updated successfully
@@ -1164,6 +1174,8 @@ components:
           description: The account email
         type:
           description: The account type
+        user_id:
+          description: The user id
     error_message:
       type: object
       properties:

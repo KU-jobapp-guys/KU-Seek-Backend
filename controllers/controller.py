@@ -54,6 +54,17 @@ def get_user_profile(user_id: str) -> Dict:
         return jsonify({"message": str(e)}), 404
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+    
+def get_user_setting() -> Dict:
+    """GET user setting from the database."""
+    try:
+        profile_manager = ProfileController(current_app.config["Database"])
+        setting_data = profile_manager.get_user_setting(get_auth_user_id(request))
+        return jsonify(setting_data), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 404
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
 
 
 def create_profile(body: Dict) -> Optional[Dict]:
