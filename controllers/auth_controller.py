@@ -113,7 +113,7 @@ def handle_credential_login(body: Dict):
     auth_controller = AuthenticationController(
         current_app.config["Database"], current_app.config["Admin"]
     )
-    return auth_controller.credential_login()
+    return auth_controller.credential_login(body["email"], body["password"])
 
 
 def handle_authentication(body: Dict):

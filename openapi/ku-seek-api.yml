@@ -61,6 +61,37 @@ paths:
         401:
           description: User not authenticated
 
+  /auth/credentials:
+    post:
+      tags:
+          - Authentication
+      summary: Login a user using credentials and return user credentials.
+      operationId: controllers.auth_controller.handle_credential_login
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: The user's email
+                password:
+                  type: string
+                  description: The user's password
+      responses: 
+        200:
+          description: return client_id and access/refresh tokens
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserCredentials'
+        400:
+          description: Invalid authorization code
+
   /auth/oauth:
     post:
       tags:
