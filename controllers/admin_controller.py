@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
 
+
 class AdminController:
     """Class for handling admin operations."""
 
@@ -117,7 +118,7 @@ class AdminController:
                 user.type = user_request.requested_type
                 user.is_verified = True
                 session.add_all([user_request, user])
-            
+
             # deny users
             deny_ids = [
                 item["user_id"]
@@ -125,16 +126,14 @@ class AdminController:
                 if not item["is_accepted"] and not item.get("delete", False)
             ]
             records = (
-                session.query(UserRequest)
-                .where(UserRequest.id.in_(deny_ids))
-                .all()
+                session.query(UserRequest).where(UserRequest.id.in_(deny_ids)).all()
             )
             for user_request in records:
                 user_request.status = RequestStatusTypes.DENIED
                 user_request.approved_at = datetime.now(timezone.utc)
                 user_request.approved_by = token_info["user_id"]
                 session.add(user_request)
-            
+
             # delete users
             delete_ids = [item["user_id"] for item in body if item["delete"]]
             records = (
@@ -149,9 +148,9 @@ class AdminController:
             response = {
                 "accepted": accept_ids,
                 "denied": deny_ids,
-                "deleted": delete_ids
+                "deleted": delete_ids,
             }
-            
+
             session.commit()
             session.close()
             return response, 200
@@ -221,7 +220,7 @@ class AdminController:
                 job.visibiity = True
                 job.approved_by = token_info["user_id"]
                 session.add_all([job_request, job])
-            
+
             # deny jobs
             deny_ids = [
                 item["job_id"]
@@ -240,7 +239,7 @@ class AdminController:
                 job_request.approved_by = token_info["user_id"]
                 job.status = "rejected"
                 session.add_all([job_request, job])
-            
+
             # delete jobs
             delete_ids = [item["job_id"] for item in body if item["delete"]]
             records = (
@@ -255,9 +254,9 @@ class AdminController:
             response = {
                 "accepted": accept_ids,
                 "denied": deny_ids,
-                "deleted": delete_ids
+                "deleted": delete_ids,
             }
-            
+
             session.commit()
             session.close()
             return response, 200
