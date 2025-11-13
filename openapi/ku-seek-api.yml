@@ -89,6 +89,104 @@ paths:
         400:
           description: Invalid authorization code 
 
+  /admin/users/:
+    get:
+      tags:
+        - Admin
+      summary: Get all user creation requests
+      description: Retrieve all user creation requests that are not denied, including user and profile data.
+      operationId: controllers.controller.get_all_user_request
+      responses:
+        200:
+          description: A list of user requests with profile data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserRequest'
+        401:
+          description: User not authenticated
+        403:
+          description: User does not have admin authorization
+    
+    post:
+      tags:
+        - Admin
+      summary: Update user verification statuses
+      description: Update the status of one or more user creation requests. Can approve, deny, or delete users.
+      operationId: controllers.controller.update_user_status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserStatusUpdate'
+      responses:
+        200:
+          description: User statuses updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUpdateResponse'
+        400:
+          description: Could not update user IDs
+        401:
+          description: User not authenticated
+        403:
+          description: User does not have admin authorization
+
+  /admin/jobs/:
+    get:
+      tags:
+        - Admin
+      summary: Get all job post creation requests
+      description: Retrieve all job post creation requests that are not denied, including job details.
+      operationId: controllers.controller.get_all_job_request
+      responses:
+        200:
+          description: A list of job requests with job data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobRequestWithJob'
+        401:
+          description: User not authenticated
+        403:
+          description: User does not have admin authorization
+    
+    post:
+      tags:
+        - Admin
+      summary: Update job post verification statuses
+      description: Update the status of one or more job post creation requests. Can approve, deny, or delete job posts.
+      operationId: controllers.controller.update_job_status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/JobStatusUpdate'
+      responses:
+        200:
+          description: Job statuses updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUpdateResponse'
+        400:
+          description: Could not update job IDs
+        401:
+          description: User not authenticated
+        403:
+          description: User does not have admin authorization
+
   /jobs:
     get:
       tags:
@@ -651,6 +749,158 @@ components:
         bearerFormat: JWT
 
   schemas:
+    UserRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The user request ID
+          example: 1
+        userId:
+          type: string
+          format: uuid
+          description: The user's unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        requestedType:
+          type: string
+          enum: ["Student", "Company", "Staff", "Professor", "Admin"]
+          description: The type of user being requested
+          example: "Student"
+        status:
+          type: string
+          enum: ["pending", "approved", "denied"]
+          description: The status of the request
+          example: "pending"
+        createdAt:
+          type: string
+          format: date-time
+          description: When the request was created
+          example: "2025-11-01T10:00:00Z"
+        approvedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the request was approved
+          example: "2025-11-02T14:30:00Z"
+        approvedBy:
+          type: string
+          format: uuid
+          nullable: true
+          description: The admin who approved the request
+          example: "660e8400-e29b-41d4-a716-446655440001"
+        firstName:
+          type: string
+          description: User's first name from profile
+          example: "John"
+        lastName:
+          type: string
+          description: User's last name from profile
+          example: "Doe"
+
+    UserStatusUpdate:
+      type: object
+      required:
+        - user_id
+        - is_accepted
+      properties:
+        user_id:
+          type: string
+          description: The user request ID to update
+          example: 
+            - "550e8400-e29b-41d4-a716-446655440000"
+            - "660e8400-e29b-41d4-a716-446655440001"
+            - "770e8400-e29b-41d4-a716-446655440002"
+        is_accepted:
+          type: boolean
+          description: Whether to accept the request
+          example: true
+        delete:
+          type: boolean
+          description: Whether to delete the user
+          default: false
+          example: false
+
+    JobRequestWithJob:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The job request ID
+          example: 1
+        jobId:
+          type: integer
+          description: The job's unique identifier
+          example: 
+            - "550e8400-e29b-41d4-a716-446655440000"
+            - "660e8400-e29b-41d4-a716-446655440001"
+            - "770e8400-e29b-41d4-a716-446655440002"
+        status:
+          type: string
+          enum: ["pending", "approved", "denied"]
+          description: The status of the request
+          example: "pending"
+        createdAt:
+          type: string
+          format: date-time
+          description: When the request was created
+          example: "2025-11-01T10:00:00Z"
+        approvedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the request was approved
+          example: "2025-11-02T14:30:00Z"
+        approvedBy:
+          type: string
+          format: uuid
+          nullable: true
+          description: The admin who approved the request
+          example: "660e8400-e29b-41d4-a716-446655440001"
+        job:
+          $ref: '#/components/schemas/Job'
+
+    JobStatusUpdate:
+      type: object
+      required:
+        - job_id
+        - is_accepted
+      properties:
+        job_id:
+          type: integer
+          description: The job request ID to update
+          example: 1
+        is_accepted:
+          type: boolean
+          description: Whether to accept the request
+          example: true
+        delete:
+          type: boolean
+          description: Whether to delete the job post
+          default: false
+          example: false
+
+    AdminUpdateResponse:
+      type: object
+      properties:
+        accepted:
+          type: array
+          items:
+            type: string
+          description: List of accepted request IDs
+          example: ["550e8400-e29b-41d4-a716-446655440000", "660e8400-e29b-41d4-a716-446655440001"]
+        denied:
+          type: array
+          items:
+            type: string
+          description: List of denied request IDs
+          example: ["550e8400-e29b-41d4-a716-446655440000", "660e8400-e29b-41d4-a716-446655440001"]
+        deleted:
+          type: array
+          items:
+            type: string
+          description: List of deleted request IDs
+          example: ["550e8400-e29b-41d4-a716-446655440000", "660e8400-e29b-41d4-a716-446655440001"]
+
     Job:
       type: object
       required:
