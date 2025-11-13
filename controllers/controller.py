@@ -11,6 +11,7 @@ from .file_controller import FileController
 from typing import Dict, Optional
 from flask import current_app
 from .skills_controller import SkillsController
+from .admin_controller import AdminController
 
 
 def get_all_tasks():
@@ -253,3 +254,23 @@ def download_file(file_id: str) -> Response:
     """Get a file for downloading, based on the file id."""
     file_manager = FileController(current_app.config["Database"])
     return file_manager.download_file(file_id)
+
+def get_all_user_request(body:Dict) -> Optional[Dict]:
+    """Get all pending user creation requests."""
+    admin_manager = AdminController(current_app.config["Database"])
+    return admin_manager.get_all_user_request(body)
+
+def get_all_job_request(body:Dict) -> Optional[Dict]:
+    """Get all pending job creation requests."""
+    admin_manager = AdminController(current_app.config["Database"])
+    return admin_manager.get_all_job_request(body)
+
+def update_user_status(body:list[Dict]) -> Optional[Dict]:
+    """Update the user's status from the user creation requests."""
+    admin_manager = AdminController(current_app.config["Database"])
+    return admin_manager.update_user_status(body)
+
+def update_job_status(body:list[Dict]) -> Optional[Dict]:
+    """Update the job's status from the job creation requests."""
+    admin_manager = AdminController(current_app.config["Database"])
+    return admin_manager.update_job_status(body)

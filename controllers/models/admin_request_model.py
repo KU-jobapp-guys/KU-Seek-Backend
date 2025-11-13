@@ -8,7 +8,6 @@ from sqlalchemy.orm import Mapped, MappedColumn
 from sqlalchemy import ForeignKey, DateTime, func
 from sqlalchemy.types import Enum
 from .user_model import UserTypes
-from .profile_model import Profile
 
 
 class RequestStatusTypes(enum.Enum):
