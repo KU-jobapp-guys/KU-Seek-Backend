@@ -23,6 +23,8 @@ from .management.admin import AdminModel
 from .management.email import EmailSender
 from uuid import UUID
 from werkzeug.utils import secure_filename
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
 
 
 SECRET_KEY = config("SECRET_KEY", default="good-key123")
@@ -94,6 +96,24 @@ def logout():
         current_app.config["Database"], current_app.config["Admin"]
     )
     return auth_controller.logout_user(refresh_token)
+
+
+def handle_credential_login(body: Dict):
+    """
+    Handle user authentication with local credentials.
+
+    Login a user using local credentials. This method fails if no such
+    user exsists in the database.
+
+    Args:
+        body: The request body consisting of {"email":"", "password":""}
+
+    Returns: A json containing the users unique UID, and auth tokens.
+    """
+    auth_controller = AuthenticationController(
+        current_app.config["Database"], current_app.config["Admin"]
+    )
+    return auth_controller.credential_login()
 
 
 def handle_authentication(body: Dict):
@@ -434,3 +454,35 @@ class AuthenticationController:
         )
 
         return response
+
+    def credential_login(self, email: str, password: str):
+        """Login the user using the provided email and password."""
+        session = self.db.get_session()
+        try:
+            user = session.query(User).where(User.email == email).one_or_none()
+        except Exception:
+            session.close()
+            return models.ErrorMessage("Database error occurred"), 400
+
+        if not user:
+            session.close()
+            return models.ErrorMessage(
+                "Could not find user with the provided email"
+            ), 404
+
+        session.close()
+        try:
+            ph = PasswordHasher()
+            if ph.verify(user.password, password):
+                user_jwt, refresh, user_type = self.login_user(user.uid)
+                response = make_response(
+                    models.UserCredentials(user_jwt, email, user_type).to_dict(), 200
+                )
+                # set the refresh token as a HttpOnly cookie
+                response.set_cookie(
+                    "refresh_token", refresh, max_age=timedelta(days=30), httponly=True
+                )
+
+                return response
+        except VerifyMismatchError:
+            return models.ErrorMessage("Password is invalid"), 403
