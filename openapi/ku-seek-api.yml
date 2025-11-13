@@ -416,11 +416,33 @@ paths:
         404:
           description: Task not found
 
+
+  /users/me:
+    get:
+      tags:
+        - Profile
+      summary: Get the currently authenticated user's porfile
+      operationId: controllers.controller.get_self_profile
+      responses:
+        200:
+          description: Return the user profile data created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        401:
+          description: Invalid access_token
+        403:
+          description: Invalid authorization
+        404:
+          description: Error fetching profile
+
+
   /users/{user_id}/profile:
     get:
       tags:
         - Profile
-      summary: Get the user profile data
+      summary: Get the user profile data with sub table profile data`
       operationId: controllers.controller.get_user_profile
       parameters:
         - name: user_id
@@ -437,6 +459,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserProfile'
+
+  /users/images:
+    post:
+      tags:
+        - Profile
+      summary: Upload user profile and banner images
+      operationId: controllers.controller.upload_profile_images
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProfileImageInput'
+      
+      responses:
+        200:
+          description: Files uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfileImageConfirmation'
+
+        401:
+          description: Authentication error
   
   /users/profile:
         
@@ -1282,6 +1330,8 @@ components:
           description: The account email
         type:
           description: The account type
+        user_id:
+          description: The user id
     error_message:
       type: object
       properties:
@@ -1375,6 +1425,28 @@ components:
           type: string
           description: The phone number of the user
           example: "0812345678"
+    
+    ProfileImageInput:
+      properties:
+        profile_img:
+          type: string
+          format: binary
+          description: The profile image file
+        banner_img:
+          type: string
+          format: binary
+          description: The banner image file
+    
+    ProfileImageConfirmation:
+      properties:
+        file:
+          type: string
+          description: The file saved
+          example: "profile image"
+        status:
+          type: string
+          description: The file's status
+          example: "ok"
       
     UserProfile:
       type: object

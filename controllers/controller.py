@@ -44,6 +44,15 @@ def delete_task(task_id: str):
     return task_manager.delete_task(task_id)
 
 
+def get_self_profile() -> Dict:
+    """GET the current authenticated user profile."""
+    try:
+        profile_manager = ProfileController(current_app.config["Database"])
+        return profile_manager.get_self_profile()
+    except ValueError:
+        return jsonify({"message": "No profile data found."}), 404
+
+
 def get_user_profile(user_id: str) -> Dict:
     """GET UserProfile from the database."""
     try:
@@ -81,6 +90,16 @@ def update_profile(body: Dict) -> Optional[Dict]:
         return jsonify({"message": str(e)}), 404
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+
+
+def upload_profile_images() -> Optional[Dict]:
+    """Upload new profile and banner images."""
+    try:
+        profile_manager = ProfileController(current_app.config["Database"])
+        return profile_manager.upload_profile_images()
+    except Exception as e:
+        print(e)
+        return jsonify({"message": "bad image passed"}), 405
 
 
 def get_all_jobs(job_id: str = ""):
