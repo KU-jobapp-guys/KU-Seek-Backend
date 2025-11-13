@@ -197,4 +197,71 @@ class AdminController:
 
         returns: A list of all updated job post records.
         """
-        pass
+        user_token = request.headers.get("access_token")
+        token_info = decode(jwt=user_token, key=SECRET_KEY, algorithms=["HS512"])
+        session = self.db.get_session()
+        try:
+            accept_ids = [
+                item["job_id"]
+                for item in body
+                if item["is_accepted"] and not item.get("delete", False)
+            ]
+            # approve jobs
+            records = (
+                session.query(JobRequest, Job)
+                .join(Job, Job.id == JobRequest.job_id)
+                .where(JobRequest.id.in_(accept_ids))
+                .all()
+            )
+            for job_request, job in records:
+                job_request.status = RequestStatusTypes.APPROVED
+                job_request.approved_by = token_info["user_id"]
+                job_request.approved_at = datetime.now(timezone.utc)
+                job.status = "approved"
+                job.visibiity = True
+                job.approved_by = token_info["user_id"]
+                session.add_all([job_request, job])
+            
+            # deny jobs
+            deny_ids = [
+                item["job_id"]
+                for item in body
+                if not item["is_accepted"] and not item.get("delete", False)
+            ]
+            records = (
+                session.query(JobRequest, Job)
+                .join(Job, Job.id == JobRequest.job_id)
+                .where(JobRequest.id.in_(deny_ids))
+                .all()
+            )
+            for job_request, job in records:
+                job_request.status = RequestStatusTypes.DENIED
+                job_request.approved_at = datetime.now(timezone.utc)
+                job_request.approved_by = token_info["user_id"]
+                job.status = "rejected"
+                session.add_all([job_request, job])
+            
+            # delete jobs
+            delete_ids = [item["job_id"] for item in body if item["delete"]]
+            records = (
+                session.query(JobRequest, Job)
+                .join(Job, Job.id == JobRequest.job_id)
+                .where(JobRequest.id.in_(delete_ids))
+                .all()
+            )
+            for job_request, job in records:
+                session.delete(job)
+
+            response = {
+                "accepted": accept_ids,
+                "denied": deny_ids,
+                "deleted": delete_ids
+            }
+            
+            session.commit()
+            session.close()
+            return response, 200
+        except Exception:
+            session.rollback()
+            session.close()
+            return models.ErrorMessage("Could not update ids."), 400
