@@ -5,7 +5,7 @@ import enum
 from datetime import datetime
 from .base_model import BaseModel
 from sqlalchemy.orm import Mapped, MappedColumn
-from sqlalchemy import ForeignKey, DateTime, func
+from sqlalchemy import ForeignKey, DateTime, Integer, func
 from sqlalchemy.types import Enum
 from .user_model import UserTypes
 
@@ -22,7 +22,7 @@ class UserRequest(BaseModel):
     """User creation request model."""
 
     __tablename__ = "user_requests"
-    id = Mapped[int] = MappedColumn(primary_key=True, autoincrement=True)
+    id: Mapped[int] = MappedColumn(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[uuid.UUID] = MappedColumn(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
@@ -38,7 +38,7 @@ class UserRequest(BaseModel):
     )
     approved_at: Mapped[datetime] = MappedColumn(DateTime, nullable=True)
     approved_by: Mapped[uuid.UUID] = MappedColumn(
-        ForeignKey("users.id", ondelete="SET NULL"), nullable=False
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
 
 
@@ -46,7 +46,7 @@ class JobRequest(BaseModel):
     """Job creation request model."""
 
     __tablename__ = "job_requests"
-    id = Mapped[int] = MappedColumn(primary_key=True, autoincrement=True)
+    id: Mapped[int] = MappedColumn(Integer, primary_key=True, autoincrement=True)
     job_id: Mapped[uuid.UUID] = MappedColumn(
         ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False
     )

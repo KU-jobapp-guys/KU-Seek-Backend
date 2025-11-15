@@ -3,7 +3,7 @@
 from flask import request
 from jwt import decode
 from .decorators import role_required
-from db_controller import AbstractDatabaseController
+from .db_controller import AbstractDatabaseController
 from .models.admin_request_model import UserRequest, JobRequest, RequestStatusTypes
 from .models.job_model import Job
 from .models.user_model import User

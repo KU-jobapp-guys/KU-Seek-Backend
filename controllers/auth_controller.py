@@ -20,6 +20,8 @@ from datetime import datetime, timedelta, UTC
 from .models.user_model import User, Student, Company, Professor
 from .models.profile_model import Profile
 from .models.token_model import Token
+from .models.file_model import File
+from .models.admin_request_model import UserRequest
 from .management.admin import AdminModel
 from .management.email import EmailSender
 from uuid import UUID
@@ -202,15 +204,54 @@ def handle_authentication(body: Dict):
             validation_res = auth_controller.admin.verify_user(user_info, val_filepath)
             validation_res = json.loads(validation_res)
             print("AI result:", validation_res)
-            if not validation_res["valid"]:
-                raise ValueError("User did not pass validation")
 
             # reformat info like UserCredentails class
             user_info["email"] = id_info["email"]
             user_info["google_uid"] = id_info["sub"]
-            user_info["user_type"] = validation_res["role"]
+            if not validation_res["valid"]:
+                user_info["user_type"] = "staff"
+            
             user = auth_controller.register_user(user_info, validation_res["role"])
             user_jwt, refresh, user_type, user_id = auth_controller.login_user(user)
+
+            session = current_app.config["Database"].get_session()
+
+            # remove the temporary file
+            os.remove(val_filepath)
+
+            # log the verification file
+            file_name = secure_filename(validation_file.filename)
+            validation_file_model = File(
+                owner=UUID(user_id),
+                file_name=file_name,
+                file_path="temp",
+                file_type="validation_file",
+            )
+            session.add(validation_file_model)
+            session.flush()  # Get the ID
+
+            # save file with ID in name
+            file_extension = os.path.splitext(file_name)[1]
+            file_path = f"{BASE_FILE_PATH}/{validation_file_model.id}{file_extension}"
+            full_file_path = os.path.join(os.getcwd(), file_path)
+            validation_file_model.file_path = file_path
+
+            validation_file.save(full_file_path)
+
+            session.commit()
+
+            # create a user creation request
+
+            user_request = UserRequest(
+                user_id=user_id,
+                request_type=user_info["user_type"],
+                verification_document=validation_file_model.id,
+            )
+
+            session.add(user_request)
+            session.commit()
+
+            session.close()
 
             # send a registration email
             if user_info["user_type"] == "student":
