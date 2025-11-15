@@ -14,5 +14,6 @@ PyJWT
 SQLalchemy
 alembic
 google-genai
+redis
 
 -r swagger_server/requirements.txt
