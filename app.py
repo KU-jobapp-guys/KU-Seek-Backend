@@ -9,6 +9,7 @@ from controllers.db_controller import BaseController
 from openapi_server import encoder
 from controllers.models.tag_term_model import Terms
 from controllers.management.admin import YesManModel, AiAdminModel
+from controllers.requests_controller import RequestController
 
 
 if not os.path.exists(".env"):
@@ -70,9 +71,11 @@ def create_app(engine=None, admin=None):
     CSRFProtect(app.app)
 
     app.app.config["Database"] = BaseController()
+    app.app.config["Requests"] = RequestController()
     # set database controller if provided
     if engine:
         app.app.config["Database"] = engine
+
 
     # One-time (idempotent) seeding of common Terms into the database.
     # This runs on app start and will only insert missing terms.
@@ -123,6 +126,8 @@ prompt = os.path.join(
     os.getcwd(), "controllers", "management", "prompts", "validator_prompt.txt"
 )
 app = create_app(admin=AiAdminModel(prompt_file=prompt, model="gemini-2.0-flash"))
+
+
 
 if __name__ == "__main__":
     app.run(port=8000, debug=True, use_reloader=False)
