@@ -6,7 +6,7 @@ from .decorators import role_required
 from .db_controller import AbstractDatabaseController
 from .models.admin_request_model import UserRequest, JobRequest, RequestStatusTypes
 from .models.job_model import Job
-from .models.user_model import User
+from .models.user_model import User, UserTypes, Company
 from .models.profile_model import Profile
 from swagger_server.openapi_server import models
 from decouple import config
@@ -23,23 +23,21 @@ class AdminController:
         """Initialize the class."""
         self.db: AbstractDatabaseController = database
 
-    def _format_user_request_with_profile(
-        self, user_request: UserRequest, first_name: str, last_name: str
+    def _format_user_request_with_name(
+        self, user_request: UserRequest, name: str
     ) -> dict:
         """
         Format a user request with profile data into a dictionary.
 
         Args:
             user_request: The UserRequest object
-            first_name: First name from profile
-            last_name: Last name from profile
+            name: The name of the user or company
 
         Returns:
             Dictionary with user request and profile data
         """
         request_dict = user_request.to_dict()
-        request_dict["first_name"] = first_name
-        request_dict["last_name"] = last_name
+        request_dict["name"] = name
         return request_dict
 
     def _format_job_request_with_job(self, job_request: JobRequest, job: Job) -> dict:
@@ -68,17 +66,39 @@ class AdminController:
         returns: All non-resolved user creation records.
         """
         session = self.db.get_session()
+        # query non-company users
         user_requests = (
             session.query(UserRequest, Profile.first_name, Profile.last_name)
             .join(Profile, Profile.user_id == UserRequest.user_id)
-            .where(UserRequest.status != RequestStatusTypes.DENIED)
+            .where(
+                UserRequest.status != RequestStatusTypes.DENIED,
+                UserRequest.requested_type != UserTypes.COMPANY,
+            )
+            .all()
+        )
+
+        # query company users
+        company_requests = (
+            session.query(UserRequest, Company.company_name)
+            .join(Company, Company.user_id == UserRequest.user_id)
+            .where(
+                UserRequest.status != RequestStatusTypes.DENIED,
+                UserRequest.requested_type == UserTypes.COMPANY,
+            )
             .all()
         )
 
         records = [
-            self._format_user_request_with_profile(request, first_name, last_name)
+            self._format_user_request_with_name(request, first_name + last_name)
             for request, first_name, last_name in user_requests
         ]
+
+        company_records = [
+            self._format_user_request_with_name(request, company_name)
+            for request, company_name in company_requests
+        ]
+
+        records += company_records
 
         session.close()
         return records, 200
