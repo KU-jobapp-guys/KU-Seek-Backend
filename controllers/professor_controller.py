@@ -6,6 +6,7 @@ from .models.profile_model import ProfessorConnections, Profile, CompanyTags
 from .models.user_model import Professor, Company
 from .models.tag_term_model import Tags
 from uuid import UUID
+from .decorators import role_required
 
 
 class ProfessorController:
@@ -145,6 +146,7 @@ class ProfessorController:
         finally:
             session.close()
 
+    @role_required(["Professor"])
     def post_connection(self, user_id: str, body: dict):
         """
         Create a new connection for professor.
@@ -213,6 +215,7 @@ class ProfessorController:
         finally:
             session.close()
 
+    @role_required(["Professor"])
     def delete_connection(self, user_id: str, connection_id: int) -> Dict:
         """
         Delete a connection for a professor.
