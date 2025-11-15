@@ -120,7 +120,7 @@ paths:
         400:
           description: Invalid authorization code 
 
-  /admin/users/:
+  /admin/users:
     get:
       tags:
         - Admin
@@ -169,7 +169,7 @@ paths:
         403:
           description: User does not have admin authorization
 
-  /admin/jobs/:
+  /admin/jobs:
     get:
       tags:
         - Admin
