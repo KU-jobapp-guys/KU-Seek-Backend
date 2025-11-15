@@ -11,6 +11,7 @@ from .models.profile_model import Profile
 from swagger_server.openapi_server import models
 from decouple import config
 from datetime import datetime, timezone
+from .serialization import camelize
 
 
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
@@ -23,7 +24,7 @@ class AdminController:
         """Initialize the class."""
         self.db: AbstractDatabaseController = database
 
-    def _format_user_request_with_name(
+    def _format_user_request(
         self, user_request: UserRequest, name: str
     ) -> dict:
         """
@@ -38,7 +39,9 @@ class AdminController:
         """
         request_dict = user_request.to_dict()
         request_dict["name"] = name
-        return request_dict
+        request_dict["requested_type"] = request_dict["requested_type"].value
+        request_dict["status"] = request_dict["status"].value
+        return camelize(request_dict)
 
     def _format_job_request_with_job(self, job_request: JobRequest, job: Job) -> dict:
         """
@@ -53,7 +56,8 @@ class AdminController:
         """
         request_dict = job_request.to_dict()
         request_dict["job"] = job.to_dict()
-        return request_dict
+        request_dict["status"] = request_dict["status"].value
+        return camelize(request_dict)
 
     @role_required(["Admin"])
     def get_all_user_request(self):
@@ -89,12 +93,12 @@ class AdminController:
         )
 
         records = [
-            self._format_user_request_with_name(request, first_name + last_name)
+            self._format_user_request(request, first_name + last_name)
             for request, first_name, last_name in user_requests
         ]
 
         company_records = [
-            self._format_user_request_with_name(request, company_name)
+            self._format_user_request(request, company_name)
             for request, company_name in company_requests
         ]
 
@@ -190,8 +194,9 @@ class AdminController:
         """
         session = self.db.get_session()
         job_requests = (
-            session.query(JobRequest, Job)
+            session.query(JobRequest, Job, Company.company_name)
             .join(Job, Job.id == JobRequest.job_id)
+            .join(Company, Company.id == Job.company_id)
             .where(JobRequest.status != RequestStatusTypes.DENIED)
             .all()
         )
