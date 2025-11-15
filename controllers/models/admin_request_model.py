@@ -6,7 +6,7 @@ from datetime import datetime
 from .base_model import BaseModel
 from sqlalchemy.orm import Mapped, MappedColumn
 from sqlalchemy import ForeignKey, DateTime, Integer, func
-from sqlalchemy.types import Enum
+from sqlalchemy.types import Enum, String
 from .user_model import UserTypes
 
 
@@ -36,6 +36,7 @@ class UserRequest(BaseModel):
     verification_document: Mapped[uuid.UUID] = MappedColumn(
         ForeignKey("files.id", ondelete="SET NULL"), nullable=False
     )
+    denial_reason: Mapped[str] = MappedColumn(String(255), nullable=True)
     approved_at: Mapped[datetime] = MappedColumn(DateTime, nullable=True)
     approved_by: Mapped[uuid.UUID] = MappedColumn(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
@@ -56,6 +57,7 @@ class JobRequest(BaseModel):
     created_at: Mapped[datetime] = MappedColumn(
         DateTime, default=func.now(), nullable=False
     )
+    denial_reason: Mapped[str] = MappedColumn(String(255), nullable=True)
     approved_at: Mapped[datetime] = MappedColumn(DateTime, nullable=True)
     approved_by: Mapped[uuid.UUID] = MappedColumn(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=False

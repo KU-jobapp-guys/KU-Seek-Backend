@@ -210,7 +210,7 @@ def handle_authentication(body: Dict):
             user_info["google_uid"] = id_info["sub"]
             if not validation_res["valid"]:
                 user_info["user_type"] = "staff"
-            
+
             user = auth_controller.register_user(user_info, validation_res["role"])
             user_jwt, refresh, user_type, user_id = auth_controller.login_user(user)
 
@@ -246,6 +246,7 @@ def handle_authentication(body: Dict):
                 user_id=user_id,
                 request_type=user_info["user_type"],
                 verification_document=validation_file_model.id,
+                denial_reason=validation_res["reason"],
             )
 
             session.add(user_request)
