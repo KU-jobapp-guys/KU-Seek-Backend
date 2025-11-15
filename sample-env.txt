@@ -8,6 +8,8 @@ DB_HOST = <Your Database Host>
 DB_PORT = <Your Database Port>
 DB_NAME = <Your Database Name>
 
+REDIS_PASSWORD = <Your Redis Password>
+
 # === CORS Config ===
 ALLOWED_ORIGINS = http://localhost:5173
 
