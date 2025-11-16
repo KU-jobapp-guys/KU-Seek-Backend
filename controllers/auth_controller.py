@@ -534,7 +534,7 @@ class AuthenticationController:
         try:
             ph = PasswordHasher()
             if ph.verify(user.password, password):
-                user_jwt, refresh, user_type = self.login_user(user.uid)
+                user_jwt, refresh, user_type, _ = self.login_user(user.id)
                 response = make_response(
                     models.UserCredentials(user_jwt, email, user_type).to_dict(), 200
                 )

@@ -1,5 +1,6 @@
 """Module containing admin endpoints."""
 
+from uuid import UUID
 from flask import request
 from jwt import decode
 from .decorators import role_required
@@ -43,7 +44,7 @@ class AdminController:
         request_dict["status"] = request_dict["status"].value
         return camelize(request_dict)
 
-    def _format_job_request_with_job(self, job_request: JobRequest, job: Job) -> dict:
+    def _format_job_request_with_job(self, job_request: JobRequest, job: Job, company: Company) -> dict:
         """
         Format a job request with job data into a dictionary.
 
@@ -55,7 +56,9 @@ class AdminController:
             Dictionary with job request and job data
         """
         request_dict = job_request.to_dict()
-        request_dict["job"] = job.to_dict()
+        request_dict["company"] = company.company_name
+        request_dict["title"] = job.title
+        request_dict["visibility"] = job.visibility
         request_dict["status"] = request_dict["status"].value
         return camelize(request_dict)
 
@@ -93,7 +96,7 @@ class AdminController:
         )
 
         records = [
-            self._format_user_request(request, first_name + last_name)
+            self._format_user_request(request, first_name + " " + last_name)
             for request, first_name, last_name in user_requests
         ]
 
@@ -109,22 +112,12 @@ class AdminController:
 
     @role_required(["Admin"])
     def update_user_status(self, body):
-        """
-        Update one or more user verification statuses.
-
-        Update all user verification statuses from the request body.
-
-        Args:
-            body: The request body
-
-        returns: A list of all updated user records.
-        """
         user_token = request.headers.get("access_token")
         token_info = decode(jwt=user_token, key=SECRET_KEY, algorithms=["HS512"])
         session = self.db.get_session()
         try:
             accept_ids = [
-                item["user_id"]
+                UUID(item["user_id"])
                 for item in body
                 if item["is_accepted"] and not item.get("delete", False)
             ]
@@ -132,12 +125,12 @@ class AdminController:
             records = (
                 session.query(UserRequest, User)
                 .join(User, User.id == UserRequest.user_id)
-                .where(UserRequest.id.in_(accept_ids))
+                .where(UserRequest.user_id.in_(accept_ids))
                 .all()
             )
             for user_request, user in records:
                 user_request.status = RequestStatusTypes.APPROVED
-                user_request.approved_by = token_info["user_id"]
+                user_request.approved_by = UUID(token_info["uid"])
                 user_request.approved_at = datetime.now(timezone.utc)
                 user.type = user_request.requested_type
                 user.is_verified = True
@@ -145,25 +138,25 @@ class AdminController:
 
             # deny users
             deny_ids = [
-                item["user_id"]
+                UUID(item["user_id"])
                 for item in body
                 if not item["is_accepted"] and not item.get("delete", False)
             ]
             records = (
-                session.query(UserRequest).where(UserRequest.id.in_(deny_ids)).all()
+                session.query(UserRequest).where(UserRequest.user_id.in_(deny_ids)).all()
             )
             for user_request in records:
                 user_request.status = RequestStatusTypes.DENIED
                 user_request.approved_at = datetime.now(timezone.utc)
-                user_request.approved_by = token_info["user_id"]
+                user_request.approved_by = UUID(token_info["uid"])
                 session.add(user_request)
 
             # delete users
-            delete_ids = [item["user_id"] for item in body if item["delete"]]
+            delete_ids = [UUID(item["user_id"]) for item in body if item["delete"]]
             records = (
                 session.query(UserRequest, User)
                 .join(User, User.id == UserRequest.user_id)
-                .where(UserRequest.id.in_(delete_ids))
+                .where(UserRequest.user_id.in_(delete_ids))
                 .all()
             )
             for user_request, user in records:
@@ -194,7 +187,7 @@ class AdminController:
         """
         session = self.db.get_session()
         job_requests = (
-            session.query(JobRequest, Job, Company.company_name)
+            session.query(JobRequest, Job, Company)
             .join(Job, Job.id == JobRequest.job_id)
             .join(Company, Company.id == Job.company_id)
             .where(JobRequest.status != RequestStatusTypes.DENIED)
@@ -202,8 +195,8 @@ class AdminController:
         )
 
         records = [
-            self._format_job_request_with_job(request, job)
-            for request, job in job_requests
+            self._format_job_request_with_job(request, job, company)
+            for request, job, company in job_requests
         ]
 
         session.close()
@@ -234,16 +227,16 @@ class AdminController:
             records = (
                 session.query(JobRequest, Job)
                 .join(Job, Job.id == JobRequest.job_id)
-                .where(JobRequest.id.in_(accept_ids))
+                .where(JobRequest.job_id.in_(accept_ids))
                 .all()
             )
             for job_request, job in records:
                 job_request.status = RequestStatusTypes.APPROVED
-                job_request.approved_by = token_info["user_id"]
+                job_request.approved_by = UUID(token_info["uid"])
                 job_request.approved_at = datetime.now(timezone.utc)
                 job.status = "approved"
                 job.visibiity = True
-                job.approved_by = token_info["user_id"]
+                job.approved_by = UUID(token_info["uid"])
                 session.add_all([job_request, job])
 
             # deny jobs
@@ -255,13 +248,13 @@ class AdminController:
             records = (
                 session.query(JobRequest, Job)
                 .join(Job, Job.id == JobRequest.job_id)
-                .where(JobRequest.id.in_(deny_ids))
+                .where(JobRequest.job_id.in_(deny_ids))
                 .all()
             )
             for job_request, job in records:
                 job_request.status = RequestStatusTypes.DENIED
                 job_request.approved_at = datetime.now(timezone.utc)
-                job_request.approved_by = token_info["user_id"]
+                job_request.approved_by = UUID(token_info["uid"])
                 job.status = "rejected"
                 session.add_all([job_request, job])
 
@@ -270,7 +263,7 @@ class AdminController:
             records = (
                 session.query(JobRequest, Job)
                 .join(Job, Job.id == JobRequest.job_id)
-                .where(JobRequest.id.in_(delete_ids))
+                .where(JobRequest.job_id.in_(delete_ids))
                 .all()
             )
             for job_request, job in records:
