@@ -253,6 +253,17 @@ def handle_authentication(body: Dict):
             session.add(user_request)
             session.commit()
 
+            profile = Profile(
+                user_id=UUID(user_id),
+                first_name=user_info.get("firstName", ""),
+                last_name=user_info.get("lastName", ""),
+                user_type=user_type,
+                email=user_info["email"],
+                contact_email=user_info["email"],
+            )
+            session.add(profile)
+            session.commit()
+
             session.close()
 
             # send a registration email
