@@ -124,14 +124,21 @@ from .models.user_model import Company
 from .models.job_model import Job
 from .models.admin_request_model import JobRequest
 
+
 def create_companies_and_jobs():
     session: Session = BaseController().get_session()
 
     try:
         # Map of user_id to company_name
         companies_data = [
-            {"user_id": "7a1d3327f23043619238074d40740e61", "company_name": "Company One"},
-            {"user_id": "c88a1244cf03483e8f8be602726456ca", "company_name": "Company Two"},
+            {
+                "user_id": "7a1d3327f23043619238074d40740e61",
+                "company_name": "Company One",
+            },
+            {
+                "user_id": "c88a1244cf03483e8f8be602726456ca",
+                "company_name": "Company Two",
+            },
         ]
 
         for cdata in companies_data:
@@ -143,7 +150,7 @@ def create_companies_and_jobs():
                 company_industry="Software",
                 company_size="50-100",
                 company_website=f"https://{cdata['company_name'].replace(' ', '').lower()}.com",
-                full_location="Bangkok"
+                full_location="Bangkok",
             )
             session.add(company)
             session.flush()  # so company.id is generated
@@ -178,7 +185,7 @@ def create_companies_and_jobs():
                     visibility=visibility,
                     capacity=capacity,
                     end_date=end_date,
-                    created_at=created_at
+                    created_at=created_at,
                 )
                 session.add(job)
                 session.flush()  # so job.id is generated
@@ -190,7 +197,7 @@ def create_companies_and_jobs():
                     created_at=created_at,
                     denial_reason=None,
                     approved_at=None,
-                    approved_by=None
+                    approved_by=None,
                 )
                 session.add(job_request)
 

@@ -158,7 +158,7 @@ class JobController:
             job_request = JobRequest(
                 job_id=job.id,
                 status=RequestStatusTypes.PENDING,
-                denial_reason="Job needs manual validation"
+                denial_reason="Job needs manual validation",
             )
             session.add(job_request)
 

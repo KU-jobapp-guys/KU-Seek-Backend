@@ -85,7 +85,7 @@ class ProfileController:
                 "userType": profile.user_type,
                 "isVerified": profile.is_verified,
                 "profileImg": profile.profile_img,
-                "profileBanner": profile.banner_img
+                "profileBanner": profile.banner_img,
             }
 
             if profile.user_type == "student":
@@ -235,7 +235,9 @@ class ProfileController:
         saved_files = []
 
         try:
-            profile = session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
+            profile = (
+                session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
+            )
             # Handle profile image
             if profile_img:
                 # Check if profile image already exists

@@ -25,9 +25,7 @@ class AdminController:
         """Initialize the class."""
         self.db: AbstractDatabaseController = database
 
-    def _format_user_request(
-        self, user_request: UserRequest, name: str
-    ) -> dict:
+    def _format_user_request(self, user_request: UserRequest, name: str) -> dict:
         """
         Format a user request with profile data into a dictionary.
 
@@ -44,7 +42,9 @@ class AdminController:
         request_dict["status"] = request_dict["status"].value
         return camelize(request_dict)
 
-    def _format_job_request_with_job(self, job_request: JobRequest, job: Job, company: Company) -> dict:
+    def _format_job_request_with_job(
+        self, job_request: JobRequest, job: Job, company: Company
+    ) -> dict:
         """
         Format a job request with job data into a dictionary.
 
@@ -143,7 +143,9 @@ class AdminController:
                 if not item["is_accepted"] and not item.get("delete", False)
             ]
             records = (
-                session.query(UserRequest).where(UserRequest.user_id.in_(deny_ids)).all()
+                session.query(UserRequest)
+                .where(UserRequest.user_id.in_(deny_ids))
+                .all()
             )
             for user_request in records:
                 user_request.status = RequestStatusTypes.DENIED
