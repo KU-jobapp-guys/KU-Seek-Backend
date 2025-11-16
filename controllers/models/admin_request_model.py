@@ -34,7 +34,7 @@ class UserRequest(BaseModel):
         DateTime, default=func.now(), nullable=False
     )
     verification_document: Mapped[uuid.UUID] = MappedColumn(
-        ForeignKey("files.id", ondelete="SET NULL"), nullable=False
+        ForeignKey("files.id", ondelete="SET NULL"), nullable=True
     )
     denial_reason: Mapped[str] = MappedColumn(String(255), nullable=True)
     approved_at: Mapped[datetime] = MappedColumn(DateTime, nullable=True)
@@ -60,5 +60,5 @@ class JobRequest(BaseModel):
     denial_reason: Mapped[str] = MappedColumn(String(255), nullable=True)
     approved_at: Mapped[datetime] = MappedColumn(DateTime, nullable=True)
     approved_by: Mapped[uuid.UUID] = MappedColumn(
-        ForeignKey("users.id", ondelete="SET NULL"), nullable=False
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
