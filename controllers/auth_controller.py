@@ -1,6 +1,7 @@
 """Module for sending csrf-tokens."""
 
 import random
+import shutil
 import jwt
 import json
 import os
@@ -217,9 +218,6 @@ def handle_authentication(body: Dict):
 
             session = current_app.config["Database"].get_session()
 
-            # remove the temporary file
-            os.remove(val_filepath)
-
             # log the verification file
             file_name = secure_filename(validation_file.filename)
             validation_file_model = File(
@@ -237,14 +235,16 @@ def handle_authentication(body: Dict):
             full_file_path = os.path.join(os.getcwd(), file_path)
             validation_file_model.file_path = file_path
 
-            validation_file.save(full_file_path)
+            # save the file and remove the temporary file
+            shutil.copy2(val_filepath, full_file_path)
+            os.remove(val_filepath)
 
             session.commit()
 
             # create a user creation request
 
             user_request = UserRequest(
-                user_id=user_id,
+                user_id=UUID(user_id),
                 requested_type=user_info["user_type"],
                 verification_document=validation_file_model.id,
                 denial_reason=validation_res["reason"],
