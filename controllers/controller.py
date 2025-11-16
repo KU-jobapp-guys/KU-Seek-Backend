@@ -275,16 +275,16 @@ def download_file(file_id: str) -> Response:
     return file_manager.download_file(file_id)
 
 
-def get_all_user_request(body: Dict) -> Optional[Dict]:
+def get_all_user_request() -> Optional[Dict]:
     """Get all pending user creation requests."""
     admin_manager = AdminController(current_app.config["Database"])
-    return admin_manager.get_all_user_request(body)
+    return admin_manager.get_all_user_request()
 
 
-def get_all_job_request(body: Dict) -> Optional[Dict]:
+def get_all_job_request() -> Optional[Dict]:
     """Get all pending job creation requests."""
     admin_manager = AdminController(current_app.config["Database"])
-    return admin_manager.get_all_job_request(body)
+    return admin_manager.get_all_job_request()
 
 
 def update_user_status(body: list[Dict]) -> Optional[Dict]:
