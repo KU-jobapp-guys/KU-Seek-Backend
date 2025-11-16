@@ -208,6 +208,7 @@ def handle_authentication(body: Dict):
             # reformat info like UserCredentails class
             user_info["email"] = id_info["email"]
             user_info["google_uid"] = id_info["sub"]
+            user_info["user_type"] = validation_res["role"]
             if not validation_res["valid"]:
                 user_info["user_type"] = "staff"
 
@@ -244,7 +245,7 @@ def handle_authentication(body: Dict):
 
             user_request = UserRequest(
                 user_id=user_id,
-                request_type=user_info["user_type"],
+                requested_type=user_info["user_type"],
                 verification_document=validation_file_model.id,
                 denial_reason=validation_res["reason"],
             )
@@ -428,6 +429,7 @@ class AuthenticationController:
         Returns: The user's id in the database
         """
         required_keys = ["google_uid", "email", "user_type"]
+        print(credentials)
         valid_keys = all(key in credentials for key in required_keys)
         if not valid_keys:
             raise TypeError("Invalid credentials.")
