@@ -204,7 +204,7 @@ def post_education(body: Dict):
     """Create a new education record."""
     try:
         education_manager = EducationController(current_app.config["Database"])
-        new_edu = education_manager.post_education(body)
+        new_edu = education_manager.post_education(get_auth_user_id(request), body)
         return jsonify(new_edu), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400

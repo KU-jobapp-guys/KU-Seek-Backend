@@ -193,7 +193,6 @@ class ORMTestCase(RoutingTestCase):
         student = Student(
             user_id=fake_uuid(),
             nisit_id="65123456",
-            education_id=None,
             gpa=3.75,
             interests="AI, Backend",
         )

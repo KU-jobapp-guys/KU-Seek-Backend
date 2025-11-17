@@ -865,7 +865,6 @@ components:
       type: object
       required:
         - curriculum_name
-        - user_id
         - university
         - major
         - year_of_study

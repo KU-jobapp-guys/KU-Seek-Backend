@@ -62,6 +62,50 @@ class EducationController:
             if created_session:
                 session.close()
 
+    def get_educations(self, education_id: int = None) -> List[Dict]:
+        """Return all educations or a single education by id."""
+        session = self.db.get_session()
+        try:
+            if education_id is not None:
+                edu = (
+                    session.query(Education)
+                    .where(Education.id == education_id)
+                    .one_or_none()
+                )
+                if not edu:
+                    raise ValueError(f"Education with id={education_id} not found")
+                return [
+                    {
+                        "id": edu.id,
+                        "curriculumName": edu.curriculum_name,
+                        "university": edu.university,
+                        "major": edu.major,
+                        "yearOfStudy": edu.year_of_study.year,
+                        "graduateYear": edu.graduate_year.year,
+                        "userId": str(edu.user_id),
+                    }
+                ]
+
+            educations = session.query(Education).all()
+            result = []
+            for e in educations:
+                result.append(
+                    {
+                        "id": e.id,
+                        "curriculumName": e.curriculum_name,
+                        "university": e.university,
+                        "major": e.major,
+                        "yearOfStudy": e.year_of_study.year,
+                        "graduateYear": e.graduate_year.year,
+                        "userId": str(e.user_id),
+                    }
+                )
+            return result
+        except SQLAlchemyError as e:
+            raise RuntimeError(str(e))
+        finally:
+            session.close()
+
 
     def post_education(self, user_id: UUID, body: Dict) -> Dict:
         """Create a new education record.
@@ -84,7 +128,13 @@ class EducationController:
 
         session = self.db.get_session()
         try:
-            edu = Education(user_id=user_id)
+            # Normalize user_id to UUID where possible
+            try:
+                uid = user_id if isinstance(user_id, UUID) else UUID(str(user_id))
+            except Exception:
+                uid = user_id
+
+            edu = Education(user_id=uid)
             for k, v in body.items():
                 if hasattr(edu, k):
                     setattr(edu, k, v)
@@ -97,7 +147,6 @@ class EducationController:
 
         except Exception as e:
             session.rollback()
-            session.close()
             raise ProblemException(str(e))
         finally:
             session.close()

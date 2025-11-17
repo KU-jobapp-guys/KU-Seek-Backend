@@ -138,6 +138,8 @@ class EducationTestCase(RoutingTestCase):
             headers={"X-CSRFToken": csrf_token, "access_token": jwt},
             json=payload,
         )
+
+        print("KAMNRIDER", post_res.json)
         self.assertEqual(post_res.status_code, 201)
         created = post_res.get_json()
         created_id = created.get("id")
