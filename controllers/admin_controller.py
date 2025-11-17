@@ -115,7 +115,7 @@ class AdminController:
         """
         Update one or more users.
 
-        Update all user's by approving their role 
+        Update all user's by approving their role
         or deleting them from the request body.
 
         Args:
