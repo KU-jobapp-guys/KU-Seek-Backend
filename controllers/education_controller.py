@@ -1,5 +1,6 @@
 """Controller for Education CRUD operations."""
 
+from .decorators import role_required
 from typing import List, Dict, Optional, Union
 from sqlalchemy.orm import Session
 from connexion.exceptions import ProblemException
@@ -104,6 +105,7 @@ class EducationController:
         finally:
             session.close()
 
+    @role_required(["Student"])
     def post_education(self, user_id: UUID, body: Dict) -> Dict:
         """Create a new education record.
 
@@ -148,6 +150,7 @@ class EducationController:
         finally:
             session.close()
 
+    @role_required(["Student"])
     def patch_education(self, education_id: int, body: Dict) -> Dict:
         """Update an education record with partial fields."""
         if not body:
@@ -176,6 +179,7 @@ class EducationController:
         finally:
             session.close()
 
+    @role_required(["Student"])
     def delete_education(self, education_id: int) -> Dict:
         """Delete an education record by id."""
         session = self.db.get_session()
