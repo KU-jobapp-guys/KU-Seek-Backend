@@ -100,7 +100,6 @@ def add_mockup_data(cls):
     student1 = Student(
         user_id=cls.student_user1_id,
         nisit_id="6401010101",
-        education_id=None,
         gpa=3.75,
         interests="AI, Machine Learning, Backend Development",
     )
@@ -108,7 +107,6 @@ def add_mockup_data(cls):
     student2 = Student(
         user_id=cls.student_user2_id,
         nisit_id="6401010102",
-        education_id=None,
         gpa=3.25,
         interests="Frontend Development, UX Design",
     )

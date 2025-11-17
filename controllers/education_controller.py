@@ -1,6 +1,7 @@
 """Controller for Education CRUD operations."""
 
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
+from sqlalchemy.orm import Session
 from connexion.exceptions import ProblemException
 from .models.profile_model import Education
 from sqlalchemy.exc import SQLAlchemyError
@@ -14,14 +15,34 @@ class EducationController:
         """Init the class."""
         self.db = database
 
-    def get_educations_by_user(self, user_id: UUID) -> List[Dict]:
-        """Return all educations belonging to a specific user."""
-        session = self.db.get_session()
+    def get_educations_by_user(
+        self,
+        user_id: Union[str, UUID],
+        session: Optional[Session] = None,
+    ) -> List[Dict]:
+        """Return all educations belonging to a specific user.
+
+        If a `session` is provided, the method will reuse it and will not
+        open/close a new connection. This prevents nested connections when
+        higher-level controllers already have an active session (pool_size=1).
+        """
+        created_session = False
+        if session is None:
+            session = self.db.get_session()
+            created_session = True
+
         education_obj = []
         try:
+            uid = user_id
+            try:
+                if not isinstance(user_id, UUID):
+                    uid = UUID(str(user_id))
+            except Exception:
+                uid = user_id
+
             educations = (
                 session.query(Education)
-                .filter(Education.user_id == user_id)
+                .filter(Education.user_id == uid)
                 .all()
             )
 
@@ -38,10 +59,11 @@ class EducationController:
         except SQLAlchemyError as e:
             raise RuntimeError(f"Error fetching educations for user {user_id}: {e}")
         finally:
-            session.close()
+            if created_session:
+                session.close()
 
 
-    def post_education(self, body: Dict) -> Dict:
+    def post_education(self, user_id: UUID, body: Dict) -> Dict:
         """Create a new education record.
 
         Expects fields: curriculum_name, university, major, year_of_study, graduate_year
@@ -55,7 +77,6 @@ class EducationController:
             "major",
             "year_of_study",
             "graduate_year",
-            "user_id"
         ]
         missing = [f for f in required if f not in body]
         if missing:
@@ -63,7 +84,7 @@ class EducationController:
 
         session = self.db.get_session()
         try:
-            edu = Education()
+            edu = Education(user_id=user_id)
             for k, v in body.items():
                 if hasattr(edu, k):
                     setattr(edu, k, v)

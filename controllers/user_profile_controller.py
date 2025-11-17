@@ -123,8 +123,11 @@ class ProfileController:
                 if student:
                     profile_obj["interests"] = student.interests
                     profile_obj["educations"] = (
-                        self.education_controller.get_educations_by_user(user_uuid) or []
+                        self.education_controller.get_educations_by_user(
+                            user_uuid, session=session
                         )
+                        or []
+                    )
                     
             elif profile.user_type == "company":
                 company = (
