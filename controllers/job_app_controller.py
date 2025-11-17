@@ -8,6 +8,7 @@ from .decorators import role_required
 from flask import request
 from decouple import config, Csv
 from sqlalchemy.orm import joinedload
+from .job_controller import JobController
 from swagger_server.openapi_server import models
 from werkzeug.utils import secure_filename
 from .models.job_model import Job, JobApplication
@@ -15,7 +16,8 @@ from .models.user_model import Student, Company, User
 from .models.file_model import File
 from .models.email_model import MailQueue, MailParameter
 from .management.email.email_sender import EmailSender
-
+from .models.profile_model import Profile
+from .serialization import camelize, decamelize
 
 ALLOWED_FILE_FORMATS = config(
     "ALLOWED_FILE_FORMATS", cast=Csv(), default="application/pdf, application/msword"
@@ -33,12 +35,14 @@ class JobApplicationController:
         self.db = database
 
     @role_required(["Student"])
-    def create_job_application(self, body, job_id: int):
+    def create_job_application(self, job_id: int):
         """Create a new job application from the request body."""
         user_token = request.headers.get("access_token")
         token_info = decode(jwt=user_token, key=SECRET_KEY, algorithms=["HS512"])
 
-        form = request.form
+        form = decamelize(request.form)
+        files = decamelize(request.files)
+
         session = self.db.get_session()
 
         job: Job = session.query(Job).where(Job.id == job_id).one_or_none()
@@ -86,7 +90,7 @@ class JobApplicationController:
         base_path = os.path.join(os.getcwd(), BASE_FILE_PATH)
 
         # process application letter
-        letter = request.files.get("application_letter")
+        letter = files.get("application_letter")
         if not letter:
             session.close()
             return models.ErrorMessage("Missing required application letter file"), 400
@@ -118,12 +122,13 @@ class JobApplicationController:
             session.commit()
 
             job_app_data = job_application.to_dict()
+            job_app_data = camelize(job_app_data)
             session.close()
 
             return job_app_data, 200
 
         # process resume
-        resume = request.files.get("resume")
+        resume = files.get("resume")
         if not resume:
             session.close()
             return models.ErrorMessage("Missing required resume file"), 400
@@ -191,6 +196,7 @@ class JobApplicationController:
             )
             session.add(mail)
             session.commit()
+            job_app_data = camelize(job_app_data)
             session.close()
 
             return job_app_data, 200
@@ -217,6 +223,12 @@ class JobApplicationController:
 
         session = self.db.get_session()
 
+        profile = (
+            session.query(Profile)
+            .where(Profile.user_id == UUID(token_info["uid"]))
+            .one_or_none()
+        )
+
         student = (
             session.query(Student)
             .where(Student.user_id == UUID(token_info["uid"]))
@@ -234,30 +246,45 @@ class JobApplicationController:
             .all()
         )
 
-        formatted_apps = [
-            models.JobApplication(
-                applicant={
+        job_controller = JobController(self.db)
+
+        formatted_apps = []
+        for j_app in job_apps:
+            mapped_job = None
+            try:
+                mapped_job = job_controller._JobController__job_with_company_terms_tags(
+                    session, [j_app.job], single_response=True
+                )
+            except Exception:
+                mapped_job = {
+                    "jobId": str(j_app.job.id) if j_app.job else None,
+                    "company": None,
+                    "role": j_app.job.title if j_app.job else None,
+                }
+            app_obj = {
+                "id": j_app.id,
+                "applicant": {
                     "user_id": str(j_app.student_id),
                     "first_name": j_app.first_name,
                     "last_name": j_app.last_name,
                     "contact_email": j_app.contact_email,
+                    "location": (profile.location if profile else None),
                 },
-                job_details={
-                    "job_id": str(j_app.job.id),
-                    "job_title": j_app.job.title,
-                },
-                resume=j_app.resume,
-                letter_of_application=j_app.letter_of_application,
-                years_of_experience=j_app.years_of_experience,
-                expected_salary=j_app.expected_salary,
-                phone_number=j_app.phone_number,
-                status=j_app.status,
-                applied_at=j_app.applied_at,
-            )
-            for j_app in job_apps
-        ]
+                "job": mapped_job,
+                "resume": j_app.resume,
+                "letter_of_application": j_app.letter_of_application,
+                "years_of_experience": j_app.years_of_experience,
+                "expected_salary": j_app.expected_salary,
+                "phone_number": j_app.phone_number,
+                "status": j_app.status,
+                "applied_at": j_app.applied_at,
+            }
+
+            formatted_apps.append(app_obj)
 
         session.close()
+
+        formatted_apps = [camelize(a) for a in formatted_apps]
 
         return formatted_apps, 200
 
@@ -293,26 +320,41 @@ class JobApplicationController:
             session.query(JobApplication).where(JobApplication.job_id == job_id).all()
         )
 
-        formatted_apps = [
-            models.JobApplication(
-                applicant={
-                    "user_id": str(j_app.student_id),
-                    "first_name": j_app.first_name,
-                    "last_name": j_app.last_name,
-                    "contact_email": j_app.contact_email,
-                },
-                resume=j_app.resume,
-                letter_of_application=j_app.letter_of_application,
-                years_of_experience=j_app.years_of_experience,
-                expected_salary=j_app.expected_salary,
-                phone_number=j_app.phone_number,
-                status=j_app.status,
-                applied_at=j_app.applied_at,
+        formatted_apps = []
+        for j_app in job_apps:
+            applicant_profile = (
+                session.query(Profile)
+                .join(Student, Profile.user_id == Student.user_id)
+                .filter(Student.id == j_app.student_id)
+                .one_or_none()
             )
-            for j_app in job_apps
-        ]
+
+            formatted_apps.append(
+                {
+                    "id": j_app.id,
+                    "applicant": {
+                        "user_id": str(j_app.student_id),
+                        "first_name": j_app.first_name,
+                        "last_name": j_app.last_name,
+                        "contact_email": j_app.contact_email,
+                        "location": (
+                            applicant_profile.location if applicant_profile else None
+                        ),
+                    },
+                    "resume": j_app.resume,
+                    "letter_of_application": j_app.letter_of_application,
+                    "years_of_experience": j_app.years_of_experience,
+                    "expected_salary": j_app.expected_salary,
+                    "phone_number": j_app.phone_number,
+                    "status": j_app.status,
+                    "applied_at": j_app.applied_at,
+                }
+            )
 
         session.close()
+
+        # convert to camelCase keys for frontend
+        formatted_apps = [camelize(a) for a in formatted_apps]
 
         return formatted_apps, 200
 
@@ -329,7 +371,7 @@ class JobApplicationController:
             job_id: The job id for the job application's applied job
             body: The request body, in the format of a list of JSON
                   with the following attribues:
-                    {application_id: str, status: str}
+                    {applicationId: str, status: str}
 
         returns A copy of a list of updated job applications
         """
@@ -338,6 +380,8 @@ class JobApplicationController:
 
         if not body:
             return models.ErrorMessage("No job applications provided"), 400
+
+        body = decamelize(body)
 
         session = self.db.get_session()
 
@@ -411,6 +455,10 @@ class JobApplicationController:
                 except Exception:
                     # logger here
                     pass
+
+
+            # convert to camelCase keys for frontend
+            job_apps = [camelize(a) for a in job_apps]
 
             return job_apps, 200
 

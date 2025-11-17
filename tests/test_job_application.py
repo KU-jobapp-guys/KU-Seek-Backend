@@ -189,14 +189,14 @@ class JobApplicationTestCase(RoutingTestCase):
         letter = BytesIO(b"Fake application letter content for testing")
 
         data = {
-            "first_name": "John",
-            "last_name": "Doe",
+            "firstName": "John",
+            "lastName": "Doe",
             "email": "john.doe@example.com",
-            "years_of_experience": "2",
-            "expected_salary": "15000",
-            "phone_number": "0812345678",
+            "yearsOfExperience": "2",
+            "expectedSalary": "15000",
+            "phoneNumber": "0812345678",
             "resume": (resume, "resume.pdf", "application/pdf"),
-            "application_letter": (
+            "applicationLetter": (
                 letter,
                 "letter.pdf",
                 "application/pdf",
@@ -222,14 +222,14 @@ class JobApplicationTestCase(RoutingTestCase):
         letter = BytesIO(b"Fake application letter content for testing")
 
         data = {
-            "first_name": "John",
-            "last_name": "Doe",
+            "firstName": "John",
+            "lastName": "Doe",
             "email": "john.doe@example.com",
-            "years_of_experience": "2",
-            "expected_salary": "15000",
-            "phone_number": "0812345678",
+            "yearsOfExperience": "2",
+            "expectedSalary": "15000",
+            "phoneNumber": "0812345678",
             "resume": (resume, "resume.pdf", "application/pdf"),
-            "application_letter": (
+            "applicationLetter": (
                 letter,
                 "letter.pdf",
                 "application/pdf",
@@ -248,8 +248,8 @@ class JobApplicationTestCase(RoutingTestCase):
         # validate response
         self.assertEqual(res.status_code, 200)
         json_data = res.get_json()
-        self.assertIn("first_name", json_data)
-        self.assertEqual(json_data["first_name"], "John")
+        self.assertIn("firstName", json_data)
+        self.assertEqual(json_data["firstName"], "John")
 
         res = self.client.get("/api/v1/application", headers={"access_token": jwt})
         self.assertEqual(res.status_code, 200)
@@ -266,14 +266,14 @@ class JobApplicationTestCase(RoutingTestCase):
         letter = BytesIO(b"Fake application letter content for testing2")
 
         data = {
-            "first_name": "John",
-            "last_name": "Doe",
+            "firstName": "John",
+            "lastName": "Doe",
             "email": "john.doe@example.com",
-            "years_of_experience": "2",
-            "expected_salary": "15000",
-            "phone_number": "0812345678",
+            "yearsOfExperience": "2",
+            "expectedSalary": "15000",
+            "phoneNumber": "0812345678",
             "resume": (resume, "resume2.pdf", "application/pdf"),
-            "application_letter": (
+            "applicationLetter": (
                 letter,
                 "letter2.pdf",
                 "application/pdf",
@@ -305,7 +305,7 @@ class JobApplicationTestCase(RoutingTestCase):
         """Only company users can update job applicant status."""
         jwt = generate_jwt(self.user_id, secret=SECRET_KEY)
 
-        data = [{"application_id": self.job_app_id, "status": "accepted"}]
+        data = [{"applicationId": self.job_app_id, "status": "accepted"}]
 
         csrf = self.client.get("/api/v1/csrf-token")
         res = self.client.patch(
@@ -383,7 +383,7 @@ class JobApplicationTestCase(RoutingTestCase):
 
         jwt = generate_jwt(self.company_id, secret=SECRET_KEY)
 
-        data = [{"application_id": job_application_id, "status": "accepted"}]
+        data = [{"applicationId": job_application_id, "status": "accepted"}]
 
         csrf = self.client.get("/api/v1/csrf-token")
         res = self.client.patch(
@@ -399,7 +399,7 @@ class JobApplicationTestCase(RoutingTestCase):
         jwt = generate_jwt(self.company_id, secret=SECRET_KEY)
 
         # Use a non-existent application ID
-        data = [{"application_id": 99999999999, "status": "accepted"}]
+        data = [{"applicationId": 99999999999, "status": "accepted"}]
 
         csrf = self.client.get("/api/v1/csrf-token")
         res = self.client.patch(
@@ -416,7 +416,7 @@ class JobApplicationTestCase(RoutingTestCase):
 
         jwt = generate_jwt(self.company_id, secret=SECRET_KEY)
 
-        data = [{"application_id": self.job_app_id, "status": "accepted"}]
+        data = [{"applicationId": self.job_app_id, "status": "accepted"}]
 
         csrf = self.client.get("/api/v1/csrf-token")
         res = self.client.patch(
@@ -424,6 +424,7 @@ class JobApplicationTestCase(RoutingTestCase):
             json=data,
             headers={"access_token": jwt, "X-CSRFToken": csrf.json["csrf_token"]},
         )
+
         self.assertEqual(res.status_code, 200)
         self.assertEqual(len(res.json), 1)
 
@@ -486,8 +487,8 @@ class JobApplicationTestCase(RoutingTestCase):
         jwt = generate_jwt(self.company_id, secret=SECRET_KEY)
 
         data = [
-            {"application_id": app_ids[0], "status": "accepted"},
-            {"application_id": app_ids[1], "status": "rejected"},
+            {"applicationId": app_ids[0], "status": "accepted"},
+            {"applicationId": app_ids[1], "status": "rejected"},
         ]
 
         csrf = self.client.get("/api/v1/csrf-token")

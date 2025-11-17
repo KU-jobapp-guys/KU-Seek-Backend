@@ -6,6 +6,8 @@ from decouple import config, Csv
 from flask_cors import CORS
 from flask_wtf import CSRFProtect
 from controllers.db_controller import BaseController
+from openapi_server import encoder
+from controllers.models.tag_term_model import Terms
 from controllers.management.admin import YesManModel, AiAdminModel
 from controllers.management.email.email_scheduler import EmailScheduler
 
@@ -34,8 +36,6 @@ except ModuleNotFoundError:
         " pip install -r requirements.txt"
     )
     sys.exit(1)
-
-from openapi_server import encoder  # noqa: E402
 
 
 def create_app(engine=None, admin=None):
@@ -67,7 +67,7 @@ def create_app(engine=None, admin=None):
         },
         supports_credentials=True,
     )
-    # setup CSRF (disabling for now)
+    # setup CSRF
     app.app.secret_key = config("SECRET_KEY", default="very-secure-secret-key")
     CSRFProtect(app.app)
 
@@ -77,11 +77,47 @@ def create_app(engine=None, admin=None):
     else:
         app.app.config["Database"] = BaseController()
 
-    # Setup admin model
+    # One-time (idempotent) seeding of common Terms into the database.
+    # This runs on app start and will only insert missing terms.
+    terms_list = [
+        "React",
+        "Vue",
+        "Angular",
+        "Node.js",
+        "Python",
+        "Django",
+        "Machine Learning",
+        "AWS",
+        "SQL",
+    ]
+
+    try:
+        with app.app.app_context():
+            db = app.app.config.get("Database")
+            if db and hasattr(db, "get_session"):
+                session = db.get_session()
+                added = 0
+                try:
+                    for name in terms_list:
+                        exists = session.query(Terms).filter(Terms.name == name).first()
+                        if exists:
+                            continue
+                        term = Terms(name=name, type="skill")
+                        session.add(term)
+                        added += 1
+                    if added:
+                        session.commit()
+                except Exception:
+                    session.rollback()
+                    raise
+                finally:
+                    session.close()
+    except Exception:
+        print("Warning: failed to seed Terms table")
+    app.app.config["Admin"] = YesManModel()
+    # set an agentic model for validation if provided
     if admin:
         app.app.config["Admin"] = admin
-    else:
-        app.app.config["Admin"] = YesManModel()
 
     return app
 
