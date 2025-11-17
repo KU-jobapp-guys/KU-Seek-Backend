@@ -334,6 +334,8 @@ class AuthenticationController:
         user_type = user.type.value.lower()
         session.close()
 
+        current_app.config["Requests"].unban_user(str(uid))
+
         return auth_token, refresh_token, user_type
 
     def get_user(self, google_uid):
