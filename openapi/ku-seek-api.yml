@@ -559,10 +559,10 @@ paths:
 
 components:
   securitySchemes:
-      BearerAuth:
-        type: http
-        scheme: bearer
-        bearerFormat: JWT
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 
   schemas:
     Job:
@@ -703,10 +703,10 @@ components:
           type: integer
           description: Number of positions available
         end_date:
-            type: string
-            format: date-time
-            description: Application deadline
-            example: "2025-12-31T23:59:59Z"
+          type: string
+          format: date-time
+          description: Application deadline
+          example: "2025-12-31T23:59:59Z"
         company_id:
           type: string
         companyName:
@@ -729,6 +729,7 @@ components:
   
     JobPost:
       type: object
+      required:
         - title
         - salaryMin
         - salaryMax
@@ -800,23 +801,23 @@ components:
             type: string
           example: ["Remote", "Backend"]
 
-   StudentHistory:
-        type: object
-        required:
-          - job_id
-          - student_id
-          - viewed_at
-        properties:
-          job_id:
-            type: integer
-            example: 1
-          student_id:
-            type: integer
-            example: 1
-          viewed_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp when the student viewed the job
+    StudentHistory:
+      type: object
+      required:
+        - job_id
+        - student_id
+        - viewed_at
+      properties:
+        job_id:
+          type: integer
+          example: 1
+        student_id:
+          type: integer
+          example: 1
+        viewed_at:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the student viewed the job
 
     StudentHistoryInput:
       type: object

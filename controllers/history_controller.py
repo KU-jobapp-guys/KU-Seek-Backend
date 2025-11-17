@@ -34,7 +34,9 @@ class HistoryController:
             )
 
             if not student:
-                raise ProblemException("Student not found")
+                raise ProblemException(
+                    status=404, title="Not Found", detail="Student not found"
+                )
 
             histories = (
                 session.query(StudentHistories)
@@ -74,14 +76,16 @@ class HistoryController:
         timestamp is updated to now; otherwise a new row is inserted.
         """
         if not body or "job_id" not in body:
-            raise ProblemException("'job_id' is a required property")
+            raise ProblemException(
+                status=400,
+                title="Bad Request",
+                detail="'job_id' is a required property",
+            )
 
         def _ensure_trim(session, student_id: int):
             """Ensure the history table for a student is trimmed to 15 rows.
 
-            Keep the newest 15 entries (order by viewed_at desc) and delete
-            the rest. This is deterministic even when timestamps are very
-            close or equal.
+            Keep the newest 15 entries and delete the rest.
             """
             total = (
                 session.query(StudentHistories)
@@ -91,18 +95,19 @@ class HistoryController:
             if total <= 15:
                 return
 
-            histories_desc = (
+            oldest = (
                 session.query(StudentHistories)
                 .where(StudentHistories.student_id == student_id)
                 .order_by(
-                    StudentHistories.viewed_at.desc(),
-                    StudentHistories.job_id.desc(),
+                    StudentHistories.viewed_at.asc(),
+                    StudentHistories.job_id.asc(),
+                    StudentHistories.student_id.asc(),
                 )
                 .all()
             )
 
-            # Delete anything after the first 15 (keep the newest 15)
-            for row in histories_desc[15:]:
+            to_remove = total - 15
+            for row in oldest[:to_remove]:
                 session.delete(row)
 
             session.commit()
@@ -118,7 +123,9 @@ class HistoryController:
             )
 
             if not student:
-                raise ProblemException("Student not found")
+                raise ProblemException(
+                    status=404, title="Not Found", detail="Student not found"
+                )
 
             job_id = body["job_id"]
 
@@ -169,6 +176,10 @@ class HistoryController:
             raise
         except Exception as e:
             session.rollback()
-            raise ProblemException(f"Database Error {str(e)}")
+            raise ProblemException(
+                status=500,
+                title="Internal Server Error",
+                detail=f"Database Error {str(e)}",
+            )
         finally:
             session.close()
