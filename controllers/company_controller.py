@@ -99,10 +99,14 @@ class CompanyController:
                 pr = profile.to_dict() if profile else {}
 
                 mapped = {
+                    "userId": str(company.user_id),
                     "companyId": str(company.id),
                     "companyName": company.company_name or "",
                     "jobCount": job_count,
                     "profilePhoto": pr.get("profile_img") or "",
+                    "bannerPhoto": pr.get("banner_img") or "",
+                    "industry": company.company_industry,
+                    "location": pr.get("location") or "",
                 }
 
                 company_data.append(mapped)

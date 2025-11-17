@@ -29,27 +29,20 @@ class ProfessorController:
 
         session = self.db.get_session()
         try:
-            professor = (
-                session.query(Professor).where(Professor.user_id == user_uuid).one()
-            )
-            professor_connections = (
-                session.query(ProfessorConnections)
-                .where(ProfessorConnections.professor_id == professor.id)
-                .all()
-            )
+            professor = session.query(Professor).filter(
+                Professor.user_id == user_uuid
+            ).one()
 
-            if not professor_connections:
-                session.close()
-                return []
+            professor_connections = session.query(ProfessorConnections).filter(
+                ProfessorConnections.professor_id == professor.id
+            ).all()
 
             return [
                 {
                     "id": conn.id,
                     "professor_id": conn.professor_id,
                     "company_id": conn.company_id,
-                    "created_at": conn.created_at.isoformat()
-                    if conn.created_at
-                    else None,
+                    "created_at": conn.created_at.isoformat() if conn.created_at else None,
                 }
                 for conn in professor_connections
             ]
