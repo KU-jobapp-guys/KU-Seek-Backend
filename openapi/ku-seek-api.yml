@@ -356,7 +356,7 @@ paths:
                 $ref: '#/components/schemas/UserProfile'
   
   /users/profile:
-        
+    
     post:
       tags:
         - Profile
@@ -411,6 +411,72 @@ paths:
         404:
           description: user profile not found
 
+  /annoucements:
+    get:
+      summary: Get all of the annoucements from professors
+      operationId: controllers.controller.get_professor_annoucement
+       
+      responses:
+        200:
+          description: Return all of the annoucements that exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Annoucement'
+
+  /connections:
+    get:
+        summary: Get the professor connections
+        operationId: controllers.controller.get_professor_connection
+       
+        responses:
+          200:
+            description: Return the user profile data created successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Connection'
+    post:
+      summary: Create a new connection
+      operationId: controllers.controller.post_new_connection
+ 
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectionInput'
+      
+      responses:
+        201:
+          description: User profile created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
+        
+        400:
+          description: Error BAD REQUEST
+    
+    delete:
+      summary: Delete the professor connection
+      operationId: controllers.controller.delete_connection
+      parameters:
+        - name: connection_id
+          in: query
+          required: true
+          description: The ID of the connection
+          schema:
+            type: integer
+      
+      responses:
+        200:
+          description: Return the deleted data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
+        
   /application:
     get:
       tags:
@@ -697,6 +763,65 @@ components:
         bearerFormat: JWT
 
   schemas:
+    ConnectionInput:
+        type: object
+        required:
+          - company_id
+        properties:
+          company_id:
+            type: integer
+            description: The unique identifier of the company
+   
+    Connection:
+        type: object
+        properties:
+          id:
+            type: integer
+            description: The unique identifier for a connection
+            example: 1
+          professor_id:
+            type: integer
+            description: The unique identifier of the professor
+          company_id:
+            type: integer
+            description: The unique identifier of the company
+          created_at:
+            type: string
+            description: Time that this connection got created
+    
+    Annoucement:
+        type: object
+        properties:
+          id:
+            type: integer
+            description: The unique identifier for an announcement
+            example: 1
+          professor:
+            type: string
+            description: Professor full name (first + last)
+            example: "Assoc. Prof. Nattawut Meechai"
+          professorPosition:
+            type: string
+            description: Professor position/title
+            example: "Assistant Professor"
+          department:
+            type: string
+            description: Professor department
+            example: "Agricultural Engineering"
+          company:
+            type: string
+            description: Company name
+            example: "EcoFarm Innovation Ltd."
+          companyIndustry:
+            type: string
+            description: Company industry
+            example: "IoT & Smart Farming"
+          tags:
+            type: array
+            items:
+              type: string
+            description: Tags associated with the company
+            example: ["IoT", "Smart Farming", "Workshop"]
     Job:
       type: object
       required:
