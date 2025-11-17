@@ -112,6 +112,17 @@ class AdminController:
 
     @role_required(["Admin"])
     def update_user_status(self, body):
+        """
+        Update one or more users.
+
+        Update all user's by approving their role 
+        or deleting them from the request body.
+
+        Args:
+            body: The request body
+
+        returns: A list of all updated job post records.
+        """
         user_token = request.headers.get("access_token")
         token_info = decode(jwt=user_token, key=SECRET_KEY, algorithms=["HS512"])
         session = self.db.get_session()

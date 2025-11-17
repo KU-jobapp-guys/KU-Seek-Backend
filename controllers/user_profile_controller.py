@@ -162,7 +162,8 @@ class ProfileController:
     def update_profile(self, user_id: str, body: Dict) -> Optional[Dict]:
         """
         Update fields in the UserProfile table dynamically.
-        PATCH /users/profile
+
+        Corresponds to PATCH /users/profile
         """
         user_uuid = UUID(user_id)
         if not body:
@@ -361,10 +362,7 @@ class ProfileController:
             raise ProblemException(f"Failed to upload images: {str(e)}")
 
     def _update_model_fields(self, session, model_class, user_id: UUID, data: Dict):
-        """
-        Helper function to update fields on any model instance.
-        """
-
+        """Update fields on any model instance."""
         instance = (
             session.query(model_class)
             .where(model_class.user_id == user_id)
