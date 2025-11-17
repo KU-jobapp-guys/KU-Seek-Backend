@@ -128,7 +128,7 @@ class ProfileController:
                         )
                         or []
                     )
-                    
+
             elif profile.user_type == "company":
                 company = (
                     session.query(Company)
@@ -196,6 +196,7 @@ class ProfileController:
     def update_profile(self, user_id: str, body: Dict) -> Optional[Dict]:
         """
         Update fields in the UserProfile table dynamically.
+
         PATCH /users/profile
         """
         user_uuid = UUID(user_id)
@@ -247,10 +248,7 @@ class ProfileController:
         return self.get_profile_by_uid(user_id)
 
     def _update_model_fields(self, session, model_class, user_id: UUID, data: Dict):
-        """
-        Helper function to update fields on any model instance.
-        """
-
+        """Update fields on a model instance."""
         instance = (
             session.query(model_class)
             .where(model_class.user_id == user_id)

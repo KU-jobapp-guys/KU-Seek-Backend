@@ -54,7 +54,8 @@ def get_user_profile(user_id: str) -> Dict:
         return jsonify({"message": str(e)}), 404
     except Exception as e:
         return jsonify({"message": str(e)}), 500
-    
+
+
 def get_user_setting() -> Dict:
     """GET user setting from the database."""
     try:

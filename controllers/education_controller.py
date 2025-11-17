@@ -40,21 +40,19 @@ class EducationController:
             except Exception:
                 uid = user_id
 
-            educations = (
-                session.query(Education)
-                .filter(Education.user_id == uid)
-                .all()
-            )
+            educations = session.query(Education).filter(Education.user_id == uid).all()
 
             for e in educations:
-                education_obj.append({
-                    "id": e.id,
-                    "curriculumName": e.curriculum_name,
-                    "university": e.university,
-                    "major": e.major,
-                    "yearOfStudy": e.year_of_study.year,
-                    "graduateYear": e.graduate_year.year,
-                })
+                education_obj.append(
+                    {
+                        "id": e.id,
+                        "curriculumName": e.curriculum_name,
+                        "university": e.university,
+                        "major": e.major,
+                        "yearOfStudy": e.year_of_study.year,
+                        "graduateYear": e.graduate_year.year,
+                    }
+                )
             return education_obj
         except SQLAlchemyError as e:
             raise RuntimeError(f"Error fetching educations for user {user_id}: {e}")
@@ -105,7 +103,6 @@ class EducationController:
             raise RuntimeError(str(e))
         finally:
             session.close()
-
 
     def post_education(self, user_id: UUID, body: Dict) -> Dict:
         """Create a new education record.
