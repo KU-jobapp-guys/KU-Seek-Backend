@@ -47,8 +47,7 @@ class JobTestCase(RoutingTestCase):
         It should return specific job data.
         """
         jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
-        res = self.client.get("/api/v1/jobs?job_id=1",
-                              headers={"access_token": jwt})
+        res = self.client.get("/api/v1/jobs?job_id=1", headers={"access_token": jwt})
         data = res.json
 
         self.assertEqual(data["jobId"], "1")
@@ -58,11 +57,9 @@ class JobTestCase(RoutingTestCase):
 
     def test_output_all_field(self):
         """Test that the data have all field base on schema."""
-
         jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
-        
-        res = self.client.get("/api/v1/jobs",
-                              headers={"access_token": jwt})
+
+        res = self.client.get("/api/v1/jobs", headers={"access_token": jwt})
 
         data = res.json
 

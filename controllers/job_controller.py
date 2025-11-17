@@ -11,7 +11,6 @@ from .models.tag_term_model import Tags, Terms
 from .decorators import login_required, role_required
 
 
-
 class JobController:
     """Controller to use CRUD operations for Job."""
 

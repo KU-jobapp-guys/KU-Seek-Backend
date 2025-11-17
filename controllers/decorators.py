@@ -26,7 +26,9 @@ def login_required(func):
             return models.ErrorMessage("User is not authenticated."), 401
 
         try:
-            token_info = decode(jwt=jwt_auth_token, key=SECRET_KEY, algorithms=["HS512"])
+            token_info = decode(
+                jwt=jwt_auth_token, key=SECRET_KEY, algorithms=["HS512"]
+            )
 
         except InvalidSignatureError:
             return models.ErrorMessage("Invalid authentication token provided"), 403
@@ -36,13 +38,15 @@ def login_required(func):
             return models.ErrorMessage(f"Invalid authentication token, {e}"), 403
 
         # authentication successful
-        
+
         request_controller = current_app.config["Requests"]
-        if request_controller.request(token_info['uid']):
+        if request_controller.request(token_info["uid"]):
             # Add new request successful, serve the API.
             return func(*args, **kwargs)
-        return models.ErrorMessage("Too many requests. Please renew login session."), 429
-    
+        return models.ErrorMessage(
+            "Too many requests. Please renew login session."
+        ), 429
+
     return run_function
 
 
@@ -96,10 +100,12 @@ def role_required(roles: list[Literal["Student", "Company"]] = []):
             # Authorization successful
 
             request_controller = current_app.config["Requests"]
-            if request_controller.request(token_info['uid']):
+            if request_controller.request(token_info["uid"]):
                 # Add new request successful, serve the API.
                 return func(*args, **kwargs)
-            return models.ErrorMessage("Too many requests. Please renew login session."), 429
+            return models.ErrorMessage(
+                "Too many requests. Please renew login session."
+            ), 429
 
         return run_function
 
