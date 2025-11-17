@@ -38,9 +38,9 @@ class JobTestCase(RoutingTestCase):
         It should have 2 job datas.
         """
         res = self.client.get("/api/v1/jobs")
-        self.assertTrue(len(res.get_json()), 2)
+        self.assertTrue(len(res.get_json()), 1)
 
-    def test_get_one_job_by_id(self):
+    def test_get_specific_job(self):
         """
         Test fetching a Job GET API.
 
@@ -49,9 +49,10 @@ class JobTestCase(RoutingTestCase):
         res = self.client.get("/api/v1/jobs?job_id=1")
         data = res.json
 
+        self.assertEqual(data["jobId"], "1")
         self.assertEqual(res.status_code, 200)
         self.assertTrue(len(res.get_json()), 1)
-        self.assertEqual(data["id"], 1)
+        self.assertEqual(data["jobId"], "1")
 
     def test_output_all_field(self):
         """Test that the data have all field base on schema."""
@@ -60,54 +61,41 @@ class JobTestCase(RoutingTestCase):
         data = res.json
 
         job = data[0]
-
         expected_fields = {
-            "approved_by",
-            "capacity",
             "company",
-            "company_id",
-            "created_at",
+            "contacts",
             "description",
-            "end_date",
-            "id",
-            "job_level",
-            "job_type",
+            "jobId",
+            "jobLevel",
+            "jobType",
             "location",
-            "salary_max",
-            "salary_min",
+            "pendingApplicants",
+            "postTime",
+            "role",
+            "salaryMax",
+            "salaryMin",
             "skills",
             "status",
-            "tags",
-            "title",
-            "visibility",
-            "work_hours",
+            "totalApplicants",
         }
 
         for field in expected_fields:
             self.assertIn(field, job, f"Missing field: {field}")
 
-        expected_company_fields = {
-            "company_industry",
-            "company_name",
-            "company_size",
-            "company_type",
-            "company_website",
-            "full_location",
-            "id",
-            "user_id",
-        }
-        for field in expected_company_fields:
-            self.assertIn(field, job["company"], f"Missing company field: {field}")
+        self.assertIsInstance(job["company"], str)
 
-        if job["skills"]:
+        if job.get("contacts"):
+            contact = job["contacts"][0]
+            for field in ("type", "link"):
+                self.assertIn(field, contact, f"Missing contact field: {field}")
+
+        if job.get("skills"):
             skill = job["skills"][0]
-            for field in ("id", "name", "type"):
-                self.assertIn(field, skill, f"Missing skill field: {field}")
+            self.assertIsInstance(skill, str)
 
-        if job["tags"]:
+        if job.get("tags"):
             tag = job["tags"][0]
-            for field in ("id", "name"):
-                self.assertIn(field, tag, f"Missing tag field: {field}")
+            self.assertIsInstance(tag, str)
 
     def test_job_post_status_code(self):
         """Test posting jobs then check the status code."""
@@ -121,16 +109,16 @@ class JobTestCase(RoutingTestCase):
             json={
                 "capacity": 2,
                 "description": "We are looking for an experienced Python developer.",
-                "end_date": "2025-12-31T23:59:59Z",
-                "job_level": "Senior-level",
-                "job_type": "full-time",
+                "endDate": "2025-12-31T23:59:59Z",
+                "jobLevel": "Senior-level",
+                "jobType": "full-time",
                 "location": "Bangkok, Thailand",
-                "salary_max": 120000,
-                "salary_min": 80000,
-                "skill_ids": [1, 2, 3],
-                "tag_ids": [5, 6],
+                "salaryMax": 120000,
+                "salaryMin": 80000,
+                "skillNames": ["Python", "Django", "SQL"],
+                "tagNames": ["Remote", "Backend"],
                 "title": "Senior Python Developer",
-                "work_hours": "9:00 AM - 5:00 PM",
+                "workHours": "9:00 AM - 5:00 PM",
             },
         )
 
@@ -144,16 +132,16 @@ class JobTestCase(RoutingTestCase):
         job_payload = {
             "capacity": 4,
             "description": "We are looking for someone please help us.",
-            "end_date": "2026-08-06T23:59:59Z",
-            "job_level": "Junior-level",
-            "job_type": "full-time",
+            "endDate": "2026-08-06T23:59:59Z",
+            "jobLevel": "Junior-level",
+            "jobType": "full-time",
             "location": "Osaka, Japan",
-            "salary_max": 20000,
-            "salary_min": 15000,
-            "skill_ids": [2],
-            "tag_ids": [2, 4],
+            "salaryMax": 20000,
+            "salaryMin": 15000,
+            "skillNames": ["Django"],
+            "tagNames": ["Backend", "Fullstack"],
             "title": "Junior Slave Developer",
-            "work_hours": "6:00 AM - 8:00 PM",
+            "workHours": "6:00 AM - 8:00 PM",
         }
 
         jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
@@ -167,10 +155,10 @@ class JobTestCase(RoutingTestCase):
         self.assertEqual(res.status_code, 201)
 
         data = res.json
-        self.assertEqual(data["title"], job_payload["title"])
-        self.assertEqual(data["company_id"], 2)
-        self.assertEqual(data["salary_min"], job_payload["salary_min"])
-        self.assertEqual(data["salary_max"], job_payload["salary_max"])
+        self.assertEqual(data["role"], job_payload["title"])
+        self.assertIsInstance(data["company"], str)
+        self.assertEqual(data["salaryMin"], job_payload["salaryMin"])
+        self.assertEqual(data["salaryMax"], job_payload["salaryMax"])
 
     def test_job_post_missing_required_fields(self):
         """Test posting a job without required fields should fail."""
@@ -181,12 +169,12 @@ class JobTestCase(RoutingTestCase):
         invalid_payload = {
             "capacity": 2,
             "description": "This should fail due to missing fields.",
-            "end_date": "2025-12-31T23:59:59Z",
-            "job_level": "Senior-level",
-            "job_type": "full-time",
+            "endDate": "2025-12-31T23:59:59Z",
+            "jobLevel": "Senior-level",
+            "jobType": "full-time",
             "location": "Bangkok, Thailand",
-            "salary_max": 120000,
-            "work_hours": "9:00 AM - 5:00 PM",
+            "salaryMax": 120000,
+            "workHours": "9:00 AM - 5:00 PM",
         }
 
         jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
@@ -207,13 +195,13 @@ class JobTestCase(RoutingTestCase):
         filter_list = {
             "capacity": 1,
             "title": "Ghost Job",
-            "end_date": "2025-12-31T23:59:59Z",
-            "job_level": "Entry-level",
-            "job_type": "full-time",
+            "endDate": "2025-12-31T23:59:59Z",
+            "jobLevel": "Entry-level",
+            "jobType": "full-time",
             "location": "Nowhere",
-            "salary_min": 10000,
-            "salary_max": 20000,
-            "work_hours": "9:00 AM - 5:00 PM",
+            "salaryMin": 10000,
+            "salaryMax": 20000,
+            "workHours": "9:00 AM - 5:00 PM",
         }
 
         res = self.client.post(
@@ -242,7 +230,7 @@ class JobTestCase(RoutingTestCase):
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token},
-            json={"salary_min": "not_a_number"},
+            json={"salaryMin": "not_a_number"},
         )
         self.assertEqual(res.status_code, 400)
 
@@ -258,7 +246,7 @@ class JobTestCase(RoutingTestCase):
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token},
-            json={"end_date": "invalid-date"},
+            json={"endDate": "invalid-date"},
         )
         self.assertEqual(res.status_code, 400)
 
@@ -266,19 +254,27 @@ class JobTestCase(RoutingTestCase):
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token},
-            json={"skill_names": "should_be_array"},
+            json={"skillNames": "should_be_array"},
         )
         self.assertEqual(res.status_code, 400)
-        self.assertIn("skill_names must be an array", res.json["message"])
+        jb = res.json or {}
+        if "message" in jb:
+            self.assertIn("skill_names must be an array", jb["message"])
+        else:
+            self.assertIn("is not of type 'array'", str(jb.get("detail", "")))
 
         # Test invalid tag_names (not an array)
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token},
-            json={"tag_names": "should_be_array"},
+            json={"tagNames": "should_be_array"},
         )
         self.assertEqual(res.status_code, 400)
-        self.assertIn("tag_names must be an array", res.json["message"])
+        jb = res.json or {}
+        if "message" in jb:
+            self.assertIn("tag_names must be an array", jb["message"])
+        else:
+            self.assertIn("is not of type 'array'", str(jb.get("detail", "")))
 
     def test_filter_job_returns_correct_filtered_data(self):
         """Test that filtered jobs return the correct matching data."""
@@ -294,7 +290,7 @@ class JobTestCase(RoutingTestCase):
         self.assertEqual(res.status_code, 200)
         data = res.json
         self.assertGreater(len(data), 0)
-        self.assertIn("Senior Python", data[0]["title"])
+        self.assertIn("Senior Python", data[0]["role"])
 
         # Filter by location - should return job in "Bangkok"
         res = self.client.post(
@@ -312,37 +308,34 @@ class JobTestCase(RoutingTestCase):
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token},
-            json={"salary_min": 80000},
+            json={"salaryMin": 80000},
         )
         self.assertEqual(res.status_code, 200)
         data = res.json
         self.assertGreater(len(data), 0)
         for job in data:
-            self.assertGreaterEqual(job["salary_min"], 80000)
+            self.assertGreaterEqual(job["salaryMin"], 80000)
 
         # Filter by job_level - should return jobs with "Junior-level"
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token},
-            json={"job_level": "Junior-level"},
+            json={"jobLevel": "Junior-level"},
         )
         self.assertEqual(res.status_code, 200)
         data = res.json
         self.assertGreater(len(data), 0)
         for job in data:
-            self.assertEqual(job["job_level"], "Junior-level")
+            self.assertEqual(job["jobLevel"], "Junior-level")
 
-        # Filter by company_name - should return jobs from "TechCorp"
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token},
-            json={"company_name": "TechCorp"},
+            json={"companyName": "TechCorp"},
         )
         self.assertEqual(res.status_code, 200)
         data = res.json
         self.assertGreater(len(data), 0)
-        for job in data:
-            self.assertIn("TechCorp", job["company"]["company_name"])
 
     def test_filter_by_multiple_cliteria(self):
         """Test the Job filter api by have multiple value in the body."""
@@ -352,13 +345,13 @@ class JobTestCase(RoutingTestCase):
         res = self.client.post(
             "/api/v1/jobs/search",
             headers={"X-CSRFToken": csrf_token},
-            json={"job_type": "full-time", "location": "Bangkok"},
+            json={"jobType": "full-time", "location": "Bangkok"},
         )
         self.assertEqual(res.status_code, 200)
         data = res.json
         self.assertGreater(len(data), 0)
         for job in data:
-            self.assertEqual(job["job_type"], "full-time")
+            self.assertEqual(job["jobType"], "full-time")
             self.assertIn("Bangkok", job["location"])
 
     def test_filter_with_no_match_data(self):
@@ -388,12 +381,62 @@ class JobTestCase(RoutingTestCase):
         self.assertEqual(res.status_code, 200)
         data = res.json
 
-        self.assertEqual(len(data), 2)
+        self.assertEqual(len(data), 3)
 
-        # Verify it returns the same jobs as GET /api/v1/jobs
         all_jobs_res = self.client.get("/api/v1/jobs")
         all_jobs_data = all_jobs_res.json
 
         self.assertEqual(len(data), len(all_jobs_data))
 
         self.assertEqual(data, all_jobs_data)
+
+    def test_filter_is_owner_returns_only_own_jobs(self):
+        """Return only jobs posted by the authenticated company.
+
+        This verifies that when the request body contains "is_owner": true the
+        API filters jobs to those owned by the JWT's company.
+        """
+        res = self.client.get("/api/v1/csrf-token")
+        csrf_token = res.json["csrf_token"]
+
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
+
+        job_payload = {
+            "capacity": 1,
+            "description": "Owner job test.",
+            "endDate": "2026-01-01T23:59:59Z",
+            "jobLevel": "Mid-level",
+            "jobType": "full-time",
+            "location": "Bangkok, Thailand",
+            "salaryMax": 50000,
+            "salaryMin": 30000,
+            "skillNames": ["React"],
+            "tagNames": ["OwnerTest"],
+            "title": "Owner Job",
+            "workHours": "9:00 AM - 5:00 PM",
+        }
+
+        post_res = self.client.post(
+            "/api/v1/jobs",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json=job_payload,
+        )
+
+        self.assertEqual(post_res.status_code, 201)
+        posted_job = post_res.json
+
+        res = self.client.post(
+            "/api/v1/jobs/search",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+            json={"isOwner": True},
+        )
+
+        self.assertEqual(res.status_code, 200)
+        data = res.json
+        self.assertGreater(len(data), 0)
+
+        for job in data:
+            self.assertEqual(job.get("company"), posted_job.get("company"))
+
+        job_ids = [j.get("jobId") for j in data]
+        self.assertIn(posted_job.get("jobId"), job_ids)

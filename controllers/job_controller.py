@@ -5,7 +5,7 @@ import uuid
 from typing import List, Dict
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
-from .models.job_model import Job, JobSkills, JobTags, Bookmark
+from .models.job_model import Job, JobSkills, JobTags, Bookmark, JobApplication
 from .models.user_model import Company, Student
 from .models.tag_term_model import Tags, Terms
 
@@ -66,10 +66,11 @@ class JobController:
                 - capacity (int): Number of positions
                 - end_date (str): Application deadline (ISO format)
 
-            Optional fields:
-                - description (str): Job description
-                - skill_ids (list[int]): List of skill IDs
-                - tag_ids (list[int]): List of tag IDs
+                        Optional fields:
+                                - description (str): Job description
+                                - skill_names (list[str]): List of skill names (strings)
+                                - tag_names (list[str]): List of tag names (strings)
+                                    If a name does not exist in Tags it will be created
 
         Returns:
             Dict: The created job data
@@ -77,6 +78,26 @@ class JobController:
         Raises:
             ValueError: If required fields are missing or invalid
         """
+        camel_map = {
+            "salaryMin": "salary_min",
+            "salaryMax": "salary_max",
+            "jobLevel": "job_level",
+            "jobType": "job_type",
+            "workHours": "work_hours",
+            "skillNames": "skill_names",
+            "tagNames": "tag_names",
+            "endDate": "end_date",
+            "isOwner": "is_owner",
+            "companyName": "company_name",
+            "companyIndustry": "company_industry",
+            "companyType": "company_type",
+            "userId": "user_id",
+        }
+        mapped_body = {}
+        for k, v in (body or {}).items():
+            mapped_body[camel_map.get(k, k)] = v
+        body = mapped_body
+
         required_fields = [
             "title",
             "salary_min",
@@ -106,12 +127,17 @@ class JobController:
             if isinstance(end_date, str):
                 end_date = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
 
-            company_id = (
+            company_obj = (
                 session.query(Company).where(Company.user_id == user_id).one_or_none()
             )
 
+            if not company_obj:
+                raise ValueError(
+                    "Company not found for current user. Create a company first."
+                )
+
             job = Job(
-                company_id=company_id.id,
+                company_id=company_obj.id,
                 title=body["title"],
                 description=body.get("description"),
                 salary_min=body["salary_min"],
@@ -128,13 +154,26 @@ class JobController:
             session.add(job)
             session.flush()
 
-            if "skill_ids" in body and body["skill_ids"]:
-                for skill_id in body["skill_ids"]:
-                    job_skill = JobSkills(job_id=job.id, skill_id=skill_id)
+            if "skill_names" in body and body["skill_names"]:
+                if not isinstance(body["skill_names"], list):
+                    raise ValueError("skill_names must be an array of strings")
+                for name in body["skill_names"]:
+                    if not name:
+                        continue
+                    name = str(name).strip()
+                    term = session.query(Terms).where(Terms.name == name).one_or_none()
+                    if not term:
+                        raise ValueError(f"Term not found: {name}")
+                    job_skill = JobSkills(job_id=job.id, skill_id=term.id)
                     session.add(job_skill)
 
-            if "tag_ids" in body and body["tag_ids"]:
-                for tag_id in body["tag_ids"]:
+            if "tag_names" in body and body["tag_names"]:
+                if not isinstance(body["tag_names"], list):
+                    raise ValueError("tag_names must be an array of strings")
+                for name in body["tag_names"]:
+                    if not name:
+                        continue
+                    tag_id = self._get_or_create_tag(session, str(name).strip())
                     job_tag = JobTags(job_id=job.id, tag_id=tag_id)
                     session.add(job_tag)
 
@@ -181,7 +220,19 @@ class JobController:
                 session.close()
                 return []
 
-            result = [bookmark.to_dict() for bookmark in user_bookmarked_jobs]
+            result = []
+            for bookmark in user_bookmarked_jobs:
+                b = bookmark.to_dict()
+                result.append(
+                    {
+                        "id": b.get("id"),
+                        "jobId": b.get("job_id"),
+                        "studentId": b.get("student_id"),
+                        "createdAt": b.get("created_at").isoformat()
+                        if b.get("created_at")
+                        else None,
+                    }
+                )
             session.close()
             return result
         except Exception as e:
@@ -194,6 +245,12 @@ class JobController:
 
         Corresponds to: POST /api/v1/bookmarks
         """
+        camel_map = {"jobId": "job_id"}
+        mapped_body = {}
+        for k, v in (body or {}).items():
+            mapped_body[camel_map.get(k, k)] = v
+        body = mapped_body
+
         if isinstance(user_id, str):
             try:
                 user_id = uuid.UUID(user_id)
@@ -226,7 +283,12 @@ class JobController:
 
             session.close()
 
-            return result
+            return {
+                "id": result.get("id"),
+                "jobId": result.get("job_id"),
+                "studentId": result.get("student_id"),
+                "createdAt": result.get("created_at"),
+            }
 
         except Exception as e:
             session.close()
@@ -279,7 +341,12 @@ class JobController:
 
             session.close()
 
-            return result
+            return {
+                "id": result.get("id"),
+                "jobId": result.get("job_id"),
+                "studentId": result.get("student_id"),
+                "createdAt": result.get("created_at"),
+            }
 
         except Exception as e:
             session.rollback()
@@ -309,12 +376,50 @@ class JobController:
             "capacity",
             "end_date",
         }
-        allowed_company_fields = {"company_name", "company_industry", "company_type"}
+        allowed_company_fields = {
+            "company_name",
+            "company_industry",
+            "company_type",
+            "user_id",
+        }
         allowed_special_fields = {"skill_names", "tag_names"}
 
         all_allowed_fields = (
             allowed_job_fields | allowed_company_fields | allowed_special_fields
         )
+
+        camel_map = {
+            "salaryMin": "salary_min",
+            "salaryMax": "salary_max",
+            "jobLevel": "job_level",
+            "jobType": "job_type",
+            "workHours": "work_hours",
+            "skillNames": "skill_names",
+            "tagNames": "tag_names",
+            "endDate": "end_date",
+            "companyName": "company_name",
+            "companyIndustry": "company_industry",
+            "companyType": "company_type",
+            "userId": "user_id",
+        }
+        mapped_body = {}
+        for k, v in (body or {}).items():
+            mapped_body[camel_map.get(k, k)] = v
+        body = mapped_body
+
+        def _is_empty_filter(d: Dict) -> bool:
+            if not d:
+                return True
+            for v in d.values():
+                if v is None or v == "":
+                    continue
+                if isinstance(v, list) and len(v) == 0:
+                    continue
+                return False
+            return True
+
+        if _is_empty_filter(body):
+            return self.get_all_jobs("")
 
         session = self.db.get_session()
 
@@ -328,6 +433,30 @@ class JobController:
                 )
 
             query = session.query(Job).join(Company, Job.company_id == Company.id)
+
+            owner_user_id = body.pop("user_id", None)
+            if owner_user_id:
+                try:
+                    # Accept UUID string or UUID instance
+                    if isinstance(owner_user_id, str):
+                        from uuid import UUID as _UUID
+
+                        owner_uuid = _UUID(owner_user_id)
+                    else:
+                        owner_uuid = owner_user_id
+                except Exception:
+                    session.close()
+                    raise ValueError("Invalid user_id format. Expected UUID string.")
+                company_obj = (
+                    session.query(Company)
+                    .where(Company.user_id == owner_uuid)
+                    .one_or_none()
+                )
+                if not company_obj:
+                    session.close()
+                    raise ValueError("Company not found for provided user_id")
+
+                query = query.filter(Job.company_id == company_obj.id)
 
             skill_names = body.pop("skill_names", None)
             tag_names = body.pop("tag_names", None)
@@ -374,7 +503,17 @@ class JobController:
                     query = query.filter(getattr(Company, key).ilike(f"%{val}%"))
 
                 elif key in allowed_job_fields:
-                    query = query.filter(getattr(Job, key).ilike(f"%{val}%"))
+                    if key == "location":
+                        from sqlalchemy import or_
+
+                        query = query.filter(
+                            or_(
+                                Job.location.ilike(f"%{val}%"),
+                                Company.full_location.ilike(f"%{val}%"),
+                            )
+                        )
+                    else:
+                        query = query.filter(getattr(Job, key).ilike(f"%{val}%"))
 
             # Filter by skills if provided
             if skill_names:
@@ -421,22 +560,36 @@ class JobController:
             raise Exception(f"Error filtering jobs: {str(e)}")
 
     def __job_with_company_terms_tags(self, session, jobs, single_response=None):
-        """Return jobs data with company, terms, and tags."""
+        """Return jobs data shaped for the frontend.
+
+        Produces objects like the provided frontend mock where:
+        - jobId: string representation of the job id
+        - company: company name string
+        - role: job title
+        - jobLevel: job_level
+        - location: company.full_location or job.location
+        - postTime: ISO timestamp string (frontend will parse to Date)
+        - skills: list[str] of term names
+        - tags: list[str] of tag names (optional)
+        - pendingApplicants / totalApplicants computed from JobApplication rows
+                - contacts: list of contact objects derived from
+                    company.company_website when present
+        """
         result = []
         for job in jobs:
-            job_dict = job.to_dict()
-
             company = (
                 session.query(Company)
                 .filter(Company.id == job.company_id)
                 .one_or_none()
             )
-            job_dict["company"] = company.to_dict() if company else None
+
+            company_name = company.company_name if company else None
+
+            location = job.location or company.full_location
 
             job_skills = (
                 session.query(JobSkills).filter(JobSkills.job_id == job.id).all()
             )
-
             skills_list = []
             for job_skill in job_skills:
                 skill = (
@@ -445,25 +598,100 @@ class JobController:
                     .one_or_none()
                 )
                 if skill:
-                    skills_list.append(skill.to_dict())
-
-            job_dict["skills"] = skills_list
+                    skills_list.append(skill.name)
 
             job_tags = session.query(JobTags).filter(JobTags.job_id == job.id).all()
-
             tags_list = []
             for job_tag in job_tags:
                 tag = (
                     session.query(Tags).filter(Tags.id == job_tag.tag_id).one_or_none()
                 )
                 if tag:
-                    tags_list.append(tag.to_dict())
+                    tags_list.append(tag.name)
 
-            job_dict["tags"] = tags_list
-            result.append(job_dict)
+            try:
+                total_applicants = (
+                    session.query(JobApplication)
+                    .filter(JobApplication.job_id == job.id)
+                    .count()
+                )
+                pending_applicants = (
+                    session.query(JobApplication)
+                    .filter(
+                        JobApplication.job_id == job.id,
+                        JobApplication.status == "pending",
+                    )
+                    .count()
+                )
+            except Exception:
+                total_applicants = 0
+                pending_applicants = 0
+
+            contacts = []
+            if company and company.company_website:
+                link = company.company_website
+                contact_type = "email" if "@" in link else "website"
+                contacts.append({"type": contact_type, "link": link})
+
+            post_time = (
+                job.created_at.isoformat() if getattr(job, "created_at", None) else None
+            )
+
+            job_id_slug = str(job.id)
+
+            mapped = {
+                "jobId": job_id_slug,
+                "company": company_name,
+                "role": job.title,
+                "jobLevel": job.job_level,
+                "location": location,
+                "postTime": post_time,
+                "description": job.description,
+                "jobType": job.job_type,
+                "skills": skills_list,
+                "salaryMin": job.salary_min,
+                "salaryMax": job.salary_max,
+                "capacity": job.capacity,
+                "workHours": job.work_hours,
+                "endDate": job.end_date,
+                "status": job.status,
+                "pendingApplicants": pending_applicants,
+                "totalApplicants": total_applicants,
+            }
+
+            if contacts:
+                mapped["contacts"] = contacts
+
+            if tags_list:
+                mapped["tags"] = tags_list
+
+            result.append(mapped)
 
         session.close()
 
         if single_response and result:
             return result[0]
         return result
+
+    def _get_or_create_tag(self, session, name: str) -> int:
+        """Return tag id for name, creating the tag if it doesn't exist.
+
+        Uses the provided session and handles race conditions similarly to terms.
+        """
+        try:
+            tag = session.query(Tags).where(Tags.name == name).one_or_none()
+            if tag:
+                return tag.id
+
+            tag = Tags(name=name)
+            session.add(tag)
+            try:
+                session.flush()
+                return tag.id
+            except IntegrityError:
+                session.rollback()
+                tag = session.query(Tags).where(Tags.name == name).one()
+                return tag.id
+        except Exception:
+            session.rollback()
+            raise
