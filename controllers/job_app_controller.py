@@ -456,7 +456,6 @@ class JobApplicationController:
                     # logger here
                     pass
 
-
             # convert to camelCase keys for frontend
             job_apps = [camelize(a) for a in job_apps]
 
