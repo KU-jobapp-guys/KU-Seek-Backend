@@ -458,16 +458,6 @@ class AuthenticationController:
         session.refresh(user)
         user_id = user.id
 
-        profile = Profile(
-            user_id=user_id,
-            first_name=credentials.get("firstName", ""),
-            last_name=credentials.get("lastName", ""),
-            user_type=user_type,
-            email=credentials["email"],
-            contact_email=credentials["email"],
-        )
-        session.add(profile)
-
         # role based tables
         if user_type == "student":
             student = Student(user_id=user_id, nisit_id=credentials["kuId"])
