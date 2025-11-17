@@ -41,7 +41,7 @@ def login_required(func):
         if request_controller.request(token_info['uid']):
             # Add new request successful, serve the API.
             return func(*args, **kwargs)
-        return models.ErrorMessage("Too many requests. Please renew login session.", 429)
+        return models.ErrorMessage("Too many requests. Please renew login session."), 429
     
     return run_function
 
@@ -99,7 +99,7 @@ def role_required(roles: list[Literal["Student", "Company"]] = []):
             if request_controller.request(token_info['uid']):
                 # Add new request successful, serve the API.
                 return func(*args, **kwargs)
-            return models.ErrorMessage("Too many requests. Please renew login session.", 429)
+            return models.ErrorMessage("Too many requests. Please renew login session."), 429
 
         return run_function
 
