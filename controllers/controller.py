@@ -188,6 +188,8 @@ def post_student_history(body: Dict):
     if isinstance(body, dict):
         body["user_id"] = get_auth_user_id(request)
     return history_manager.post_history(body)
+
+
 def get_tag_by_id(tag_id: int):
     """Get a tag by its id."""
     try:
