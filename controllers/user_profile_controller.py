@@ -120,7 +120,7 @@ class ProfileController:
                 )
                 if student:
                     profile_obj["interests"] = student.interests
-                    
+
             elif profile.user_type == "company":
                 company = (
                     session.query(Company)
