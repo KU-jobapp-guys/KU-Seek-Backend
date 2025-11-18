@@ -1392,15 +1392,35 @@ components:
     AllCompanyOutput:
       type: object
       properties:
+        userId:
+          type: string
+          description: The user id (owner) of the company
+          example: "550e8400-e29b-41d4-a716-446655440000"
         companyId:
-          type: integer
-          description: The id of company.
+          type: string
+          description: The id of the company
+          example: "123"
         companyName:
           type: string
           description: Name of the company.
+          example: "Tech Solutions Ltd."
         jobCount:
           type: integer
-          description: Total job company 
+          description: Total job postings for the company
+          example: 5
         profilePhoto:
           type: string
           description: Profile photo of the company
+          example: "profile_123456.jpg"
+        bannerPhoto:
+          type: string
+          description: Banner/cover photo for the company
+          example: "banner_123456.jpg"
+        industry:
+          type: string
+          description: Company industry
+          example: "Software Development"
+        location:
+          type: string
+          description: Company or profile location
+          example: "Bangkok, Thailand"
