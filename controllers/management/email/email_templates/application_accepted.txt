@@ -17,8 +17,7 @@ KU-Seek Team
 
 ---
 
-You’re receiving this email because you applied for a job through {{PlatformName}}.  
-If you wish to stop receiving application status updates, you can unsubscribe here: {{UnsubscribeLink}}
+You’re receiving this email because you applied for a job through KU-Seek.  
 
 ———————————————
 © 2025 KU-Seek. All rights reserved.
