@@ -34,12 +34,6 @@ jobs:
           timeout 90 bash -c 'until docker compose exec -T db mysqladmin ping -h 127.0.0.1 -uroot -p${{ env.DB_PASSWORD }} --silent; do sleep 2; done'
           echo "Database is ready!"
 
-      - name: Wait for Redis
-        run: |
-          echo "Waiting for Redis to be ready..."
-          timeout 90 bash -c 'until docker compose exec -T redis redis-cli ping | grep -q PONG; do sleep 2; done'
-          echo "Redis is ready!"
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
