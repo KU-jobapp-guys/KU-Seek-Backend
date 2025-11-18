@@ -1,6 +1,7 @@
 """RequestController implements rate-limiting for users."""
 
 import redis
+from decouple import config
 
 
 class RequestController:
@@ -11,8 +12,7 @@ class RequestController:
         self._rate_limit = rate_limit
         self._interval = interval
         self.__redis_instance = redis.Redis(
-            host="localhost",
-            password="admin",
+            password=config("REDIS_PASSWORD", "mysecretpw123"),
             port=6379,
             decode_responses=True,
             socket_timeout=5,
