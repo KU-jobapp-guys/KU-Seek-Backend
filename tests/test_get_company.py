@@ -12,6 +12,7 @@ class CompanyTestCase(RoutingTestCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up the database for this test suite."""
         super().setUpClass()
         add_mockup_data(cls)
 
