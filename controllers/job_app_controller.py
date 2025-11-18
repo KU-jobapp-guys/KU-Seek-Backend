@@ -25,7 +25,9 @@ ALLOWED_FILE_FORMATS = config(
 BASE_FILE_PATH = config("BASE_FILE_PATH", default="content")
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
 VALID_STATUSES = ["accepted", "rejected"]
-DASHBOARD_URL = config("DASHBOARD_URL", default="http://localhost:5173/company/dashboard")
+DASHBOARD_URL = config(
+    "DASHBOARD_URL", default="http://localhost:5173/company/dashboard"
+)
 
 
 class JobApplicationController:
@@ -194,7 +196,7 @@ class JobApplicationController:
                     MailParameter(key="ApplicantCount", value="1"),
                     MailParameter(key="JobTitle", value=f"{job.title}"),
                     MailParameter(key="CompanyName", value=f"{company.company_name}"),
-                    MailParameter(key="DashboardLink", value=f"{DASHBOARD_URL}")
+                    MailParameter(key="DashboardLink", value=f"{DASHBOARD_URL}"),
                 ],
             )
             session.add(mail)
