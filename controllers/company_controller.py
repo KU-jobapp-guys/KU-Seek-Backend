@@ -8,6 +8,7 @@ from .models.profile_model import Profile
 from swagger_server.openapi_server import models
 from .decorators import login_required
 
+
 class CompanyController:
     """Controller to use CRUD operations for Company."""
 
@@ -75,7 +76,7 @@ class CompanyController:
         except Exception as e:
             session.close()
             return models.ErrorMessage(f"Database exception occurred: {e}"), 400
-    
+
     def get_all_companies(self) -> List[Dict]:
         """
         Return all company in companies table.
