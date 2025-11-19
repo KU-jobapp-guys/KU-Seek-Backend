@@ -42,7 +42,9 @@ class CompanyTestCase(RoutingTestCase):
 
     def test_get_all_companies(self):
         """GET /companies returns a list of companies with expected shape."""
-        res = self.client.get("/api/v1/companies")
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+
+        res = self.client.get("/api/v1/companies", headers={"access_token": jwt})
         self.assertEqual(res.status_code, 200)
 
         data = res.get_json()
