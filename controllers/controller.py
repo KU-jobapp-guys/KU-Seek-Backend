@@ -10,8 +10,11 @@ from .job_controller import JobController
 from .professor_controller import ProfessorController
 from .file_controller import FileController
 from typing import Dict, Optional
+from logger.custom_logger import get_logger
 from flask import current_app
 from .skills_controller import SkillsController
+
+logger = get_logger()
 
 
 def get_all_tasks():
@@ -60,7 +63,9 @@ def create_profile(body: Dict) -> Optional[Dict]:
     """Add UserProfile to the database."""
     try:
         profile_manager = ProfileController(current_app.config["Database"])
-        new_profile = profile_manager.create_profile(get_auth_user_id(request), body)
+        uid = get_auth_user_id(request)
+        new_profile = profile_manager.create_profile(uid, body)
+        logger.info("Profile has been created.", user=uid)
         return jsonify(new_profile), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
@@ -72,10 +77,10 @@ def update_profile(body: Dict) -> Optional[Dict]:
     """Update User Profile data."""
     try:
         profile_manager = ProfileController(current_app.config["Database"])
-        profile_updated_data = profile_manager.update_profile(
-            get_auth_user_id(request), body
-        )
-
+        uid = get_auth_user_id(request)
+        profile_updated_data = profile_manager.update_profile(uid, body)
+        logger.info("Profile has been updated.", user=uid)
+        logger.debug(f"{body}", user=uid)
         return jsonify(profile_updated_data), 200
     except ValueError as e:
         return jsonify({"message": str(e)}), 404
@@ -97,7 +102,9 @@ def post_job(body: Dict):
     """Add new Job."""
     try:
         job_manager = JobController(current_app.config["Database"])
-        new_job = job_manager.post_job(get_auth_user_id(request), body)
+        uid = get_auth_user_id(request)
+        new_job = job_manager.post_job(uid, body)
+        logger.info(f"Job:{new_job['jobId']} has been posted.", user=uid)
         return jsonify(new_job), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
@@ -136,9 +143,15 @@ def post_bookmark_jobs(body: Dict):
     """Add new bookmark."""
     try:
         job_manager = JobController(current_app.config["Database"])
-        bookmarked_jobs = job_manager.post_bookmark_jobs(
-            get_auth_user_id(request), body
+        uid = get_auth_user_id(request)
+        bookmarked_jobs = job_manager.post_bookmark_jobs(uid, body)
+        logger.info(
+            f"Bookmark:{bookmarked_jobs['id']} "
+            f"for Job:{bookmarked_jobs['jobId']} "
+            f"has been created.",
+            user=uid,
         )
+        logger.debug(bookmarked_jobs)
         return jsonify(bookmarked_jobs), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
@@ -152,6 +165,10 @@ def delete_bookmark_jobs(job_id: int):
         user_id = get_auth_user_id(request)
         job_manager = JobController(current_app.config["Database"])
         deleted_bookmark = job_manager.delete_bookmark_jobs(user_id, job_id)
+        logger.info(
+            f"Bookmark:{deleted_bookmark['id']} for Job:{job_id} has been deleted.",
+            user=user_id,
+        )
         return jsonify(deleted_bookmark), 200
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
@@ -216,7 +233,17 @@ def get_professor_annoucement():
 def create_job_application(job_id: int) -> Optional[Dict]:
     """Create a job application in the database."""
     app_manager = JobApplicationController(current_app.config["Database"])
-    return app_manager.create_job_application(job_id)
+    job_application = app_manager.create_job_application(job_id)
+    if job_application[1] == 200:
+        logger.info(
+            f"Student: {job_application[0]['studentId']} - "
+            f"Job Application:{job_application[0]['id']} "
+            f"for Job:{job_id} has been created."
+        )
+        logger.debug(job_application)
+    else:
+        logger.warning(f"{job_application}")
+    return job_application
 
 
 def fetch_user_job_applications() -> Optional[Dict]:
