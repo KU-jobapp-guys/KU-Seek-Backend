@@ -1,0 +1,21 @@
+[run]
+
+branch = True
+
+cover_pylib = False
+
+omit =
+    # init files
+    __init__.py
+    # management/external stuff
+    */management/*
+
+include =
+    # include the main controller logic files
+    controllers/*
+
+[report]
+# dont test __str__ and __repr__ methods
+exclude_lines =
+    def __str__
+    def __repr__
