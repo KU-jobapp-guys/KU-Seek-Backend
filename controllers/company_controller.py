@@ -77,6 +77,7 @@ class CompanyController:
             session.close()
             return models.ErrorMessage(f"Database exception occurred: {e}"), 400
 
+    @login_required
     def get_all_companies(self) -> List[Dict]:
         """
         Return all company in companies table.
