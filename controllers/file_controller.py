@@ -40,11 +40,12 @@ class FileController:
             if not file:
                 session.close()
                 return models.ErrorMessage("File record not found"), 404
-            file_name = file.file_name
+            file_extension = os.path.splitext(file.file_name)[1]
+            file_name = str(file.id) + file_extension
             session.close()
         except Exception as e:
             session.close()
-            return models.ErrorMessage("Database Error occured: ", e), 400
+            return models.ErrorMessage("Database Error occured"), 400
 
         try:
             return send_from_directory(self.base_path, file_name, as_attachment=False)

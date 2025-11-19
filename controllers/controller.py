@@ -319,3 +319,12 @@ def download_file(file_id: str) -> Response:
     """Get a file for downloading, based on the file id."""
     file_manager = FileController(current_app.config["Database"])
     return file_manager.download_file(file_id)
+
+def upload_profile_images() -> Optional[Dict]:
+    """Upload new profile and banner images."""
+    try:
+        profile_manager = ProfileController(current_app.config["Database"])
+        return profile_manager.upload_profile_images()
+    except Exception as e:
+        print(e)
+        return jsonify({"message": "bad image passed"}), 405

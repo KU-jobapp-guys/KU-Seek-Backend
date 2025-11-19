@@ -61,37 +61,6 @@ paths:
         401:
           description: User not authenticated
 
-  /auth/credentials:
-    post:
-      tags:
-          - Authentication
-      summary: Login a user using credentials and return user credentials.
-      operationId: controllers.auth_controller.handle_credential_login
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  description: The user's email
-                password:
-                  type: string
-                  description: The user's password
-      responses: 
-        200:
-          description: return client_id and access/refresh tokens
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/UserCredentials'
-        400:
-          description: Invalid authorization code
-
   /auth/oauth:
     post:
       tags:
@@ -119,104 +88,6 @@ paths:
                   $ref: '#/components/schemas/UserCredentials'
         400:
           description: Invalid authorization code 
-
-  /admin/users:
-    get:
-      tags:
-        - Admin
-      summary: Get all user creation requests
-      description: Retrieve all user creation requests that are not denied, including user and profile data.
-      operationId: controllers.controller.get_all_user_request
-      responses:
-        200:
-          description: A list of user requests with profile data
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/UserRequest'
-        401:
-          description: User not authenticated
-        403:
-          description: User does not have admin authorization
-    
-    post:
-      tags:
-        - Admin
-      summary: Update user verification statuses
-      description: Update the status of one or more user creation requests. Can approve, deny, or delete users.
-      operationId: controllers.controller.update_user_status
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/UserStatusUpdate'
-      responses:
-        200:
-          description: User statuses updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminUpdateResponse'
-        400:
-          description: Could not update user IDs
-        401:
-          description: User not authenticated
-        403:
-          description: User does not have admin authorization
-
-  /admin/jobs:
-    get:
-      tags:
-        - Admin
-      summary: Get all job post creation requests
-      description: Retrieve all job post creation requests that are not denied, including job details.
-      operationId: controllers.controller.get_all_job_request
-      responses:
-        200:
-          description: A list of job requests with job data
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/JobRequestWithJob'
-        401:
-          description: User not authenticated
-        403:
-          description: User does not have admin authorization
-    
-    post:
-      tags:
-        - Admin
-      summary: Update job post verification statuses
-      description: Update the status of one or more job post creation requests. Can approve, deny, or delete job posts.
-      operationId: controllers.controller.update_job_status
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/JobStatusUpdate'
-      responses:
-        200:
-          description: Job statuses updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminUpdateResponse'
-        400:
-          description: Could not update job IDs
-        401:
-          description: User not authenticated
-        403:
-          description: User does not have admin authorization
 
   /jobs:
     get:
@@ -416,28 +287,6 @@ paths:
         404:
           description: Task not found
 
-
-  /users/me:
-    get:
-      tags:
-        - Profile
-      summary: Get the currently authenticated user's porfile
-      operationId: controllers.controller.get_self_profile
-      responses:
-        200:
-          description: Return the user profile data created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserProfile'
-        401:
-          description: Invalid access_token
-        403:
-          description: Invalid authorization
-        404:
-          description: Error fetching profile
-
-
   /users/{user_id}/profile:
     get:
       tags:
@@ -541,6 +390,19 @@ paths:
 
         404:
           description: user profile not found
+
+  /settings:
+    get:
+      summary: Get user setting
+      description: Retrieve the user's personal information.
+      operationId: controllers.controller.get_user_setting
+      responses:
+          200:
+            description: Return the user profile data created successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/UserProfile'
 
   /application:
     get:
