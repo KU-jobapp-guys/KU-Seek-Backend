@@ -323,12 +323,14 @@ class ProfileController:
                     except IOError:
                         raise IOError("Could not read/write files")
                     profile_file_model = existing_profile_img
-                    saved_files.append({
-                        "file_type": "profile_image",
-                        "file_id": profile_file_model.id,
-                        "file_path": existing_profile_img.file_path,
-                        "full_path": full_file_path,
-                    })
+                    saved_files.append(
+                        {
+                            "file_type": "profile_image",
+                            "file_id": profile_file_model.id,
+                            "file_path": existing_profile_img.file_path,
+                            "full_path": full_file_path,
+                        }
+                    )
                 else:
                     # Create new file record
                     file_name = secure_filename(profile_img.filename)
@@ -351,20 +353,20 @@ class ProfileController:
 
                     profile_img.save(full_file_path)
                     profile_file_model = profile_img_model
-                    saved_files.append({
-                        "file_type": "profile_image",
-                        "file_id": profile_file_model.id,
-                        "file_path": profile_img_model.file_path,
-                        "full_path": full_file_path,
-                    })
-                
+                    saved_files.append(
+                        {
+                            "file_type": "profile_image",
+                            "file_id": profile_file_model.id,
+                            "file_path": profile_img_model.file_path,
+                            "full_path": full_file_path,
+                        }
+                    )
+
                 print("PEAAA: ", profile_file_model.id)
-                print("IS THERE PROFILE ",profile)
+                print("IS THERE PROFILE ", profile)
                 print("IMG????: ", profile.profile_img)
                 profile.profile_img = str(profile_file_model.id)
                 print("IMG SHOULDN'T BLANK: ", profile.profile_img)
-
-        
 
             # Handle banner image
             if banner_img:
@@ -396,12 +398,14 @@ class ProfileController:
                     except IOError:
                         raise IOError("Could not save/write file.")
                     banner_file_model = existing_banner_img
-                    saved_files.append({
-                        "file_type": "banner_image",
-                        "file_id": banner_file_model.id,
-                        "file_path": existing_banner_img.file_path,
-                        "full_path": full_file_path,
-                    })
+                    saved_files.append(
+                        {
+                            "file_type": "banner_image",
+                            "file_id": banner_file_model.id,
+                            "file_path": existing_banner_img.file_path,
+                            "full_path": full_file_path,
+                        }
+                    )
                 else:
                     # Create new file record
                     file_name = secure_filename(banner_img.filename)
@@ -424,12 +428,14 @@ class ProfileController:
 
                     banner_img.save(full_file_path)
                     banner_file_model = banner_img_model
-                    saved_files.append({
-                        "file_type": "banner_image",
-                        "file_id": banner_file_model.id,
-                        "file_path": banner_img_model.file_path,
-                        "full_path": full_file_path,
-                    })
+                    saved_files.append(
+                        {
+                            "file_type": "banner_image",
+                            "file_id": banner_file_model.id,
+                            "file_path": banner_img_model.file_path,
+                            "full_path": full_file_path,
+                        }
+                    )
                 profile.banner_img = str(banner_file_model.id)
 
             session.commit()
