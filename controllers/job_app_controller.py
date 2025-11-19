@@ -405,6 +405,7 @@ class JobApplicationController:
             session.close()
             return models.ErrorMessage("Company not found"), 400
 
+        company_name = company.company_name
         job = session.query(Job).where(Job.id == job_id).one_or_none()
 
         if not job:
@@ -467,7 +468,7 @@ class JobApplicationController:
                         mail_file,
                         template_args=[
                             ("JobTitle", f"{job.title}"),
-                            ("CompanyName", f"{company.company_name}"),
+                            ("CompanyName", f"{company_name}"),
                             ("ApplicationLink", f"{STUDENT_DASHBOARD_URL}"),
                         ],
                     )
