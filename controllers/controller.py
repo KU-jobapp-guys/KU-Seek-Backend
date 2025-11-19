@@ -7,6 +7,7 @@ from .job_app_controller import JobApplicationController
 from .auth_controller import get_auth_user_id
 from connexion.exceptions import ProblemException
 from .job_controller import JobController
+from .professor_controller import ProfessorController
 from .file_controller import FileController
 from typing import Dict, Optional
 from flask import current_app
@@ -152,6 +153,60 @@ def delete_bookmark_jobs(job_id: int):
         job_manager = JobController(current_app.config["Database"])
         deleted_bookmark = job_manager.delete_bookmark_jobs(user_id, job_id)
         return jsonify(deleted_bookmark), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+def get_professor_connection():
+    """Return professor connection."""
+    try:
+        user_id = get_auth_user_id(request)
+        connection_controller = ProfessorController(current_app.config["Database"])
+        professor_connection = connection_controller.get_connection(user_id)
+        return jsonify(professor_connection), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+def post_new_connection(body: dict):
+    """Add new connection to the database."""
+    try:
+        connection_controller = ProfessorController(current_app.config["Database"])
+        new_connection = connection_controller.post_connection(
+            get_auth_user_id(request), body
+        )
+        return jsonify(new_connection), 201
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+def delete_connection(connection_id: int):
+    """Delete connection from the ProfessorConnection table."""
+    try:
+        user_id = get_auth_user_id(request)
+        connection_controller = ProfessorController(current_app.config["Database"])
+        deleted_connection = connection_controller.delete_connection(
+            user_id, connection_id
+        )
+        return jsonify(deleted_connection), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+def get_professor_annoucement():
+    """Return professor announcements."""
+    try:
+        connection_controller = ProfessorController(current_app.config["Database"])
+        annoucements = connection_controller.get_annoucement()
+        return jsonify(annoucements), 200
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
     except Exception as e:
