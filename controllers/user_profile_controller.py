@@ -13,6 +13,8 @@ from decouple import config
 import os
 from werkzeug.utils import secure_filename
 from .models.file_model import File
+from .file_controller import FileController
+from flask import current_app
 
 SECRET_KEY = config("SECRET_KEY", default="good-key123")
 
@@ -114,6 +116,8 @@ class ProfileController:
             if not profile:
                 print(f"Profile for user_id={user_id} not found")
                 raise ValueError(f"Profile for user_id={user_id} not found")
+            
+            file_manager = FileController(current_app.config["Database"])
 
             profile_obj = {
                 "id": str(profile.user_id),
@@ -128,8 +132,8 @@ class ProfileController:
                 "phoneNumber": profile.phone_number,
                 "userType": profile.user_type,
                 "isVerified": profile.is_verified,
-                "profilePhoto": profile.profile_img,
-                "bannerPhoto": profile.banner_img,
+                "profilePhoto": file_manager.get_file_as_blob(profile.profile_img),
+                "bannerPhoto": file_manager.get_file_as_blob(profile.banner_img),
             }
 
             if profile.user_type == "student":

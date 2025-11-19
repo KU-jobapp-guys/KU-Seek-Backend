@@ -1,6 +1,7 @@
 """Module containing endpoints for file serving."""
 
 import os
+import base64
 
 from flask import send_from_directory
 from .decorators import login_required
@@ -51,6 +52,39 @@ class FileController:
             return send_from_directory(self.base_path, file_name, as_attachment=False)
         except FileNotFoundError:
             return models.ErrorMessage("File not found"), 404
+        
+    def get_file_as_blob(self, file_id: str):
+        """
+        Load a file by ID and return it as a base64 blob string.
+        This does NOT send a response, only returns the encoded string.
+        """
+        try:
+            session = self.db.get_session()
+            file = session.query(File).where(File.id == UUID(file_id)).one_or_none()
+            
+            if not file:
+                session.close()
+                return None
+
+            file_extension = os.path.splitext(file.file_name)[1]
+            file_name = f"{file.id}{file_extension}"
+            full_path = os.path.join(self.base_path, file_name)
+            session.close()
+
+        except Exception as e:
+            print("Error loading file metadata:", e)
+            return None
+
+        try:
+            with open(full_path, "rb") as f:
+                file_bytes = f.read()
+
+            encoded = base64.b64encode(file_bytes).decode("utf-8")
+            return f"data:image/*;base64,{encoded}"
+
+        except Exception as e:
+            print("Error encoding file:", e)
+            return None
 
     @login_required
     def download_file(self, file_id: str):
