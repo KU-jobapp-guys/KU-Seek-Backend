@@ -132,8 +132,8 @@ class ProfileController:
                 "phoneNumber": profile.phone_number,
                 "userType": profile.user_type,
                 "isVerified": profile.is_verified,
-                "profilePhoto": file_manager.get_file_as_blob(profile.profile_img),
-                "bannerPhoto": file_manager.get_file_as_blob(profile.banner_img),
+                "profilePhoto": file_manager.get_file_as_blob(profile.profile_img) if profile.profile_img else '',
+                "bannerPhoto": file_manager.get_file_as_blob(profile.banner_img) if profile.banner_img else '',
             }
 
             if profile.user_type == "student":
