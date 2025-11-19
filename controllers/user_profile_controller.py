@@ -13,6 +13,7 @@ from decouple import config
 import os
 from werkzeug.utils import secure_filename
 from .models.file_model import File
+from .serialization import decamelize
 
 SECRET_KEY = config("SECRET_KEY", default="good-key123")
 
@@ -105,6 +106,13 @@ class ProfileController:
                 )
                 if company:
                     profile_obj["name"] = company.company_name
+                    profile_obj["industry"] = company.company_industry
+                    profile_obj["size"] = company.company_size
+                    profile_obj["fullLocation"] = company.full_location
+                    profile_obj["companyType"] = company.company_type
+                    profile_obj["companyWebsite"] = company.company_website
+                    profile_obj["profilePhoto"] = profile.profile_img
+                    profile_obj["bannerPhoto"] = profile.banner_img
             return profile_obj
 
         except SQLAlchemyError as e:
@@ -170,17 +178,24 @@ class ProfileController:
             print("Request body cannot be empty.")
             raise ProblemException("Request body cannot be empty.")
 
-        print(body)
-        camel_map = {
-            "firstName": "first_name",
-            "lastName": "last_name",
-            "phoneNumber": "phone_number",
-            "contactEmail": "contact_email",
-        }
+        decamel = decamelize(body or {})
 
-        mapped_body = {}
-        for k, v in (body or {}).items():
-            mapped_body[camel_map.get(k, k)] = v
+        mapped_body = dict(decamel)
+
+        if "name" in mapped_body and "company_name" not in mapped_body:
+            mapped_body["company_name"] = mapped_body.pop("name")
+
+        if "companyType" in mapped_body and "company_type" not in mapped_body:
+            mapped_body["company_type"] = mapped_body.pop("companyType")
+
+        if "companyWebsite" in mapped_body and "company_website" not in mapped_body:
+            mapped_body["company_website"] = mapped_body.pop("companyWebsite")
+
+        if "industry" in mapped_body and "company_industry" not in mapped_body:
+            mapped_body["company_industry"] = mapped_body.pop("industry")
+
+        if "size" in mapped_body and "company_size" not in mapped_body:
+            mapped_body["company_size"] = mapped_body.pop("size")
 
         session = self.db.get_session()
         try:
