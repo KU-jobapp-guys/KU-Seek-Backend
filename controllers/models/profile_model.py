@@ -59,7 +59,7 @@ class ProfileSkills(BaseModel):
 
     skill_id: Mapped[int] = MappedColumn(
         Integer,
-        ForeignKey("terms.id", ondelete="CASCADE"),
+        ForeignKey("tags.id", ondelete="CASCADE"),
         primary_key=True,
         nullable=False,
     )

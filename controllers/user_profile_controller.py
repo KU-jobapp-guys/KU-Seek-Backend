@@ -2,7 +2,7 @@
 
 from typing import Optional, Dict
 from connexion.exceptions import ProblemException
-from .models.profile_model import Profile
+from .models.profile_model import Profile, ProfileSkills
 from .models.user_model import User, UserTypes, Student, Company
 from .decorators import login_required
 from jwt import decode
@@ -13,6 +13,7 @@ from decouple import config
 import os
 from werkzeug.utils import secure_filename
 from .models.file_model import File
+from .models.tag_term_model import Tags
 from .serialization import decamelize
 
 SECRET_KEY = config("SECRET_KEY", default="good-key123")
@@ -97,7 +98,6 @@ class ProfileController:
                 )
                 if student:
                     profile_obj["gpa"] = student.gpa
-
             elif profile.user_type == "company":
                 company = (
                     session.query(Company)
@@ -113,6 +113,15 @@ class ProfileController:
                     profile_obj["companyWebsite"] = company.company_website
                     profile_obj["profilePhoto"] = profile.profile_img
                     profile_obj["bannerPhoto"] = profile.banner_img
+
+            skills = (
+                session.query(Tags.name)
+                .join(ProfileSkills, ProfileSkills.skill_id == Tags.id)
+                .filter(ProfileSkills.user_id == user_uuid)
+                .all()
+            )
+            profile_obj["workFields"] = [s[0] for s in skills] if skills else []
+
             return profile_obj
 
         except SQLAlchemyError as e:
@@ -210,6 +219,28 @@ class ProfileController:
                 models_to_update.append(Student)
             elif user.type == UserTypes.COMPANY:
                 models_to_update.append(Company)
+
+            # Handle profile skills/workFields if present (list of term names)
+            work_fields = mapped_body.pop("work_fields", None)
+            if work_fields is not None:
+                if not isinstance(work_fields, (list, tuple)):
+                    raise ProblemException("workFields must be a list")
+
+                # Remove existing skills for the user
+                session.query(ProfileSkills).filter(ProfileSkills.user_id == user_uuid).delete(synchronize_session=False)
+
+                # Ensure each tag exists and add ProfileSkills entries
+                for tag_name in work_fields:
+                    if not tag_name:
+                        continue
+                    tag = session.query(Tags).where(Tags.name == tag_name).one_or_none()
+                    if not tag:
+                        tag = Tags(name=tag_name)
+                        session.add(tag)
+                        session.flush()
+
+                    ps = ProfileSkills(user_id=user_uuid, skill_id=tag.id)
+                    session.add(ps)
 
             # Update all relevant models
             for model_class in models_to_update:
