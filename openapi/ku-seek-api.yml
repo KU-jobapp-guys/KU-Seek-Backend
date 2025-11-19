@@ -146,7 +146,10 @@ paths:
       responses:
         200:
           description: A list of user requests with profile data
-          $ref: '#/components/schemas/UserRequest'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRequest'
 
         401:
           description: User not authenticated
