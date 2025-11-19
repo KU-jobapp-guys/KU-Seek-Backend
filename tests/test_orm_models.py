@@ -16,7 +16,6 @@ from controllers.models import (
     StudentDocuments,
     StudentHistories,
     ProfessorConnections,
-    Announcements,
     Tags,
     Terms,
     Token,
@@ -151,15 +150,6 @@ class ORMTestCase(RoutingTestCase):
         )
         assert pc.professor_id == 1
         assert pc.company_id == 2
-
-    def test_announcements_model(self):
-        """Test Annoucements model instantiation, and access it value."""
-        ann = Announcements(
-            professor_id=1,
-            title="Job Fair 2025",
-            content="Join us at the main hall!",
-        )
-        assert "Job Fair" in ann.title
 
     def test_tags_model(self):
         """Test Tags model instantiation, and access it value."""

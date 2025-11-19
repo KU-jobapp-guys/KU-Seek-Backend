@@ -96,6 +96,8 @@ class Company(BaseModel):
 
     company_industry: Mapped[str] = MappedColumn(String(255), nullable=True)
 
+    company_overview: Mapped[str] = MappedColumn(Text, nullable=True)
+
     company_size: Mapped[str] = MappedColumn(String(255), nullable=False)
 
     company_website: Mapped[str] = MappedColumn(String(255), nullable=True)
