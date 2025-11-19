@@ -7,7 +7,10 @@ from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 from .models.job_model import Job, JobSkills, JobTags, Bookmark, JobApplication
 from .models.user_model import Company, Student
+from .models.profile_model import Profile
 from .models.tag_term_model import Tags, Terms
+from .file_controller import FileController
+from flask import current_app
 
 
 class JobController:
@@ -153,6 +156,13 @@ class JobController:
 
             session.add(job)
             session.flush()
+
+            job_request = JobRequest(
+                job_id=job.id,
+                status=RequestStatusTypes.PENDING,
+                denial_reason="Job needs manual validation",
+            )
+            session.add(job_request)
 
             if "skill_names" in body and body["skill_names"]:
                 if not isinstance(body["skill_names"], list):
@@ -585,6 +595,17 @@ class JobController:
 
             company_name = company.company_name if company else None
 
+            company_profile = (
+                session.query(Profile)
+                .filter(Profile.user_id == company.user_id)
+                .one_or_none()
+            )
+
+            file_manager = FileController(current_app.config["Database"])
+            profile_photo = file_manager.get_file_as_blob(company_profile.profile_img) if company_profile.profile_img else ''
+            banner_photo = file_manager.get_file_as_blob(company_profile.banner_img) if company_profile.banner_img else ''
+
+
             location = job.location or company.full_location
 
             job_skills = (
@@ -640,7 +661,7 @@ class JobController:
             job_id_slug = str(job.id)
 
             mapped = {
-                "jobId": job_id_slug,
+                "jobId": str(job_id_slug),
                 "company": company_name,
                 "role": job.title,
                 "jobLevel": job.job_level,
@@ -654,6 +675,8 @@ class JobController:
                 "status": job.status,
                 "pendingApplicants": pending_applicants,
                 "totalApplicants": total_applicants,
+                "profilePhoto": profile_photo,
+                "bannerPhoto": banner_photo,
             }
 
             if contacts:
