@@ -220,16 +220,15 @@ class ProfileController:
             elif user.type == UserTypes.COMPANY:
                 models_to_update.append(Company)
 
-            # Handle profile skills/workFields if present (list of term names)
             work_fields = mapped_body.pop("work_fields", None)
             if work_fields is not None:
                 if not isinstance(work_fields, (list, tuple)):
                     raise ProblemException("workFields must be a list")
 
-                # Remove existing skills for the user
-                session.query(ProfileSkills).filter(ProfileSkills.user_id == user_uuid).delete(synchronize_session=False)
+                session.query(ProfileSkills).filter(
+                    ProfileSkills.user_id == user_uuid
+                ).delete(synchronize_session=False)
 
-                # Ensure each tag exists and add ProfileSkills entries
                 for tag_name in work_fields:
                     if not tag_name:
                         continue
@@ -242,7 +241,10 @@ class ProfileController:
                     ps = ProfileSkills(user_id=user_uuid, skill_id=tag.id)
                     session.add(ps)
 
-            # Update all relevant models
+            for key in ("profile_img", "banner_img"):
+                if key in mapped_body and not mapped_body[key]:
+                    mapped_body.pop(key, None)
+
             for model_class in models_to_update:
                 self._update_model_fields(
                     session=session,
@@ -285,6 +287,12 @@ class ProfileController:
             profile = (
                 session.query(Profile).where(Profile.user_id == user_uuid).one_or_none()
             )
+
+            if not profile:
+                profile = Profile(user_id=user_uuid)
+                session.add(profile)
+                session.flush()
+
             # Handle profile image
             if profile_img:
                 # Check if profile image already exists
@@ -308,11 +316,19 @@ class ProfileController:
                     existing_profile_img.file_path = file_path
 
                     try:
-                        os.remove(os.getcwd(), previous_file)
+                        full_previous_path = os.path.join(os.getcwd(), previous_file)
+                        if os.path.exists(full_previous_path):
+                            os.remove(full_previous_path)
                         profile_img.save(full_file_path)
                     except IOError:
                         raise IOError("Could not read/write files")
-                    saved_files.append((full_file_path, "profile image"))
+                    profile_file_model = existing_profile_img
+                    saved_files.append({
+                        "file_type": "profile_image",
+                        "file_id": profile_file_model.id,
+                        "file_path": existing_profile_img.file_path,
+                        "full_path": full_file_path,
+                    })
                 else:
                     # Create new file record
                     file_name = secure_filename(profile_img.filename)
@@ -334,8 +350,21 @@ class ProfileController:
                     profile_img_model.file_path = file_path
 
                     profile_img.save(full_file_path)
-                    saved_files.append((full_file_path, "profile image"))
-                profile.profile_img = profile_img_model.id
+                    profile_file_model = profile_img_model
+                    saved_files.append({
+                        "file_type": "profile_image",
+                        "file_id": profile_file_model.id,
+                        "file_path": profile_img_model.file_path,
+                        "full_path": full_file_path,
+                    })
+                
+                print("PEAAA: ", profile_file_model.id)
+                print("IS THERE PROFILE ",profile)
+                print("IMG????: ", profile.profile_img)
+                profile.profile_img = str(profile_file_model.id)
+                print("IMG SHOULDN'T BLANK: ", profile.profile_img)
+
+        
 
             # Handle banner image
             if banner_img:
@@ -360,11 +389,19 @@ class ProfileController:
                     existing_banner_img.file_path = file_path
 
                     try:
-                        os.remove(os.getcwd(), previous_file)
+                        full_previous_path = os.path.join(os.getcwd(), previous_file)
+                        if os.path.exists(full_previous_path):
+                            os.remove(full_previous_path)
                         banner_img.save(full_file_path)
                     except IOError:
                         raise IOError("Could not save/write file.")
-                    saved_files.append((full_file_path, "banner image"))
+                    banner_file_model = existing_banner_img
+                    saved_files.append({
+                        "file_type": "banner_image",
+                        "file_id": banner_file_model.id,
+                        "file_path": existing_banner_img.file_path,
+                        "full_path": full_file_path,
+                    })
                 else:
                     # Create new file record
                     file_name = secure_filename(banner_img.filename)
@@ -386,13 +423,27 @@ class ProfileController:
                     banner_img_model.file_path = file_path
 
                     banner_img.save(full_file_path)
-                    saved_files.append((full_file_path, "banner image"))
-                profile.banner_img = banner_img_model.id
+                    banner_file_model = banner_img_model
+                    saved_files.append({
+                        "file_type": "banner_image",
+                        "file_id": banner_file_model.id,
+                        "file_path": banner_img_model.file_path,
+                        "full_path": full_file_path,
+                    })
+                profile.banner_img = str(banner_file_model.id)
 
             session.commit()
             session.close()
 
-            response = [{"file": file[1], "status": "ok"} for file in saved_files]
+            response = [
+                {
+                    "file": entry["file_type"],
+                    "status": "ok",
+                    "file_id": str(entry.get("file_id")),
+                    "file_path": entry.get("file_path"),
+                }
+                for entry in saved_files
+            ]
             return response, 200
 
         except Exception as e:
@@ -401,9 +452,10 @@ class ProfileController:
             session.close()
 
             # Cleanup saved files on error
-            for file_path in saved_files:
-                if os.path.exists(file_path[0]):
-                    os.remove(file_path[0])
+            for entry in saved_files:
+                fp = entry.get("full_path")
+                if fp and os.path.exists(fp):
+                    os.remove(fp)
 
             raise ProblemException(f"Failed to upload images: {str(e)}")
 
