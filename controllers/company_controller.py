@@ -6,7 +6,7 @@ from .models.user_model import Company
 from .models.job_model import Job
 from .models.profile_model import Profile
 from swagger_server.openapi_server import models
-
+from .decorators import login_required
 
 class CompanyController:
     """Controller to use CRUD operations for Company."""
@@ -15,6 +15,7 @@ class CompanyController:
         """Initialize the class."""
         self.db = database
 
+    @login_required
     def get_company(self, user_id: str) -> Dict:
         """
         Return company data for the company associated with the given user id.
@@ -74,7 +75,7 @@ class CompanyController:
         except Exception as e:
             session.close()
             return models.ErrorMessage(f"Database exception occurred: {e}"), 400
-
+    
     def get_all_companies(self) -> List[Dict]:
         """
         Return all company in companies table.
