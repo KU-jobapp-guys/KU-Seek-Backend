@@ -14,6 +14,7 @@ from typing import Dict, Optional
 from logger.custom_logger import get_logger
 from flask import current_app
 from .skills_controller import SkillsController
+from .admin_controller import AdminController
 
 logger = get_logger()
 
@@ -46,6 +47,15 @@ def delete_task(task_id: str):
     """Delete task."""
     task_manager = TaskController(current_app.config["Database"])
     return task_manager.delete_task(task_id)
+
+
+def get_self_profile() -> Dict:
+    """GET the current authenticated user profile."""
+    try:
+        profile_manager = ProfileController(current_app.config["Database"])
+        return profile_manager.get_self_profile()
+    except ValueError:
+        return jsonify({"message": "No profile data found."}), 404
 
 
 def get_user_profile(user_id: str) -> Dict:
@@ -87,6 +97,16 @@ def update_profile(body: Dict) -> Optional[Dict]:
         return jsonify({"message": str(e)}), 404
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+
+
+def upload_profile_images() -> Optional[Dict]:
+    """Upload new profile and banner images."""
+    try:
+        profile_manager = ProfileController(current_app.config["Database"])
+        return profile_manager.upload_profile_images()
+    except Exception as e:
+        print(e)
+        return jsonify({"message": "bad image passed"}), 405
 
 
 def get_all_jobs(job_id: str = ""):
@@ -349,3 +369,27 @@ def download_file(file_id: str) -> Response:
     """Get a file for downloading, based on the file id."""
     file_manager = FileController(current_app.config["Database"])
     return file_manager.download_file(file_id)
+
+
+def get_all_user_request() -> Optional[Dict]:
+    """Get all pending user creation requests."""
+    admin_manager = AdminController(current_app.config["Database"])
+    return admin_manager.get_all_user_request()
+
+
+def get_all_job_request() -> Optional[Dict]:
+    """Get all pending job creation requests."""
+    admin_manager = AdminController(current_app.config["Database"])
+    return admin_manager.get_all_job_request()
+
+
+def update_user_status(body: list[Dict]) -> Optional[Dict]:
+    """Update the user's status from the user creation requests."""
+    admin_manager = AdminController(current_app.config["Database"])
+    return admin_manager.update_user_status(body)
+
+
+def update_job_status(body: list[Dict]) -> Optional[Dict]:
+    """Update the job's status from the job creation requests."""
+    admin_manager = AdminController(current_app.config["Database"])
+    return admin_manager.update_job_status(body)

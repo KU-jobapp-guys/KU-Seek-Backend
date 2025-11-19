@@ -14,4 +14,4 @@ from .profile_model import (
 from .job_model import Job, JobApplication, JobSkills, JobTags, Bookmark
 from .tag_term_model import Tags, Terms
 from .file_model import File
-
+from .admin_request_model import UserRequest, JobRequest
