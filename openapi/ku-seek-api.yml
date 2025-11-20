@@ -1,7 +1,7 @@
 openapi: 3.0.0
 
 info:
-  title: KU SEEK 
+  title: KU SEEK
   description: CRUD operations for KU SEEK
   version: 2.0.0
 
@@ -23,7 +23,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  csrf_token: 
+                  csrf_token:
                     type: string
 
   /refresh:
@@ -46,11 +46,11 @@ paths:
               schema:
                 type: object
                 properties:
-                  access_token: 
+                  access_token:
                     type: string
         400:
           description: Invalid refresh token provided in header
-  
+
   /auth/logout:
     post:
       summary: Logout a user from the system
@@ -77,7 +77,7 @@ paths:
                 code:
                   type: string
                   description: The grant code from the oauth2 flow
-      responses: 
+      responses:
         200:
           description: return client_id and access/refresh tokens
           content:
@@ -85,9 +85,40 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/UserCredentials'
+                  $ref: "#/components/schemas/UserCredentials"
         400:
-          description: Invalid authorization code 
+          description: Invalid authorization code
+
+  /testing/login:
+    post:
+      tags:
+        - Testing
+      summary: Test-only login endpoint (local testing only)
+      operationId: controllers.auth_controller.test_login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                  description: The user's UUID (preferred)
+                google_uid:
+                  type: string
+                  description: The user's Google UID (alternative)
+      responses:
+        200:
+          description: Return an access token and refresh token cookie
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/token"
+        400:
+          description: Invalid request
+        404:
+          description: Endpoint disabled or user not found
 
   /jobs:
     get:
@@ -109,8 +140,8 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Job'
-  
+                  $ref: "#/components/schemas/Job"
+
     post:
       tags:
         - Job Post
@@ -121,7 +152,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/JobPost'
+              $ref: "#/components/schemas/JobPost"
 
       responses:
         201:
@@ -131,8 +162,8 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Job'
-    
+                  $ref: "#/components/schemas/Job"
+
   /jobs/search:
     post:
       tags:
@@ -144,7 +175,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/JobFilter'
+              $ref: "#/components/schemas/JobFilter"
 
       responses:
         200:
@@ -154,8 +185,8 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Job'
-   
+                  $ref: "#/components/schemas/Job"
+
   /bookmarks:
     get:
       tags:
@@ -170,31 +201,31 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Job'
+                  $ref: "#/components/schemas/Job"
     post:
       tags:
         - Bookmark
       summary: Add new bookmarked job to the database
-      operationId: controllers.controller.post_bookmark_jobs 
+      operationId: controllers.controller.post_bookmark_jobs
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BookmarkInput'
+              $ref: "#/components/schemas/BookmarkInput"
       responses:
         200:
           description: A new of bookmarked job
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/BookmarkOutput'
-    
+                $ref: "#/components/schemas/BookmarkOutput"
+
     delete:
       tags:
         - Bookmark
       summary: Delete bookmarked job in the database
-      operationId: controllers.controller.delete_bookmark_jobs 
+      operationId: controllers.controller.delete_bookmark_jobs
       parameters:
         - name: job_id
           in: query
@@ -207,8 +238,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BookmarkOutput'
-
+                $ref: "#/components/schemas/BookmarkOutput"
 
   /test/tasks:
     get:
@@ -222,7 +252,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Task'
+                  $ref: "#/components/schemas/Task"
     post:
       summary: Create a new task
       operationId: controllers.controller.create_task
@@ -231,14 +261,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TaskInput'
+              $ref: "#/components/schemas/TaskInput"
       responses:
         201:
           description: Task created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Task'
+                $ref: "#/components/schemas/Task"
 
   /test/tasks/{task_id}:
     parameters:
@@ -257,7 +287,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Task'
+                $ref: "#/components/schemas/Task"
         404:
           description: Task not found
     put:
@@ -268,14 +298,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TaskInput'
+              $ref: "#/components/schemas/TaskInput"
       responses:
         200:
           description: Task updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Task'
+                $ref: "#/components/schemas/Task"
         404:
           description: Task not found
     delete:
@@ -300,41 +330,40 @@ paths:
           description: The ID of the user whose profile to created
           schema:
             type: string
-      
+
       responses:
         200:
           description: Return the user profile data created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
-  
+                $ref: "#/components/schemas/UserProfile"
+
   /users/profile:
-    
     post:
       tags:
         - Profile
       summary: Create an user profile
       operationId: controllers.controller.create_profile
- 
+
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserProfileInput'
-      
+              $ref: "#/components/schemas/UserProfileInput"
+
       responses:
         200:
           description: User profile created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
-        
+                $ref: "#/components/schemas/UserProfile"
+
         400:
           description: Error BAD REQUEST
-        
+
         409:
           description: Profile already exists for user
 
@@ -343,13 +372,13 @@ paths:
         - Profile
       summary: Update an existing user profile
       operationId: controllers.controller.update_profile
-      
+
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserProfileInput'
+              $ref: "#/components/schemas/UserProfileInput"
 
       responses:
         200:
@@ -357,8 +386,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
-        
+                $ref: "#/components/schemas/UserProfile"
+
         400:
           description: Error BAD REQUEST
 
@@ -369,49 +398,49 @@ paths:
     get:
       summary: Get all of the annoucements from professors
       operationId: controllers.controller.get_professor_annoucement
-       
+
       responses:
         200:
           description: Return all of the annoucements that exist
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Annoucement'
+                $ref: "#/components/schemas/Annoucement"
 
   /connections:
     get:
-        summary: Get the professor connections
-        operationId: controllers.controller.get_professor_connection
-       
-        responses:
-          200:
-            description: Return the user profile data created successfully
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Connection'
+      summary: Get the professor connections
+      operationId: controllers.controller.get_professor_connection
+
+      responses:
+        200:
+          description: Return the user profile data created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
     post:
       summary: Create a new connection
       operationId: controllers.controller.post_new_connection
- 
+
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConnectionInput'
-      
+              $ref: "#/components/schemas/ConnectionInput"
+
       responses:
         201:
           description: User profile created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Connection'
-        
+                $ref: "#/components/schemas/Connection"
+
         400:
           description: Error BAD REQUEST
-    
+
     delete:
       summary: Delete the professor connection
       operationId: controllers.controller.delete_connection
@@ -422,15 +451,15 @@ paths:
           description: The ID of the connection
           schema:
             type: integer
-      
+
       responses:
         200:
           description: Return the deleted data.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Connection'
-        
+                $ref: "#/components/schemas/Connection"
+
   /application:
     get:
       tags:
@@ -443,10 +472,10 @@ paths:
           description: Applications retrieved successfully.
           content:
             application/json:
-              schema: 
+              schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/StudentApplication'
+                  $ref: "#/components/schemas/StudentApplication"
         400:
           description: Invalid credentials
 
@@ -469,10 +498,10 @@ paths:
           description: Applications retrieved successfully.
           content:
             application/json:
-              schema: 
+              schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/JobApplication'
+                  $ref: "#/components/schemas/JobApplication"
         400:
           description: "Invalid job or credentials provided."
 
@@ -487,16 +516,16 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ApplicationSubmission'
+              $ref: "#/components/schemas/ApplicationSubmission"
       responses:
         201:
           description: Application created successfully.
           content:
             application/json:
-              schema: 
+              schema:
                 type: object
 
-                $ref: '#/components/schemas/JobApplication'
+                $ref: "#/components/schemas/JobApplication"
         400:
           description: Invalid request body.
 
@@ -519,7 +548,7 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/ApplicationStatusUpdate'
+                $ref: "#/components/schemas/ApplicationStatusUpdate"
       responses:
         200:
           description: Application statuses updated successfully.
@@ -528,7 +557,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/JobApplication'
+                  $ref: "#/components/schemas/JobApplication"
         400:
           description: Invalid request body or application IDs provided.
         401:
@@ -578,7 +607,6 @@ paths:
           description: Database error occurred
         404:
           description: File not found (either database record or physical file)
-
 
   /file/download/{file_id}:
     get:
@@ -639,20 +667,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TagInput'
+              $ref: "#/components/schemas/TagInput"
       responses:
         200:
           description: Existing tag returned
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tag'
+                $ref: "#/components/schemas/Tag"
         201:
           description: New tag created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tag'
+                $ref: "#/components/schemas/Tag"
 
   /tags/{tag_id}:
     parameters:
@@ -670,7 +698,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tag'
+                $ref: "#/components/schemas/Tag"
         404:
           description: Tag not found
 
@@ -686,7 +714,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Term'
+                  $ref: "#/components/schemas/Term"
 
   /terms/{term_id}:
     parameters:
@@ -704,78 +732,77 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Term'
+                $ref: "#/components/schemas/Term"
         404:
           description: Term not found
 
-
 components:
   securitySchemes:
-      BearerAuth:
-        type: http
-        scheme: bearer
-        bearerFormat: JWT
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 
   schemas:
     ConnectionInput:
-        type: object
-        required:
-          - company_id
-        properties:
-          company_id:
-            type: integer
-            description: The unique identifier of the company
-   
+      type: object
+      required:
+        - company_id
+      properties:
+        company_id:
+          type: integer
+          description: The unique identifier of the company
+
     Connection:
-        type: object
-        properties:
-          id:
-            type: integer
-            description: The unique identifier for a connection
-            example: 1
-          professor_id:
-            type: integer
-            description: The unique identifier of the professor
-          company_id:
-            type: integer
-            description: The unique identifier of the company
-          created_at:
-            type: string
-            description: Time that this connection got created
-    
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The unique identifier for a connection
+          example: 1
+        professor_id:
+          type: integer
+          description: The unique identifier of the professor
+        company_id:
+          type: integer
+          description: The unique identifier of the company
+        created_at:
+          type: string
+          description: Time that this connection got created
+
     Annoucement:
-        type: object
-        properties:
-          id:
-            type: integer
-            description: The unique identifier for an announcement
-            example: 1
-          professor:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The unique identifier for an announcement
+          example: 1
+        professor:
+          type: string
+          description: Professor full name (first + last)
+          example: "Assoc. Prof. Nattawut Meechai"
+        professorPosition:
+          type: string
+          description: Professor position/title
+          example: "Assistant Professor"
+        department:
+          type: string
+          description: Professor department
+          example: "Agricultural Engineering"
+        company:
+          type: string
+          description: Company name
+          example: "EcoFarm Innovation Ltd."
+        companyIndustry:
+          type: string
+          description: Company industry
+          example: "IoT & Smart Farming"
+        tags:
+          type: array
+          items:
             type: string
-            description: Professor full name (first + last)
-            example: "Assoc. Prof. Nattawut Meechai"
-          professorPosition:
-            type: string
-            description: Professor position/title
-            example: "Assistant Professor"
-          department:
-            type: string
-            description: Professor department
-            example: "Agricultural Engineering"
-          company:
-            type: string
-            description: Company name
-            example: "EcoFarm Innovation Ltd."
-          companyIndustry:
-            type: string
-            description: Company industry
-            example: "IoT & Smart Farming"
-          tags:
-            type: array
-            items:
-              type: string
-            description: Tags associated with the company
-            example: ["IoT", "Smart Farming", "Workshop"]
+          description: Tags associated with the company
+          example: ["IoT", "Smart Farming", "Workshop"]
     Job:
       type: object
       required:
@@ -867,7 +894,7 @@ components:
           type: integer
           description: Total number of applicants
           example: 4
-    
+
     JobFilter:
       type: object
       properties:
@@ -914,10 +941,10 @@ components:
           type: integer
           description: Number of positions available
         end_date:
-            type: string
-            format: date-time
-            description: Application deadline
-            example: "2025-12-31T23:59:59Z"
+          type: string
+          format: date-time
+          description: Application deadline
+          example: "2025-12-31T23:59:59Z"
         company_id:
           type: string
         companyName:
@@ -936,7 +963,6 @@ components:
           type: boolean
           description: Job that company post by themself (need JWT)
           default: false
-      
 
     JobPost:
       type: object
@@ -1012,7 +1038,6 @@ components:
             type: string
           example: ["Remote", "Backend"]
 
-
     Skill:
       type: object
       properties:
@@ -1085,7 +1110,7 @@ components:
           maxLength: 255
           description: Full address of the company
           example: "123 Tech Street, Bangkok, Thailand 10110"
-          
+
     Task:
       type: object
       required:
@@ -1143,7 +1168,7 @@ components:
         refresh_token:
           type: string
           description: The refresh token
-    
+
     BookmarkInput:
       type: object
       required:
@@ -1152,7 +1177,7 @@ components:
         jobId:
           type: integer
           description: The job id (frontend camelCase)
-    
+
     BookmarkOutput:
       type: object
       properties:
@@ -1168,7 +1193,7 @@ components:
         createdAt:
           type: string
           description: date that this bookmark got created
- 
+
     UserProfileInput:
       type: object
       properties:
@@ -1199,7 +1224,7 @@ components:
           enum: ["M", "F"]
           example: "M"
         age:
-          type: integer 
+          type: integer
           description: The age of the user
           example: 22
         user_type:
@@ -1219,7 +1244,7 @@ components:
           type: string
           description: The phone number of the user
           example: "0812345678"
-      
+
     UserProfile:
       type: object
       required:
@@ -1267,7 +1292,7 @@ components:
           maxLength: 1
           nullable: true
           description: The gender of the user (single character)
-          enum: ["M", "F"]  
+          enum: ["M", "F"]
           example: "M"
         age:
           type: integer
@@ -1399,8 +1424,7 @@ components:
           type: string
           example: "1 year"
         job:
-          $ref: '#/components/schemas/Job'
-
+          $ref: "#/components/schemas/Job"
 
     ApplicationSubmission:
       type: object
@@ -1471,7 +1495,7 @@ components:
         applicationId:
           type: integer
           format: uuid
-          description: The unique identifier of the job application 
+          description: The unique identifier of the job application
           example: 12
         status:
           type: string

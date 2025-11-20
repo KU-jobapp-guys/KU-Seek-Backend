@@ -220,6 +220,50 @@ def handle_authentication(body: Dict):
         ), 400
 
 
+def test_login(body: Dict):
+    """
+    Test-only login endpoint.
+
+    Accepts a JSON body with either `user_id` (UUID string) or `google_uid`.
+    Returns an access token and sets the refresh_token cookie. This endpoint
+    is only available when the environment variable `ENABLE_TEST_LOGIN` is
+    set to a truthy value (true/1/yes). Intended for local end-to-end tests
+    and must NOT be enabled in production.
+    """
+    allow = config("ENABLE_TEST_LOGIN", default="True")
+    if str(allow).lower() not in ("1", "true", "yes"):
+        return models.ErrorMessage("Test login endpoint disabled"), 404
+
+    auth_controller = AuthenticationController(
+        current_app.config["Database"], current_app.config["Admin"]
+    )
+
+    user_id = body.get("user_id") if isinstance(body, dict) else None
+    google_uid = body.get("google_uid") if isinstance(body, dict) else None
+
+    if not user_id and not google_uid:
+        return models.ErrorMessage("Missing user_id or google_uid"), 400
+
+    try:
+        if google_uid and not user_id:
+            uid = auth_controller.get_user(google_uid)
+            if not uid:
+                return models.ErrorMessage("User not found"), 404
+        else:
+            uid = user_id
+
+        access, refresh, user_type = auth_controller.login_user(uid)
+
+        # Return a simple JSON payload and set refresh_token cookie
+        response = make_response(jsonify(access_token=access, refresh_token=refresh), 200)
+        response.set_cookie(
+            "refresh_token", refresh, max_age=timedelta(days=30), httponly=True
+        )
+        return response
+    except Exception as e:
+        return models.ErrorMessage(f"Could not create test login token, {e}"), 400
+
+
 class AuthenticationController:
     """Controller for fetching database authentication credentials."""
 
