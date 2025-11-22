@@ -38,14 +38,7 @@ def login_required(func):
             return models.ErrorMessage(f"Invalid authentication token, {e}"), 403
 
         # authentication successful
-
-        request_controller = current_app.config["Requests"]
-        if request_controller.request(token_info["uid"]):
-            # Add new request successful, serve the API.
-            return func(*args, **kwargs)
-        return models.ErrorMessage(
-            "Too many requests. Please renew login session."
-        ), 429
+        return func(*args, **kwargs)
 
     return run_function
 
@@ -99,14 +92,40 @@ def role_required(roles: list[Literal["Student", "Company"]] = []):
             session.close()
             # Authorization successful
 
-            request_controller = current_app.config["Requests"]
-            if request_controller.request(token_info["uid"]):
-                # Add new request successful, serve the API.
-                return func(*args, **kwargs)
-            return models.ErrorMessage(
-                "Too many requests. Please renew login session."
-            ), 429
-
-        return run_function
+            return func(*args, **kwargs)
 
     return decorator
+
+
+def rate_limit(func):
+    """Decorator to apply rate-limiting to an API endpoint."""
+
+    @wraps(func)
+    def run_function(*args, **kwargs):
+        jwt_auth_token = request.headers.get("access_token")
+
+        if not jwt_auth_token:
+            return models.ErrorMessage("User is not authenticated."), 401
+
+        try:
+            token_info = decode(
+                jwt=jwt_auth_token, key=SECRET_KEY, algorithms=["HS512"]
+            )
+
+        except InvalidSignatureError:
+            return models.ErrorMessage("Invalid authentication token provided"), 403
+        except ExpiredSignatureError:
+            return models.ErrorMessage("Token is expired"), 403
+        except Exception as e:
+            return models.ErrorMessage(f"Invalid authentication token, {e}"), 403
+
+        # authentication successful
+
+        rate_limiter = current_app.config["RateLimiter"]
+        if not rate_limiter.request(token_info["uid"]):
+            raise Warning(
+                "Too many requests. Please renew login session."
+            )
+        return func(*args, **kwargs)
+
+    return run_function

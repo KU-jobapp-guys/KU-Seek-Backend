@@ -21,12 +21,9 @@ from datetime import datetime, timedelta, UTC
 from .models.user_model import User, Student, Company, Professor
 from .models.profile_model import Profile
 from .models.token_model import Token
-<<<<<<< HEAD
 from .models.tos_model import TOSAgreement
-=======
 from .models.file_model import File
 from .models.admin_request_model import UserRequest
->>>>>>> main
 from .management.admin import AdminModel
 from .management.email import EmailSender
 from uuid import UUID
@@ -417,7 +414,7 @@ class AuthenticationController:
         user_id = str(uid)
         session.close()
 
-        current_app.config["Requests"].unban_user(str(uid))
+        current_app.config["RateLimiter"].unban_user(str(uid))
         return auth_token, refresh_token, user_type, user_id
 
 
