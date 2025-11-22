@@ -7,10 +7,15 @@ from .job_app_controller import JobApplicationController
 from .auth_controller import get_auth_user_id
 from connexion.exceptions import ProblemException
 from .job_controller import JobController
+from .professor_controller import ProfessorController
 from .file_controller import FileController
 from typing import Dict, Optional
+from logger.custom_logger import get_logger
 from flask import current_app
 from .skills_controller import SkillsController
+from .admin_controller import AdminController
+
+logger = get_logger()
 
 
 def get_all_tasks():
@@ -43,6 +48,15 @@ def delete_task(task_id: str):
     return task_manager.delete_task(task_id)
 
 
+def get_self_profile() -> Dict:
+    """GET the current authenticated user profile."""
+    try:
+        profile_manager = ProfileController(current_app.config["Database"])
+        return profile_manager.get_self_profile()
+    except ValueError:
+        return jsonify({"message": "No profile data found."}), 404
+
+
 def get_user_profile(user_id: str) -> Dict:
     """GET UserProfile from the database."""
     try:
@@ -59,7 +73,9 @@ def create_profile(body: Dict) -> Optional[Dict]:
     """Add UserProfile to the database."""
     try:
         profile_manager = ProfileController(current_app.config["Database"])
-        new_profile = profile_manager.create_profile(get_auth_user_id(request), body)
+        uid = get_auth_user_id(request)
+        new_profile = profile_manager.create_profile(uid, body)
+        logger.info("Profile has been created.", user=uid)
         return jsonify(new_profile), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
@@ -71,15 +87,25 @@ def update_profile(body: Dict) -> Optional[Dict]:
     """Update User Profile data."""
     try:
         profile_manager = ProfileController(current_app.config["Database"])
-        profile_updated_data = profile_manager.update_profile(
-            get_auth_user_id(request), body
-        )
-
+        uid = get_auth_user_id(request)
+        profile_updated_data = profile_manager.update_profile(uid, body)
+        logger.info("Profile has been updated.", user=uid)
+        logger.debug(f"{body}", user=uid)
         return jsonify(profile_updated_data), 200
     except ValueError as e:
         return jsonify({"message": str(e)}), 404
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+
+
+def upload_profile_images() -> Optional[Dict]:
+    """Upload new profile and banner images."""
+    try:
+        profile_manager = ProfileController(current_app.config["Database"])
+        return profile_manager.upload_profile_images()
+    except Exception as e:
+        print(e)
+        return jsonify({"message": "bad image passed"}), 405
 
 
 def get_all_jobs(job_id: str = ""):
@@ -96,7 +122,9 @@ def post_job(body: Dict):
     """Add new Job."""
     try:
         job_manager = JobController(current_app.config["Database"])
-        new_job = job_manager.post_job(get_auth_user_id(request), body)
+        uid = get_auth_user_id(request)
+        new_job = job_manager.post_job(uid, body)
+        logger.info(f"Job:{new_job['jobId']} has been posted.", user=uid)
         return jsonify(new_job), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
@@ -135,9 +163,15 @@ def post_bookmark_jobs(body: Dict):
     """Add new bookmark."""
     try:
         job_manager = JobController(current_app.config["Database"])
-        bookmarked_jobs = job_manager.post_bookmark_jobs(
-            get_auth_user_id(request), body
+        uid = get_auth_user_id(request)
+        bookmarked_jobs = job_manager.post_bookmark_jobs(uid, body)
+        logger.info(
+            f"Bookmark:{bookmarked_jobs['id']} "
+            f"for Job:{bookmarked_jobs['jobId']} "
+            f"has been created.",
+            user=uid,
         )
+        logger.debug(bookmarked_jobs)
         return jsonify(bookmarked_jobs), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
@@ -151,7 +185,65 @@ def delete_bookmark_jobs(job_id: int):
         user_id = get_auth_user_id(request)
         job_manager = JobController(current_app.config["Database"])
         deleted_bookmark = job_manager.delete_bookmark_jobs(user_id, job_id)
+        logger.info(
+            f"Bookmark:{deleted_bookmark['id']} for Job:{job_id} has been deleted.",
+            user=user_id,
+        )
         return jsonify(deleted_bookmark), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+def get_professor_connection():
+    """Return professor connection."""
+    try:
+        user_id = get_auth_user_id(request)
+        connection_controller = ProfessorController(current_app.config["Database"])
+        professor_connection = connection_controller.get_connection(user_id)
+        return jsonify(professor_connection), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+def post_new_connection(body: dict):
+    """Add new connection to the database."""
+    try:
+        connection_controller = ProfessorController(current_app.config["Database"])
+        new_connection = connection_controller.post_connection(
+            get_auth_user_id(request), body
+        )
+        return jsonify(new_connection), 201
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+def delete_connection(connection_id: int):
+    """Delete connection from the ProfessorConnection table."""
+    try:
+        user_id = get_auth_user_id(request)
+        connection_controller = ProfessorController(current_app.config["Database"])
+        deleted_connection = connection_controller.delete_connection(
+            user_id, connection_id
+        )
+        return jsonify(deleted_connection), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+def get_professor_annoucement():
+    """Return professor announcements."""
+    try:
+        connection_controller = ProfessorController(current_app.config["Database"])
+        annoucements = connection_controller.get_annoucement()
+        return jsonify(annoucements), 200
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
     except Exception as e:
@@ -161,7 +253,17 @@ def delete_bookmark_jobs(job_id: int):
 def create_job_application(job_id: int) -> Optional[Dict]:
     """Create a job application in the database."""
     app_manager = JobApplicationController(current_app.config["Database"])
-    return app_manager.create_job_application(job_id)
+    job_application = app_manager.create_job_application(job_id)
+    if job_application[1] == 200:
+        logger.info(
+            f"Student: {job_application[0]['studentId']} - "
+            f"Job Application:{job_application[0]['id']} "
+            f"for Job:{job_id} has been created."
+        )
+        logger.debug(job_application)
+    else:
+        logger.warning(f"{job_application}")
+    return job_application
 
 
 def fetch_user_job_applications() -> Optional[Dict]:
@@ -253,3 +355,27 @@ def download_file(file_id: str) -> Response:
     """Get a file for downloading, based on the file id."""
     file_manager = FileController(current_app.config["Database"])
     return file_manager.download_file(file_id)
+
+
+def get_all_user_request() -> Optional[Dict]:
+    """Get all pending user creation requests."""
+    admin_manager = AdminController(current_app.config["Database"])
+    return admin_manager.get_all_user_request()
+
+
+def get_all_job_request() -> Optional[Dict]:
+    """Get all pending job creation requests."""
+    admin_manager = AdminController(current_app.config["Database"])
+    return admin_manager.get_all_job_request()
+
+
+def update_user_status(body: list[Dict]) -> Optional[Dict]:
+    """Update the user's status from the user creation requests."""
+    admin_manager = AdminController(current_app.config["Database"])
+    return admin_manager.update_user_status(body)
+
+
+def update_job_status(body: list[Dict]) -> Optional[Dict]:
+    """Update the job's status from the job creation requests."""
+    admin_manager = AdminController(current_app.config["Database"])
+    return admin_manager.update_job_status(body)

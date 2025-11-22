@@ -1,5 +1,6 @@
 # === Application Config ===
 OPENAPI_STUB_DIR = "swagger_server"
+LOGGER = "KU_SEEK_LOGGER_PROD"
 
 # === Database Config ===
 DB_USER = <Your Username>

@@ -9,6 +9,7 @@ from .models.job_model import Job, JobSkills, JobTags, Bookmark, JobApplication
 from .models.user_model import Company, Student
 from .models.tag_term_model import Tags, Terms
 from .decorators import login_required, role_required
+from .models.admin_request_model import JobRequest, RequestStatusTypes
 
 
 class JobController:
@@ -156,6 +157,13 @@ class JobController:
 
             session.add(job)
             session.flush()
+
+            job_request = JobRequest(
+                job_id=job.id,
+                status=RequestStatusTypes.PENDING,
+                denial_reason="Job needs manual validation",
+            )
+            session.add(job_request)
 
             if "skill_names" in body and body["skill_names"]:
                 if not isinstance(body["skill_names"], list):

@@ -65,6 +65,19 @@ class SkillsController:
             session.close()
 
     @role_required(["Company"])
+    def get_tags(self) -> List[str]:
+        """Return all tag names (used as workFields)."""
+        session = self.db.get_session()
+        try:
+            tags = session.query(Tags).all()
+            return [t.name for t in tags]
+        except Exception as e:
+            session.rollback()
+            raise ProblemException(f"Database Error {str(e)}")
+        finally:
+            session.close()
+
+    @role_required(["Company"])
     def post_tag(self, name: str) -> tuple:
         """Create a tag if it doesn't exist, otherwise return existing id.
 

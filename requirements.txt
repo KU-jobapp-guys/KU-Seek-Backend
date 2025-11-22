@@ -15,5 +15,6 @@ SQLalchemy
 alembic
 google-genai
 redis
+argon2-cffi
 
 -r swagger_server/requirements.txt

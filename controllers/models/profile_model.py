@@ -59,7 +59,7 @@ class ProfileSkills(BaseModel):
 
     skill_id: Mapped[int] = MappedColumn(
         Integer,
-        ForeignKey("terms.id", ondelete="CASCADE"),
+        ForeignKey("tags.id", ondelete="CASCADE"),
         primary_key=True,
         nullable=False,
     )
@@ -144,21 +144,21 @@ class ProfessorConnections(BaseModel):
     )
 
 
-class Announcements(BaseModel):
-    """Announcements model."""
+class CompanyTags(BaseModel):
+    """Linking table to associate companies with tags (many-to-many)."""
 
-    __tablename__ = "announcements"
+    __tablename__ = "company_tags"
 
-    id: Mapped[int] = MappedColumn(Integer, primary_key=True, autoincrement=True)
-
-    professor_id: Mapped[int] = MappedColumn(
-        ForeignKey("professors.id", ondelete="CASCADE"), nullable=False
+    company_id: Mapped[int] = MappedColumn(
+        Integer,
+        ForeignKey("companies.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
     )
 
-    title: Mapped[str] = MappedColumn(String(255), nullable=False)
-
-    content: Mapped[str] = MappedColumn(Text, nullable=False)
-
-    created_at: Mapped[datetime] = MappedColumn(
-        DateTime, default=func.now(), nullable=False
+    tag_id: Mapped[int] = MappedColumn(
+        Integer,
+        ForeignKey("tags.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
     )
