@@ -1,0 +1,30 @@
+"""Custom KwAdapter for logging."""
+
+import logging
+import logging.config
+from pathlib import Path
+from decouple import config
+
+
+LOGGING_CONF = Path(__file__).with_name("logging.conf")
+logging.config.fileConfig(LOGGING_CONF, disable_existing_loggers=False)
+
+LOGGER_NAME = config("LOGGER", default="KU_SEEK_LOGGER_PROD")
+
+
+class KwAdapter(logging.LoggerAdapter):
+    """Key word adapter to take kwargs from logging function."""
+
+    def process(self, msg, kwargs):
+        """Process kwargs from logging function."""
+        extra = kwargs.pop("extra", {})
+        user = kwargs.pop("user", None)
+        if user is not None:
+            extra["user"] = user
+        kwargs["extra"] = extra
+        return msg, kwargs
+
+
+def get_logger():
+    """Get the selected logger from app.py."""
+    return KwAdapter(logging.getLogger(LOGGER_NAME))
