@@ -417,7 +417,6 @@ class AuthenticationController:
         current_app.config["RateLimiter"].unban_user(str(uid))
         return auth_token, refresh_token, user_type, user_id
 
-
     def get_user(self, google_uid):
         """Return the user id with the matching google_uid."""
         session = self.db.get_session()

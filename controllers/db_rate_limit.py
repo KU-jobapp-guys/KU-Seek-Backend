@@ -5,7 +5,10 @@ from decouple import config
 
 
 class DBRateLimit:
+    """Implements database operations for rate-limiting."""
+
     def __init__(self):
+        """Initialize the DBRateLimit."""
         self.__db_instance = redis.Redis(
             password=config("REDIS_PASSWORD", "mysecretpw123"),
             port=6379,

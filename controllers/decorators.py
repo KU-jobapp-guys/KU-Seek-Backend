@@ -26,9 +26,7 @@ def login_required(func):
             return models.ErrorMessage("User is not authenticated."), 401
 
         try:
-            token_info = decode(
-                jwt=jwt_auth_token, key=SECRET_KEY, algorithms=["HS512"]
-            )
+            decode(jwt=jwt_auth_token, key=SECRET_KEY, algorithms=["HS512"])
 
         except InvalidSignatureError:
             return models.ErrorMessage("Invalid authentication token provided"), 403
@@ -98,7 +96,7 @@ def role_required(roles: list[Literal["Student", "Company"]] = []):
 
 
 def rate_limit(func):
-    """Decorator to apply rate-limiting to an API endpoint."""
+    """Apply rate-limiting to an API endpoint."""
 
     @wraps(func)
     def run_function(*args, **kwargs):
@@ -123,9 +121,7 @@ def rate_limit(func):
 
         rate_limiter = current_app.config["RateLimiter"]
         if not rate_limiter.request(token_info["uid"]):
-            raise Warning(
-                "Too many requests. Please renew login session."
-            )
+            raise Warning("Too many requests. Please renew login session.")
         return func(*args, **kwargs)
 
     return run_function

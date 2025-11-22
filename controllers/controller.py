@@ -308,6 +308,7 @@ def fetch_user_job_applications() -> Optional[Dict]:
     except Warning as e:
         return jsonify({"message": str(e)}), 429
 
+
 def fetch_job_applications_from_job(job_id: int) -> Optional[Dict]:
     """Fetch all job applications related to a job post by job ID."""
     try:
