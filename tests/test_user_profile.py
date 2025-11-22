@@ -2,7 +2,7 @@
 
 from decouple import config
 from base_test import RoutingTestCase
-from util_functions import add_mockup_data, generate_jwt
+from util_functions import add_mockup_data, generate_jwt, decamelize
 
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
 
@@ -80,6 +80,7 @@ class ProfileTestCase(RoutingTestCase):
         self.assertEqual(res.status_code, 201)
 
         data = res.json
+        data = decamelize(data)
         self.assertEqual(data["first_name"], profile_payload["first_name"])
         self.assertEqual(data["last_name"], profile_payload["last_name"])
         self.assertEqual(data["about"], profile_payload["about"])
@@ -147,6 +148,7 @@ class ProfileTestCase(RoutingTestCase):
 
         self.assertEqual(res.status_code, 201)
         data = res.json
+        data = decamelize(data)
         self.assertEqual(data["first_name"], "Alice")
         self.assertEqual(data["last_name"], "Johnson")
 
@@ -160,9 +162,10 @@ class ProfileTestCase(RoutingTestCase):
         res = self.client.get(f"/api/v1/users/{self.user1_id}/profile")
 
         data = res.json
+        data = decamelize(data)
 
         expected_fields = {
-            "user_id",
+            "id",
             "first_name",
             "last_name",
             "about",
@@ -172,8 +175,6 @@ class ProfileTestCase(RoutingTestCase):
             "gender",
             "age",
             "user_type",
-            "profile_img",
-            "banner_img",
             "phone_number",
             "is_verified",
         }
@@ -234,6 +235,7 @@ class ProfileTestCase(RoutingTestCase):
         self.assertEqual(res.status_code, 200)
 
         data = res.json
+        data = decamelize(data)
         self.assertEqual(data["first_name"], update_payload["first_name"])
         self.assertEqual(data["last_name"], update_payload["last_name"])
         self.assertEqual(data["about"], update_payload["about"])
@@ -291,6 +293,7 @@ class ProfileTestCase(RoutingTestCase):
 
         self.assertEqual(res.status_code, 200)
         data = res.json
+        data = decamelize(data)
         self.assertEqual(data["phone_number"], "0823456789")
 
     def test_update_profile_multiple_fields(self):
@@ -315,6 +318,7 @@ class ProfileTestCase(RoutingTestCase):
 
         self.assertEqual(res.status_code, 200)
         data = res.json
+        data = decamelize(data)
         self.assertEqual(data["first_name"], update_payload["first_name"])
         self.assertEqual(data["last_name"], update_payload["last_name"])
         self.assertEqual(data["location"], update_payload["location"])
@@ -341,6 +345,7 @@ class ProfileTestCase(RoutingTestCase):
 
         self.assertEqual(res.status_code, 200)
         data = res.json
+        data = decamelize(data)
         self.assertEqual(data["first_name"], "Valid")
         self.assertNotIn("invalid_field", data)
         self.assertNotIn("another_invalid", data)
@@ -398,4 +403,5 @@ class ProfileTestCase(RoutingTestCase):
 
         self.assertEqual(res.status_code, 201)
         data = res.json
+        data = decamelize(data)
         self.assertEqual(data["is_verified"], False)
