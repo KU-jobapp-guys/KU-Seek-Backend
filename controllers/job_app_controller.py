@@ -438,5 +438,4 @@ class JobApplicationController:
 
         except Exception as e:
             session.close()
-            print(e)
             return models.ErrorMessage(f"Database exception occurred: {e}"), 400

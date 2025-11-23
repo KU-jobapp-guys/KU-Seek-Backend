@@ -1,11 +1,11 @@
-"""RequestController implements rate-limiting for users."""
+"""RateLimiter implements rate-limiting for users."""
 
 
 class RateLimiter:
     """Implements rate-limiting for user requests."""
 
     def __init__(self, db_rate_limit, rate_limit: int = 30, interval: int = 10):
-        """Initialize the RequestController."""
+        """Initialize the RateLimiter."""
         self._rate_limit = rate_limit
         self._interval = interval
         self.__db_rate_limit = db_rate_limit
