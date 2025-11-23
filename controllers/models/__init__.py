@@ -15,4 +15,5 @@ from .job_model import Job, JobApplication, JobSkills, JobTags, Bookmark
 from .tag_term_model import Tags, Terms
 from .file_model import File
 from .tos_model import TOSAgreement
+from .email_model import MailRecord, MailQueue, MailParameter
 from .admin_request_model import UserRequest, JobRequest

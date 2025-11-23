@@ -12,8 +12,10 @@ from .job_controller import JobController
 from swagger_server.openapi_server import models
 from werkzeug.utils import secure_filename
 from .models.job_model import Job, JobApplication
-from .models.user_model import Student, Company
+from .models.user_model import Student, Company, User
 from .models.file_model import File
+from .models.email_model import MailQueue, MailParameter
+from .management.email.email_sender import EmailSender, GmailEmailStrategy
 from .models.profile_model import Profile
 from .serialization import camelize, decamelize
 
@@ -23,6 +25,12 @@ ALLOWED_FILE_FORMATS = config(
 BASE_FILE_PATH = config("BASE_FILE_PATH", default="content")
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
 VALID_STATUSES = ["accepted", "rejected"]
+COMPANY_DASHBOARD_URL = config(
+    "COMPANY_DASHBOARD_URL", default="http://localhost:5173/company/dashboard"
+)
+STUDENT_DASHBOARD_URL = config(
+    "STUDENT_DASHBOARD_URL", default="http://localhost:5173/student/dashboard"
+)
 
 
 class JobApplicationController:
@@ -44,7 +52,7 @@ class JobApplicationController:
 
         session = self.db.get_session()
 
-        job = session.query(Job).where(Job.id == job_id).one_or_none()
+        job: Job = session.query(Job).where(Job.id == job_id).one_or_none()
         current_applicants = (
             session.query(JobApplication).where(JobApplication.job_id == job_id).all()
         )
@@ -186,6 +194,42 @@ class JobApplicationController:
             session.commit()
 
             job_app_data = job_application.to_dict()
+
+            # queue mail to be sent to the company
+            company = session.query(Company).where(Company.id == job.company_id).one()
+            company_user = session.query(User).where(User.id == company.user_id).one()
+            current_mail = (
+                session.query(MailQueue)
+                .where(
+                    MailQueue.recipient == company_user.email,
+                    MailQueue.topic == f"New applicants for {job.title}",
+                )
+                .one_or_none()
+            )
+            if current_mail:
+                applicant_count = int(current_mail.get_param("ApplicantCount"))
+                applicant_count += 1
+                current_mail.set_param("ApplicantCount", str(applicant_count))
+                session.commit()
+                session.close()
+
+                return job_app_data, 200
+
+            mail = MailQueue(
+                recipient=company_user.email,
+                topic=f"New applicants for {job.title}",
+                template="new_applicants",
+                parameters=[
+                    MailParameter(key="ApplicantCount", value="1"),
+                    MailParameter(key="JobTitle", value=f"{job.title}"),
+                    MailParameter(key="CompanyName", value=f"{company.company_name}"),
+                    MailParameter(
+                        key="DashboardLink", value=f"{COMPANY_DASHBOARD_URL}"
+                    ),
+                ],
+            )
+            session.add(mail)
+            session.commit()
             job_app_data = camelize(job_app_data)
             session.close()
 
@@ -386,6 +430,7 @@ class JobApplicationController:
             session.close()
             return models.ErrorMessage("Company not found"), 400
 
+        company_name = company.company_name
         job = session.query(Job).where(Job.id == job_id).one_or_none()
 
         if not job:
@@ -430,6 +475,31 @@ class JobApplicationController:
             session.commit()
             job_apps = [model.to_dict() for model in orm_models]
             session.close()
+
+            # handle emails
+
+            for application in job_apps:
+                if application["status"] == "accepted":
+                    mail_file = "application_accepted"
+                    subject = "Application Accepted"
+                else:
+                    mail_file = "application_rejected"
+                    subject = "Application Rejected"
+                try:
+                    email = EmailSender(GmailEmailStrategy())
+                    email.send_email(
+                        application["contact_email"],
+                        subject,
+                        mail_file,
+                        template_args=[
+                            ("JobTitle", f"{job.title}"),
+                            ("CompanyName", f"{company_name}"),
+                            ("ApplicationLink", f"{STUDENT_DASHBOARD_URL}"),
+                        ],
+                    )
+                except Exception:
+                    # logger here
+                    pass
 
             # convert to camelCase keys for frontend
             job_apps = [camelize(a) for a in job_apps]
