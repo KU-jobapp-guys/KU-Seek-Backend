@@ -7,6 +7,7 @@ from .job_app_controller import JobApplicationController
 from .auth_controller import get_auth_user_id
 from connexion.exceptions import ProblemException
 from .job_controller import JobController
+from .company_controller import CompanyController
 from .professor_controller import ProfessorController
 from .file_controller import FileController
 from typing import Dict, Optional
@@ -343,6 +344,19 @@ def update_job_applications_status(job_id: int, body: list[Dict]) -> Optional[Di
     """Update multiple job applications' status from the provided job."""
     app_manager = JobApplicationController(current_app.config["Database"])
     return app_manager.update_job_applications_status(job_id, body)
+
+
+def get_company():
+    """GET the company data for the authenticated user (from JWT)."""
+    company_manager = CompanyController(current_app.config["Database"])
+    user_id = get_auth_user_id(request)
+    return company_manager.get_company(user_id)
+
+
+def get_all_companies():
+    """GET all the company data."""
+    company_manager = CompanyController(current_app.config["Database"])
+    return company_manager.get_all_companies()
 
 
 def get_file(file_id: str) -> Response:
