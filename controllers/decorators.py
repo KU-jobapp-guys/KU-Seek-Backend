@@ -91,6 +91,7 @@ def role_required(roles: list[Literal["Student", "Company"]] = []):
             # Authorization successful
 
             return func(*args, **kwargs)
+        return run_function
 
     return decorator
 
