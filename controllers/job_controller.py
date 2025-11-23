@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from .models.job_model import Job, JobSkills, JobTags, Bookmark, JobApplication
 from .models.user_model import Company, Student
 from .models.tag_term_model import Tags, Terms
+from .decorators import login_required, role_required, rate_limit
 from .models.admin_request_model import JobRequest, RequestStatusTypes
 
 
@@ -18,6 +19,8 @@ class JobController:
         """Initialize the class."""
         self.db = database
 
+    @login_required
+    @rate_limit
     def get_all_jobs(self, job_id: str) -> List[Dict]:
         """
         Return all jobs in the jobs table if have job_id it will return only one job.
@@ -48,6 +51,8 @@ class JobController:
             session.close()
             raise Exception(f"Error retrieving jobs: {str(e)}")
 
+    @role_required(["Company"])
+    @rate_limit
     def post_job(self, user_id: str, body: Dict) -> Dict:
         """
         Create a new Job from the request body.
@@ -202,6 +207,8 @@ class JobController:
             session.close()
             raise Exception(f"Error creating job: {str(e)}")
 
+    @login_required
+    @rate_limit
     def get_bookmark_jobs(self, user_id: str) -> List[Dict]:
         """
         Return bookmarked job from the Bookmarked table.
@@ -247,6 +254,8 @@ class JobController:
             session.close()
             raise Exception(f"Error retrieving bookmarked jobs: {str(e)}")
 
+    @login_required
+    @rate_limit
     def post_bookmark_jobs(self, user_id, body: Dict) -> Dict:
         """
         Post bookmarked job from the Bookmarked table.
@@ -302,6 +311,8 @@ class JobController:
             session.close()
             raise Exception(f"Error retrieving bookmarked jobs: {str(e)}")
 
+    @login_required
+    @rate_limit
     def delete_bookmark_jobs(self, user_id, job_id: int) -> Dict:
         """
         Delete bookmarked job from the Bookmarked table.
@@ -361,6 +372,8 @@ class JobController:
             session.close()
             raise Exception(f"Error deleting bookmark: {str(e)}")
 
+    @login_required
+    @rate_limit
     def get_filtered_job(self, body: Dict) -> List[Dict]:
         """
         Return filtered jobs from the jobs table using ORM.

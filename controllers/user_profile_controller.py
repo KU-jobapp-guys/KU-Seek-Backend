@@ -4,7 +4,7 @@ from typing import Optional, Dict
 from connexion.exceptions import ProblemException
 from .models.profile_model import Profile, ProfileSkills
 from .models.user_model import User, UserTypes, Student, Company
-from .decorators import login_required
+from .decorators import login_required, rate_limit
 from jwt import decode
 from flask import request
 from uuid import UUID
@@ -32,6 +32,7 @@ class ProfileController:
         self.db = database
 
     @login_required
+    @rate_limit
     def get_self_profile(self) -> Optional[Dict]:
         """
         Return the currently logged in user.
@@ -47,6 +48,8 @@ class ProfileController:
         user_id = user_id.replace("'", "")
         return self.get_profile_by_uid(user_id)
 
+    @login_required
+    @rate_limit
     def get_profile_by_uid(self, user_id: str) -> Optional[Dict]:
         """
         Return a user profile in the database with the corresponding id.
@@ -130,6 +133,7 @@ class ProfileController:
         finally:
             session.close()
 
+    @rate_limit
     def create_profile(self, user_id: str, body: Dict) -> Optional[Dict]:
         """
         Create new component in the UserProfile table.
@@ -176,6 +180,7 @@ class ProfileController:
         return self.get_profile_by_uid(user_id)
 
     @login_required
+    @rate_limit
     def update_profile(self, user_id: str, body: Dict) -> Optional[Dict]:
         """
         Update fields in the UserProfile table dynamically.
@@ -263,6 +268,7 @@ class ProfileController:
         return self.get_profile_by_uid(user_id)
 
     @login_required
+    @rate_limit
     def upload_profile_images(self):
         """
         Upload new image files for the profile.

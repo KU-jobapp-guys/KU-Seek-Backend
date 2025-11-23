@@ -21,6 +21,7 @@ from datetime import datetime, timedelta, UTC
 from .models.user_model import User, Student, Company, Professor
 from .models.profile_model import Profile
 from .models.token_model import Token
+from .models.tos_model import TOSAgreement
 from .models.file_model import File
 from .models.admin_request_model import UserRequest
 from .management.admin import AdminModel
@@ -413,6 +414,7 @@ class AuthenticationController:
         user_id = str(uid)
         session.close()
 
+        current_app.config["RateLimiter"].unban_user(str(uid))
         return auth_token, refresh_token, user_type, user_id
 
     def get_user(self, google_uid):
@@ -475,6 +477,10 @@ class AuthenticationController:
             )
             session.add(company)
             session.commit()
+
+        tos = TOSAgreement(user_id=user_id, agree_status=True)
+        session.add(tos)
+        session.commit()
 
         session.close()
 

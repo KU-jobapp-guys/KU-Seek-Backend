@@ -6,7 +6,7 @@ from .models.profile_model import ProfessorConnections, Profile, CompanyTags
 from .models.user_model import Professor, Company
 from .models.tag_term_model import Tags
 from uuid import UUID
-from .decorators import role_required
+from .decorators import rate_limit, role_required
 
 
 class ProfessorController:
@@ -16,6 +16,7 @@ class ProfessorController:
         """Initialize the class."""
         self.db = database
 
+    @rate_limit
     def get_connection(self, user_id: str):
         """
         Return all connections this Professor have.
@@ -63,6 +64,7 @@ class ProfessorController:
         finally:
             session.close()
 
+    @rate_limit
     def get_annoucement(self):
         """
         Return all announcements in the system.
@@ -147,6 +149,7 @@ class ProfessorController:
             session.close()
 
     @role_required(["Professor"])
+    @rate_limit
     def post_connection(self, user_id: str, body: dict):
         """
         Create a new connection for professor.
@@ -216,6 +219,7 @@ class ProfessorController:
             session.close()
 
     @role_required(["Professor"])
+    @rate_limit
     def delete_connection(self, user_id: str, connection_id: int) -> Dict:
         """
         Delete a connection for a professor.
