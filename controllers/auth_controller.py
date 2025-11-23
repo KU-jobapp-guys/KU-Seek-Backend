@@ -23,6 +23,7 @@ from .models.profile_model import Profile
 from .models.token_model import Token
 from .models.file_model import File
 from .models.admin_request_model import UserRequest
+from .models.tos_model import TOSAgreement
 from .management.admin import AdminModel
 from .management.email import EmailSender
 from uuid import UUID
@@ -475,6 +476,10 @@ class AuthenticationController:
             )
             session.add(company)
             session.commit()
+
+        tos = TOSAgreement(user_id=user_id, agree_status=True)
+        session.add(tos)
+        session.commit()
 
         session.close()
 
