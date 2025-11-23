@@ -67,7 +67,10 @@ class AnnouncementTestCase(RoutingTestCase):
         This test ensures the endpoint responds with 200 and each announcement
         contains id, title, content, created_at and professor_* fields.
         """
-        res = self.client.get("/api/v1/annoucements")
+        jwt = generate_jwt(self.professor_user1_id, secret=SECRET_KEY)
+        res = self.client.get("/api/v1/annoucements",
+                              headers={"access_token": jwt},
+)
         self.assertEqual(res.status_code, 200)
         data = res.get_json()
         self.assertIsInstance(data, list)
@@ -105,7 +108,9 @@ class AnnouncementTestCase(RoutingTestCase):
         conn_data = post_res.get_json()
         self.assertIn("id", conn_data)
 
-        get_res = self.client.get("/api/v1/annoucements")
+        get_res = self.client.get("/api/v1/annoucements",
+                                  headers={"access_token": jwt},
+                                  )
         self.assertEqual(get_res.status_code, 200)
         anns = get_res.get_json()
         self.assertIsInstance(anns, list)
