@@ -157,9 +157,10 @@ class ProfileTestCase(RoutingTestCase):
         csrf = self.client.get("/api/v1/csrf-token")
         csrf_token = csrf.json["csrf_token"]
         jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
-        res = self.client.get(f"/api/v1/users/{self.user1_id}/profile",
-                              headers={"X-CSRFToken": csrf_token, "access_token": jwt},
-)
+        res = self.client.get(
+            f"/api/v1/users/{self.user1_id}/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+        )
         self.assertTrue(isinstance(res.get_json(), dict))
 
     def test_get_profile_returns_correct_fields(self):
@@ -167,9 +168,10 @@ class ProfileTestCase(RoutingTestCase):
         csrf = self.client.get("/api/v1/csrf-token")
         csrf_token = csrf.json["csrf_token"]
         jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
-        res = self.client.get(f"/api/v1/users/{self.user1_id}/profile",
-                              headers={"X-CSRFToken": csrf_token, "access_token": jwt},
-)
+        res = self.client.get(
+            f"/api/v1/users/{self.user1_id}/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+        )
 
         data = res.json
         data = decamelize(data)
@@ -198,9 +200,10 @@ class ProfileTestCase(RoutingTestCase):
         csrf = self.client.get("/api/v1/csrf-token")
         csrf_token = csrf.json["csrf_token"]
         jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
-        res = self.client.get(f"/api/v1/users/{non_existent_uuid}/profile",
-                              headers={"X-CSRFToken": csrf_token, "access_token": jwt},
-                              )
+        res = self.client.get(
+            f"/api/v1/users/{non_existent_uuid}/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+        )
         self.assertEqual(res.status_code, 404)
 
     def test_get_profile_invalid_uuid(self):
@@ -209,9 +212,10 @@ class ProfileTestCase(RoutingTestCase):
         csrf = self.client.get("/api/v1/csrf-token")
         csrf_token = csrf.json["csrf_token"]
         jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
-        res = self.client.get(f"/api/v1/users/{non_existent_uuid}/profile",
-                              headers={"X-CSRFToken": csrf_token, "access_token": jwt},
-                              )
+        res = self.client.get(
+            f"/api/v1/users/{non_existent_uuid}/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+        )
         self.assertEqual(res.status_code, 404)
 
     def test_update_profile_status_code(self):

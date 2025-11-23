@@ -9,12 +9,9 @@ from controllers.db_controller import BaseController
 from openapi_server import encoder
 from controllers.models.tag_term_model import Terms
 from controllers.management.admin import YesManModel, AiAdminModel
-<<<<<<< HEAD
 from controllers.rate_limiter import RateLimiter
 from controllers.db_rate_limit import DBRateLimit
-=======
 from controllers.management.email.email_scheduler import EmailScheduler
->>>>>>> main
 
 
 if not os.path.exists(".env"):
@@ -83,7 +80,6 @@ def create_app(engine=None, admin=None):
         app.app.config["Database"] = BaseController()
 
     app.app.config["RateLimiter"] = RateLimiter(DBRateLimit())
-
 
     # One-time (idempotent) seeding of common Terms into the database.
     # This runs on app start and will only insert missing terms.
