@@ -25,7 +25,7 @@ from .models.file_model import File
 from .models.admin_request_model import UserRequest
 from .models.tos_model import TOSAgreement
 from .management.admin import AdminModel
-from .management.email import EmailSender
+from .management.email.email_sender import EmailSender
 from uuid import UUID
 from werkzeug.utils import secure_filename
 from argon2 import PasswordHasher
