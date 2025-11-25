@@ -3,6 +3,7 @@
 from typing import List, Dict
 from connexion.exceptions import ProblemException
 from .models.tag_term_model import Tags, Terms
+from .decorators import login_required, role_required, rate_limit
 
 
 class SkillsController:
@@ -12,6 +13,8 @@ class SkillsController:
         """Initialize with a database instance."""
         self.db = database
 
+    @login_required
+    @rate_limit
     def get_tag(self, tag_id: int) -> Dict:
         """Return a tag by its id.
 
@@ -30,6 +33,8 @@ class SkillsController:
         finally:
             session.close()
 
+    @login_required
+    @rate_limit
     def get_term(self, term_id: int) -> Dict:
         """Return a term by its id.
 
@@ -48,6 +53,8 @@ class SkillsController:
         finally:
             session.close()
 
+    @login_required
+    @rate_limit
     def get_terms(self) -> List[Dict]:
         """Return all terms (id, name, type)."""
         session = self.db.get_session()
@@ -60,6 +67,7 @@ class SkillsController:
         finally:
             session.close()
 
+    @role_required(["Company"])
     def get_tags(self) -> List[str]:
         """Return all tag names (used as workFields)."""
         session = self.db.get_session()
@@ -72,6 +80,8 @@ class SkillsController:
         finally:
             session.close()
 
+    @role_required(["Company"])
+    @rate_limit
     def post_tag(self, name: str) -> tuple:
         """Create a tag if it doesn't exist, otherwise return existing id.
 

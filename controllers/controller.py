@@ -16,6 +16,7 @@ from flask import current_app
 from .skills_controller import SkillsController
 from .admin_controller import AdminController
 
+
 logger = get_logger()
 
 
@@ -54,6 +55,8 @@ def get_self_profile() -> Dict:
     try:
         profile_manager = ProfileController(current_app.config["Database"])
         return profile_manager.get_self_profile()
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except ValueError:
         return jsonify({"message": "No profile data found."}), 404
 
@@ -64,6 +67,8 @@ def get_user_profile(user_id: str) -> Dict:
         profile_manager = ProfileController(current_app.config["Database"])
         profile_data = profile_manager.get_profile_by_uid(user_id)
         return jsonify(profile_data), 200
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except ValueError as e:
         return jsonify({"message": str(e)}), 404
     except Exception as e:
@@ -78,6 +83,8 @@ def create_profile(body: Dict) -> Optional[Dict]:
         new_profile = profile_manager.create_profile(uid, body)
         logger.info("Profile has been created.", user=uid)
         return jsonify(new_profile), 201
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
     except Exception as e:
@@ -93,6 +100,8 @@ def update_profile(body: Dict) -> Optional[Dict]:
         logger.info("Profile has been updated.", user=uid)
         logger.debug(f"{body}", user=uid)
         return jsonify(profile_updated_data), 200
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except ValueError as e:
         return jsonify({"message": str(e)}), 404
     except Exception as e:
@@ -104,6 +113,8 @@ def upload_profile_images() -> Optional[Dict]:
     try:
         profile_manager = ProfileController(current_app.config["Database"])
         return profile_manager.upload_profile_images()
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except Exception as e:
         print(e)
         return jsonify({"message": "bad image passed"}), 405
@@ -115,6 +126,8 @@ def get_all_jobs(job_id: str = ""):
         job_manager = JobController(current_app.config["Database"])
         jobs = job_manager.get_all_jobs(job_id)
         return jsonify(jobs), 200
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
@@ -127,6 +140,8 @@ def post_job(body: Dict):
         new_job = job_manager.post_job(uid, body)
         logger.info(f"Job:{new_job['jobId']} has been posted.", user=uid)
         return jsonify(new_job), 201
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
     except ProblemException:
@@ -144,6 +159,8 @@ def get_filtered_jobs(body: Dict):
             body["userId"] = get_auth_user_id(request)
         filtered_jobs = job_manager.get_filtered_job(body)
         return jsonify(filtered_jobs), 200
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
     except Exception as e:
@@ -156,6 +173,8 @@ def get_bookmark_jobs():
         job_manager = JobController(current_app.config["Database"])
         bookmarked_jobs = job_manager.get_bookmark_jobs(get_auth_user_id(request))
         return jsonify(bookmarked_jobs), 200
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
@@ -174,6 +193,8 @@ def post_bookmark_jobs(body: Dict):
         )
         logger.debug(bookmarked_jobs)
         return jsonify(bookmarked_jobs), 201
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
     except Exception as e:
@@ -191,6 +212,8 @@ def delete_bookmark_jobs(job_id: int):
             user=user_id,
         )
         return jsonify(deleted_bookmark), 200
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
     except Exception as e:
@@ -204,6 +227,8 @@ def get_professor_connection():
         connection_controller = ProfessorController(current_app.config["Database"])
         professor_connection = connection_controller.get_connection(user_id)
         return jsonify(professor_connection), 200
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
     except Exception as e:
@@ -218,6 +243,8 @@ def post_new_connection(body: dict):
             get_auth_user_id(request), body
         )
         return jsonify(new_connection), 201
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
     except Exception as e:
@@ -233,6 +260,8 @@ def delete_connection(connection_id: int):
             user_id, connection_id
         )
         return jsonify(deleted_connection), 200
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
     except Exception as e:
@@ -245,6 +274,8 @@ def get_professor_annoucement():
         connection_controller = ProfessorController(current_app.config["Database"])
         annoucements = connection_controller.get_annoucement()
         return jsonify(annoucements), 200
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
     except Exception as e:
@@ -253,30 +284,39 @@ def get_professor_annoucement():
 
 def create_job_application(job_id: int) -> Optional[Dict]:
     """Create a job application in the database."""
-    app_manager = JobApplicationController(current_app.config["Database"])
-    job_application = app_manager.create_job_application(job_id)
-    if job_application[1] == 200:
-        logger.info(
-            f"Student: {job_application[0]['studentId']} - "
-            f"Job Application:{job_application[0]['id']} "
-            f"for Job:{job_id} has been created."
-        )
-        logger.debug(job_application)
-    else:
-        logger.warning(f"{job_application}")
-    return job_application
+    try:
+        app_manager = JobApplicationController(current_app.config["Database"])
+        job_application = app_manager.create_job_application(job_id)
+        if job_application[1] == 200:
+            logger.info(
+                f"Student: {job_application[0]['studentId']} - "
+                f"Job Application:{job_application[0]['id']} "
+                f"for Job:{job_id} has been created."
+            )
+            logger.debug(job_application)
+        else:
+            logger.warning(f"{job_application}")
+        return job_application
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
 
 
 def fetch_user_job_applications() -> Optional[Dict]:
     """Fetch all job applications created by the current user."""
-    app_manager = JobApplicationController(current_app.config["Database"])
-    return app_manager.fetch_user_job_applications()
+    try:
+        app_manager = JobApplicationController(current_app.config["Database"])
+        return app_manager.fetch_user_job_applications()
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
 
 
 def fetch_job_applications_from_job(job_id: int) -> Optional[Dict]:
     """Fetch all job applications related to a job post by job ID."""
-    app_manager = JobApplicationController(current_app.config["Database"])
-    return app_manager.fetch_job_application_from_job_post(job_id)
+    try:
+        app_manager = JobApplicationController(current_app.config["Database"])
+        return app_manager.fetch_job_application_from_job_post(job_id)
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
 
 
 def get_tag_by_id(tag_id: int):
@@ -285,6 +325,8 @@ def get_tag_by_id(tag_id: int):
         skills = SkillsController(current_app.config["Database"])
         tag = skills.get_tag(tag_id)
         return jsonify(tag), 200
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except ValueError as e:
         return jsonify({"message": str(e)}), 404
     except Exception as e:
@@ -297,6 +339,8 @@ def get_term_by_id(term_id: int):
         skills = SkillsController(current_app.config["Database"])
         term = skills.get_term(term_id)
         return jsonify(term), 200
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except ValueError as e:
         return jsonify({"message": str(e)}), 404
     except Exception as e:
@@ -309,6 +353,8 @@ def get_all_terms():
         skills = SkillsController(current_app.config["Database"])
         terms = skills.get_terms()
         return jsonify(terms), 200
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
@@ -334,6 +380,8 @@ def post_tag(body: Dict):
 
         status = 201 if created else 200
         return jsonify({"id": tag_id}), status
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
     except Exception as e:
@@ -342,8 +390,11 @@ def post_tag(body: Dict):
 
 def update_job_applications_status(job_id: int, body: list[Dict]) -> Optional[Dict]:
     """Update multiple job applications' status from the provided job."""
-    app_manager = JobApplicationController(current_app.config["Database"])
-    return app_manager.update_job_applications_status(job_id, body)
+    try:
+        app_manager = JobApplicationController(current_app.config["Database"])
+        return app_manager.update_job_applications_status(job_id, body)
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
 
 
 def get_company():
@@ -361,14 +412,20 @@ def get_all_companies():
 
 def get_file(file_id: str) -> Response:
     """Get a file for viewing, based on the file id."""
-    file_manager = FileController(current_app.config["Database"])
-    return file_manager.get_file(file_id)
+    try:
+        file_manager = FileController(current_app.config["Database"])
+        return file_manager.get_file(file_id)
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
 
 
 def download_file(file_id: str) -> Response:
     """Get a file for downloading, based on the file id."""
-    file_manager = FileController(current_app.config["Database"])
-    return file_manager.download_file(file_id)
+    try:
+        file_manager = FileController(current_app.config["Database"])
+        return file_manager.download_file(file_id)
+    except Warning as e:
+        return jsonify({"message": str(e)}), 429
 
 
 def get_all_user_request() -> Optional[Dict]:

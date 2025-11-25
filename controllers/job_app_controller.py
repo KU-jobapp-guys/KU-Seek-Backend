@@ -4,7 +4,7 @@ import os
 from typing import Dict
 from uuid import UUID
 from jwt import decode
-from .decorators import role_required
+from .decorators import role_required, rate_limit
 from flask import request
 from decouple import config, Csv
 from sqlalchemy.orm import joinedload
@@ -41,6 +41,7 @@ class JobApplicationController:
         self.db = database
 
     @role_required(["Student"])
+    @rate_limit
     def create_job_application(self, job_id: int):
         """Create a new job application from the request body."""
         user_token = request.headers.get("access_token")
@@ -247,6 +248,7 @@ class JobApplicationController:
             return models.ErrorMessage("Failed to create job application"), 404
 
     @role_required(["Student"])
+    @rate_limit
     def fetch_user_job_applications(self):
         """Fetch all job applications belonging to the owner."""
         user_token = request.headers.get("access_token")
@@ -320,6 +322,7 @@ class JobApplicationController:
         return formatted_apps, 200
 
     @role_required(["Company"])
+    @rate_limit
     def fetch_job_application_from_job_post(self, job_id: int):
         """Fetch all job applications for a specific job post."""
         user_token = request.headers.get("access_token")
@@ -390,6 +393,7 @@ class JobApplicationController:
         return formatted_apps, 200
 
     @role_required(["Company"])
+    @rate_limit
     def update_job_applications_status(self, job_id: int, body: list[Dict]):
         """
         Update the status of multiple job applications.
@@ -504,5 +508,4 @@ class JobApplicationController:
 
         except Exception as e:
             session.close()
-            print(e)
             return models.ErrorMessage(f"Database exception occurred: {e}"), 400
