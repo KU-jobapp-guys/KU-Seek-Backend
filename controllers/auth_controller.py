@@ -1,6 +1,7 @@
 """Module for sending csrf-tokens."""
 
 import random
+import shutil
 import jwt
 import json
 import os
@@ -18,11 +19,17 @@ from jwt import encode, decode
 from swagger_server.openapi_server import models
 from datetime import datetime, timedelta, UTC
 from .models.user_model import User, Student, Company, Professor
+from .models.profile_model import Profile
 from .models.token_model import Token
+from .models.tos_model import TOSAgreement
+from .models.file_model import File
+from .models.admin_request_model import UserRequest
 from .management.admin import AdminModel
-from .management.email import EmailSender
+from .management.email.email_sender import EmailSender
 from uuid import UUID
 from werkzeug.utils import secure_filename
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
 
 
 SECRET_KEY = config("SECRET_KEY", default="good-key123")
@@ -56,6 +63,7 @@ class UserCredentials(TypedDict):
     google_uid: str
     email: str
     user_type: str
+    user_id: str
 
 
 def get_csrf_token():
@@ -94,6 +102,24 @@ def logout():
         current_app.config["Database"], current_app.config["Admin"]
     )
     return auth_controller.logout_user(refresh_token)
+
+
+def handle_credential_login(body: Dict):
+    """
+    Handle user authentication with local credentials.
+
+    Login a user using local credentials. This method fails if no such
+    user exsists in the database.
+
+    Args:
+        body: The request body consisting of {"email":"", "password":""}
+
+    Returns: A json containing the users unique UID, and auth tokens.
+    """
+    auth_controller = AuthenticationController(
+        current_app.config["Database"], current_app.config["Admin"]
+    )
+    return auth_controller.credential_login(body["email"], body["password"])
 
 
 def handle_authentication(body: Dict):
@@ -163,7 +189,7 @@ def handle_authentication(body: Dict):
             user = auth_controller.get_user(id_info["sub"])
             if user is None:
                 raise ValueError("User was not found")
-            user_jwt, refresh, user_type = auth_controller.login_user(user)
+            user_jwt, refresh, user_type, user_id = auth_controller.login_user(user)
 
         else:
             user_info = form.get("user_info")
@@ -180,15 +206,66 @@ def handle_authentication(body: Dict):
             validation_res = auth_controller.admin.verify_user(user_info, val_filepath)
             validation_res = json.loads(validation_res)
             print("AI result:", validation_res)
-            if not validation_res["valid"]:
-                raise ValueError("User did not pass validation")
 
             # reformat info like UserCredentails class
             user_info["email"] = id_info["email"]
             user_info["google_uid"] = id_info["sub"]
             user_info["user_type"] = validation_res["role"]
+            if not validation_res["valid"]:
+                user_info["user_type"] = "staff"
+
             user = auth_controller.register_user(user_info, validation_res["role"])
-            user_jwt, refresh, user_type = auth_controller.login_user(user)
+            user_jwt, refresh, user_type, user_id = auth_controller.login_user(user)
+
+            session = current_app.config["Database"].get_session()
+
+            # log the verification file
+            file_name = secure_filename(validation_file.filename)
+            validation_file_model = File(
+                owner=UUID(user_id),
+                file_name=file_name,
+                file_path="temp",
+                file_type="validation_file",
+            )
+            session.add(validation_file_model)
+            session.flush()  # Get the ID
+
+            # save file with ID in name
+            file_extension = os.path.splitext(file_name)[1]
+            file_path = f"{BASE_FILE_PATH}/{validation_file_model.id}{file_extension}"
+            full_file_path = os.path.join(os.getcwd(), file_path)
+            validation_file_model.file_path = file_path
+
+            # save the file and remove the temporary file
+            shutil.copy2(val_filepath, full_file_path)
+            os.remove(val_filepath)
+
+            session.commit()
+
+            # create a user creation request
+
+            user_request = UserRequest(
+                user_id=UUID(user_id),
+                requested_type=user_info["user_type"],
+                verification_document=validation_file_model.id,
+                denial_reason=validation_res["reason"],
+            )
+
+            session.add(user_request)
+            session.commit()
+
+            profile = Profile(
+                user_id=UUID(user_id),
+                first_name=user_info.get("firstName", ""),
+                last_name=user_info.get("lastName", ""),
+                user_type=user_type,
+                email=user_info["email"],
+                contact_email=user_info["email"],
+            )
+            session.add(profile)
+            session.commit()
+
+            session.close()
 
             # send a registration email
             if user_info["user_type"] == "student":
@@ -205,7 +282,10 @@ def handle_authentication(body: Dict):
                 pass
 
         response = make_response(
-            models.UserCredentials(user_jwt, id_info["email"], user_type).to_dict(), 200
+            models.UserCredentials(
+                user_jwt, id_info["email"], user_type, user_id
+            ).to_dict(),
+            200,
         )
         # set the refresh token as a HttpOnly cookie
         response.set_cookie(
@@ -331,9 +411,11 @@ class AuthenticationController:
         session.commit()
         user = session.query(User).where(User.id == uid).one()
         user_type = user.type.value.lower()
+        user_id = str(uid)
         session.close()
 
-        return auth_token, refresh_token, user_type
+        current_app.config["RateLimiter"].unban_user(str(uid))
+        return auth_token, refresh_token, user_type, user_id
 
     def get_user(self, google_uid):
         """Return the user id with the matching google_uid."""
@@ -359,8 +441,9 @@ class AuthenticationController:
 
         Returns: The user's id in the database
         """
-        keys = list(UserCredentials.__annotations__.keys())
-        valid_keys = all(key in credentials for key in keys)
+        required_keys = ["google_uid", "email", "user_type"]
+        print(credentials)
+        valid_keys = all(key in credentials for key in required_keys)
         if not valid_keys:
             raise TypeError("Invalid credentials.")
 
@@ -394,6 +477,10 @@ class AuthenticationController:
             )
             session.add(company)
             session.commit()
+
+        tos = TOSAgreement(user_id=user_id, agree_status=True)
+        session.add(tos)
+        session.commit()
 
         session.close()
 
@@ -434,3 +521,35 @@ class AuthenticationController:
         )
 
         return response
+
+    def credential_login(self, email: str, password: str):
+        """Login the user using the provided email and password."""
+        session = self.db.get_session()
+        try:
+            user = session.query(User).where(User.email == email).one_or_none()
+        except Exception:
+            session.close()
+            return models.ErrorMessage("Database error occurred"), 400
+
+        if not user:
+            session.close()
+            return models.ErrorMessage(
+                "Could not find user with the provided email"
+            ), 404
+
+        session.close()
+        try:
+            ph = PasswordHasher()
+            if ph.verify(user.password, password):
+                user_jwt, refresh, user_type, _ = self.login_user(user.id)
+                response = make_response(
+                    models.UserCredentials(user_jwt, email, user_type).to_dict(), 200
+                )
+                # set the refresh token as a HttpOnly cookie
+                response.set_cookie(
+                    "refresh_token", refresh, max_age=timedelta(days=30), httponly=True
+                )
+
+                return response
+        except VerifyMismatchError:
+            return models.ErrorMessage("Password is invalid"), 403

@@ -19,15 +19,16 @@ jobs:
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
           echo "DB_USER=${{ secrets.DB_USER }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
           echo "DB_HOST=127.0.0.1" >> .env
           echo "DB_PORT=12000" >> .env
           echo "TESTING_DB=test_db" >> .env
           echo "SECRET_KEY=sadness_ahead" >> .env
 
-      - name: Start database
-        run: docker compose up -d db
+      - name: Start services
+        run: docker compose up -d
 
-      - name: Wait for database
+      - name: Wait for MySQL
         run: |
           echo "Waiting for MySQL to be ready..."
           timeout 90 bash -c 'until docker compose exec -T db mysqladmin ping -h 127.0.0.1 -uroot -p${{ env.DB_PASSWORD }} --silent; do sleep 2; done'
