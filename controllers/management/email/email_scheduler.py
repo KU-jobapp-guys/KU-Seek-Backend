@@ -34,10 +34,7 @@ class EmailScheduler:
 
     def _worker(self):
         """Background worker that processes emails at regular intervals."""
-        # TODO: Integrate logging
         while not self._stop_flag.is_set():
-            # this should REALLY be a log in the logfile but no logger :(
-            print("Running email batch job", flush=True)
             try:
                 session = self._database.get_session()
 

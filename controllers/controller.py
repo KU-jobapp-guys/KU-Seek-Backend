@@ -13,6 +13,7 @@ from .file_controller import FileController
 from typing import Dict, Optional
 from logger.custom_logger import get_logger
 from flask import current_app
+from .history_controller import HistoryController
 from .skills_controller import SkillsController
 from .admin_controller import AdminController
 
@@ -317,6 +318,20 @@ def fetch_job_applications_from_job(job_id: int) -> Optional[Dict]:
         return app_manager.fetch_job_application_from_job_post(job_id)
     except Warning as e:
         return jsonify({"message": str(e)}), 429
+
+
+def get_student_histories():
+    """Return view histories for the authenticated student."""
+    history_manager = HistoryController(current_app.config["Database"])
+    return history_manager.get_histories(get_auth_user_id(request))
+
+
+def post_student_history(body: Dict):
+    """Create or update a student view history entry."""
+    history_manager = HistoryController(current_app.config["Database"])
+    if isinstance(body, dict):
+        body["user_id"] = get_auth_user_id(request)
+    return history_manager.post_history(body)
 
 
 def get_tag_by_id(tag_id: int):
