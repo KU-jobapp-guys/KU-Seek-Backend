@@ -33,7 +33,9 @@ class ProfessorController:
         try:
             user_uuid = UUID(user_id)
         except Exception:
-            return models.ErrorMessage("Invalid user_id format. Expected UUID string."), 400
+            return models.ErrorMessage(
+                "Invalid user_id format. Expected UUID string."
+            ), 400
 
         session = self.db.get_session()
         try:
@@ -167,7 +169,9 @@ class ProfessorController:
         try:
             user_uuid = UUID(user_id)
         except Exception:
-            return models.ErrorMessage("Invalid user_id format. Expected UUID string."), 400
+            return models.ErrorMessage(
+                "Invalid user_id format. Expected UUID string."
+            ), 400
 
         if not body:
             return models.ErrorMessage("Request body cannot be empty."), 400
@@ -197,7 +201,8 @@ class ProfessorController:
                 session.close()
                 return (
                     models.ErrorMessage(
-                        f"Connection already exists between professor and company {body['company_id']}."
+                        f"Connection already exists between\
+                              professor and company {body['company_id']}."
                     ),
                     409,
                 )
@@ -248,7 +253,9 @@ class ProfessorController:
         try:
             user_uuid = UUID(user_id)
         except Exception:
-            return models.ErrorMessage("Invalid user_id format. Expected UUID string."), 400
+            return models.ErrorMessage(
+                "Invalid user_id format. Expected UUID string."
+            ), 400
 
         session = self.db.get_session()
         try:
@@ -275,7 +282,8 @@ class ProfessorController:
                 session.close()
                 return (
                     models.ErrorMessage(
-                        f"Connection with id '{connection_id}' not found for this professor."
+                        f"Connection with id '{connection_id}'\
+                              not found for this professor."
                     ),
                     404,
                 )

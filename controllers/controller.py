@@ -198,9 +198,7 @@ def delete_bookmark_jobs(job_id: int):
             return _normalize_response(deleted_bookmark, 200)
 
         bid = deleted_bookmark.get("id") if isinstance(deleted_bookmark, dict) else None
-        logger.info(
-            f"Bookmark:{bid} for Job:{job_id} has been deleted.", user=user_id
-        )
+        logger.info(f"Bookmark:{bid} for Job:{job_id} has been deleted.", user=user_id)
         return _normalize_response(deleted_bookmark, 200)
     except Warning as e:
         return jsonify({"message": str(e)}), 429

@@ -366,7 +366,7 @@ class AuthenticationController:
 
             return response
 
-        except Exception as e:
+        except Exception:
             session.rollback()
             session.close()
             raise ProblemException(
@@ -495,7 +495,7 @@ class AuthenticationController:
         """
         try:
             refresh_id = decode(jwt=refresh_token, key=SECRET_KEY, algorithms=["HS512"])
-        except Exception as e:
+        except Exception:
             return models.ErrorMessage("Could not decode JWT"), 400
 
         session = self.db.get_session()

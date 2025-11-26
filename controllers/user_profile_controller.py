@@ -72,9 +72,7 @@ class ProfileController:
             except Exception:
                 session.close()
                 return (
-                    models.ErrorMessage(
-                        f"Profile for user_id={user_id} not found"
-                    ),
+                    models.ErrorMessage(f"Profile for user_id={user_id} not found"),
                     404,
                 )
 
@@ -500,7 +498,7 @@ class ProfileController:
 
         if not instance:
             raise ValueError(f"{model_class.__name__} for user_id={user_id} not found")
-       
+
         forbidden_keys = {"id", "user_id"}
         for key, value in data.items():
             if key in forbidden_keys:
