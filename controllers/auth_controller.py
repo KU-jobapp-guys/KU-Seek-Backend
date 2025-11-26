@@ -21,7 +21,7 @@ from datetime import datetime, timedelta, UTC
 from .models.user_model import User, Student, Company, Professor
 from .models.profile_model import Profile
 from .models.token_model import Token
-from .models.tos_model import TOSAgreement
+from .models.tos_model import TOSAgreement as TOSAgreementModel
 from .models.file_model import File
 from .models.admin_request_model import UserRequest
 from .management.admin import AdminModel
@@ -475,7 +475,7 @@ class AuthenticationController:
             session.add(company)
             session.commit()
 
-        tos = TOSAgreement(user_id=user_id, agree_status=True)
+        tos = TOSAgreementModel(user_id=user_id, agree_status=True)
         session.add(tos)
         session.commit()
 
