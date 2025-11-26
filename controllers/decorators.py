@@ -127,3 +127,29 @@ def rate_limit(func):
         return func(*args, **kwargs)
 
     return run_function
+
+def login_rate_limit(func):
+    """Apply login rate-limiting to an API endpoint."""
+
+    @wraps(func)
+    def run_function(*args, **kwargs):
+        ip_address = request.remote_addr
+
+        rate_limiter = current_app.config["RateLimiter"]
+        if not rate_limiter.attempt_login(ip_address):
+            return models.ErrorMessage("Too many login attempts. Please try again later."), 429
+
+        return func(*args, **kwargs)
+
+    return run_function
+
+def unban_user(func):
+    """Unban a user from the rate limiter."""
+    @wraps(func)
+    def run_function(*args, **kwargs):
+        return_values = func(*args, **kwargs)
+        rate_limiter = current_app.config["RateLimiter"]
+        rate_limiter.unban_user(return_values[3])
+        return return_values
+
+    return run_function
