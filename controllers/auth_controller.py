@@ -24,7 +24,6 @@ from .models.token_model import Token
 from .models.tos_model import TOSAgreement
 from .models.file_model import File
 from .models.admin_request_model import UserRequest
-from .models.tos_model import TOSAgreement
 from .management.admin import AdminModel
 from .decorators import login_rate_limit, unban_user
 from .management.email.email_sender import EmailSender
