@@ -222,7 +222,6 @@ class ProfessorController:
                 if connection.created_at
                 else None,
             }
-            session.close()
             return connection_data
 
         except Exception as e:
@@ -230,10 +229,7 @@ class ProfessorController:
             logger.exception("Database error creating connection: %s", e)
             return models.ErrorMessage("Database Error"), 500
         finally:
-            try:
-                session.close()
-            except Exception:
-                pass
+            session.close()
 
     @role_required(["Professor"])
     @rate_limit
@@ -308,7 +304,4 @@ class ProfessorController:
             logger.exception("Database error deleting connection: %s", e)
             return models.ErrorMessage("Database Error"), 500
         finally:
-            try:
-                session.close()
-            except Exception:
-                pass
+            session.close()

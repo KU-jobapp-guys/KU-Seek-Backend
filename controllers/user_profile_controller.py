@@ -279,6 +279,7 @@ class ProfileController:
             logger.exception("Database error updating profile for user_id=%s", user_id)
             session.close()
             return models.ErrorMessage("Database error updating profile"), 500
+
         finally:
             session.close()
         return self.get_profile_by_uid(user_id)
@@ -384,11 +385,7 @@ class ProfileController:
                         }
                     )
 
-                print("PEAAA: ", profile_file_model.id)
-                print("IS THERE PROFILE ", profile)
-                print("IMG????: ", profile.profile_img)
                 profile.profile_img = str(profile_file_model.id)
-                print("IMG SHOULDN'T BLANK: ", profile.profile_img)
 
             # Handle banner image
             if banner_img:
