@@ -370,7 +370,7 @@ class AuthenticationController:
             session.rollback()
             session.close()
             raise ProblemException(
-                status=500, title="Server Error", detail="Database Error occured"
+                status=500, title="Server Error", detail="Database Error occurred"
             )
 
     def login_user(self, uid: str) -> Dict[str, str]:

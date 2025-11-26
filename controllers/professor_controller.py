@@ -32,7 +32,7 @@ class ProfessorController:
         """
         try:
             user_uuid = UUID(user_id)
-        except Exception:
+        except (ValueError, TypeError):
             return models.ErrorMessage(
                 "Invalid user_id format. Expected UUID string."
             ), 400
@@ -64,9 +64,9 @@ class ProfessorController:
                 for conn in professor_connections
             ]
 
-        except Exception as e:
+        except Exception:
             session.rollback()
-            logger.exception("Database error getting connections: %s", e)
+            logger.exception("Database error getting connections")
             return models.ErrorMessage("Database Error"), 500
         finally:
             session.close()
@@ -146,9 +146,9 @@ class ProfessorController:
 
             return results
 
-        except Exception as e:
+        except Exception:
             session.rollback()
-            logger.exception("Database error getting announcements: %s", e)
+            logger.exception("Database error getting announcements")
             return models.ErrorMessage("Database Error"), 500
         finally:
             session.close()
@@ -168,7 +168,7 @@ class ProfessorController:
         """
         try:
             user_uuid = UUID(user_id)
-        except Exception:
+        except (ValueError, TypeError):
             return models.ErrorMessage(
                 "Invalid user_id format. Expected UUID string."
             ), 400
@@ -201,8 +201,8 @@ class ProfessorController:
                 session.close()
                 return (
                     models.ErrorMessage(
-                        f"Connection already exists between\
-                              professor and company {body['company_id']}."
+                        f"Connection already exists between professor "
+                        f"and company {body['company_id']}."
                     ),
                     409,
                 )
@@ -222,18 +222,14 @@ class ProfessorController:
                 if connection.created_at
                 else None,
             }
-            session.close()
             return connection_data
 
-        except Exception as e:
+        except Exception:
             session.rollback()
-            logger.exception("Database error creating connection: %s", e)
+            logger.exception("Database error creating connection")
             return models.ErrorMessage("Database Error"), 500
         finally:
-            try:
-                session.close()
-            except Exception:
-                pass
+            session.close()
 
     @role_required(["Professor"])
     @rate_limit
@@ -252,7 +248,7 @@ class ProfessorController:
         """
         try:
             user_uuid = UUID(user_id)
-        except Exception:
+        except (ValueError, TypeError):
             return models.ErrorMessage(
                 "Invalid user_id format. Expected UUID string."
             ), 400
@@ -282,8 +278,8 @@ class ProfessorController:
                 session.close()
                 return (
                     models.ErrorMessage(
-                        f"Connection with id '{connection_id}'\
-                              not found for this professor."
+                        f"Connection with id '{connection_id}' "
+                        f"not found for this professor."
                     ),
                     404,
                 )
@@ -299,16 +295,12 @@ class ProfessorController:
 
             session.delete(connection)
             session.commit()
-            session.close()
 
             return connection_data
 
-        except Exception as e:
+        except Exception:
             session.rollback()
-            logger.exception("Database error deleting connection: %s", e)
+            logger.exception("Database error deleting connection")
             return models.ErrorMessage("Database Error"), 500
         finally:
-            try:
-                session.close()
-            except Exception:
-                pass
+            session.close()

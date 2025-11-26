@@ -69,7 +69,7 @@ class ProfileController:
         try:
             try:
                 user_uuid = UUID(user_id)
-            except Exception:
+            except (ValueError, TypeError):
                 session.close()
                 return (
                     models.ErrorMessage(f"Profile for user_id={user_id} not found"),

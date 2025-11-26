@@ -61,9 +61,9 @@ class HistoryController:
 
             return results
 
-        except Exception as e:
+        except Exception:
             session.rollback()
-            logger.exception("Database error in get_histories: %s", e)
+            logger.exception("Database error in get_histories")
             return models.ErrorMessage("Database Error"), 500
         finally:
             session.close()
@@ -167,9 +167,9 @@ class HistoryController:
                 else None,
             }
 
-        except Exception as e:
+        except Exception:
             session.rollback()
-            logger.exception("Database error in post_history: %s", e)
+            logger.exception("Database error in post_history")
             return models.ErrorMessage("Database Error"), 500
         finally:
             session.close()
