@@ -9,7 +9,7 @@ class RateLimiter:
         self._rate_limit = rate_limit
         self._interval = interval
         self.__db_rate_limit = db_rate_limit
-        
+
         self._login_rate_limit = 5
         self._login_interval = 15 * 60  # 15 minutes
 
