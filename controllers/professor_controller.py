@@ -49,7 +49,6 @@ class ProfessorController:
             )
 
             if not professor_connections:
-                session.close()
                 return []
 
             return [
@@ -185,7 +184,6 @@ class ProfessorController:
             )
 
             if not professor:
-                session.close()
                 return models.ErrorMessage("Professor not found"), 404
 
             existing_connection = (
@@ -198,7 +196,6 @@ class ProfessorController:
             )
 
             if existing_connection:
-                session.close()
                 return (
                     models.ErrorMessage(
                         f"Connection already exists between professor "
@@ -262,7 +259,6 @@ class ProfessorController:
             )
 
             if not professor:
-                session.close()
                 return models.ErrorMessage("Professor not found"), 404
 
             connection = (
@@ -275,7 +271,6 @@ class ProfessorController:
             )
 
             if not connection:
-                session.close()
                 return (
                     models.ErrorMessage(
                         f"Connection with id '{connection_id}' "

@@ -70,7 +70,6 @@ class ProfileController:
             try:
                 user_uuid = UUID(user_id)
             except (ValueError, TypeError):
-                session.close()
                 return (
                     models.ErrorMessage(f"Profile for user_id={user_id} not found"),
                     404,
