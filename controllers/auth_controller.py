@@ -223,13 +223,10 @@ def handle_authentication(body: Dict):
 def test_login(body: Dict):
     """
     Test-only login endpoint.
-
-    Accepts a JSON body with either `user_id` (UUID string) or `google_uid`.
-    Returns an access token and sets the refresh_token cookie. This endpoint
-    is only available when the environment variable `ENABLE_TEST_LOGIN` is
-    set to a truthy value (true/1/yes). Intended for local end-to-end tests
-    and must NOT be enabled in production.
+    Accepts a JSON body with either `user_id` (32-char hex string) or `google_uid`.
+    Returns an access token and sets the refresh_token cookie.
     """
+    # Check if test login is enabled
     allow = config("ENABLE_TEST_LOGIN", default="True")
     if str(allow).lower() not in ("1", "true", "yes"):
         return models.ErrorMessage("Test login endpoint disabled"), 404
@@ -244,25 +241,38 @@ def test_login(body: Dict):
     if not user_id and not google_uid:
         return models.ErrorMessage("Missing user_id or google_uid"), 400
 
-    try:
-        if google_uid and not user_id:
-            uid = auth_controller.get_user(google_uid)
-            if not uid:
-                return models.ErrorMessage("User not found"), 404
-        else:
-            uid = user_id
+    # Convert user_id string to UUID object for Token model
+    uid = None
+    if user_id:
+        try:
+            # Accept 32-character hex string (no hyphens) and convert to UUID
+            uid = UUID(hex=user_id)
+        except ValueError:
+            return models.ErrorMessage("Invalid user_id format"), 400
+    elif google_uid:
+        uid = auth_controller.get_user(google_uid)
+        if not uid:
+            return models.ErrorMessage("User not found"), 404
 
+    try:
+        # Login user and get access + refresh tokens
         access, refresh, user_type = auth_controller.login_user(uid)
 
-        # Return a simple JSON payload and set refresh_token cookie
-        response = make_response(jsonify(access_token=access, refresh_token=refresh), 200)
+        # Return JSON response and set refresh_token cookie
+        response = make_response(
+            jsonify(access_token=access, refresh_token=refresh), 200
+        )
         response.set_cookie(
-            "refresh_token", refresh, max_age=timedelta(days=30), httponly=True
+            "refresh_token",
+            refresh,
+            max_age=timedelta(days=30),
+            httponly=True,
+            samesite="Lax",
         )
         return response
+
     except Exception as e:
         return models.ErrorMessage(f"Could not create test login token, {e}"), 400
-
 
 class AuthenticationController:
     """Controller for fetching database authentication credentials."""

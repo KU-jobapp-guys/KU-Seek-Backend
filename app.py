@@ -56,14 +56,20 @@ def create_app(engine=None, admin=None):
     # setup CORS Allowed origins
     CORS(
         app.app,
-        resources={
-            r"/*": {
-                "origins": config(
-                    "ALLOWED_ORIGINS", cast=Csv(), default="http://localhost:5173"
-                )
-            }
-        },
+        resources={r"/*": {"origins": [
+            "http://localhost:5173",
+            "http://localhost:8080",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:8080",
+        ]}},
         supports_credentials=True,
+        allow_headers=[
+            "Content-Type",
+            "X-CSRFToken",
+            "Authorization",
+        ],
+        expose_headers=["Content-Type"],
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     )
     # setup CSRF (disabling for now)
     app.app.secret_key = config("SECRET_KEY", default="very-secure-secret-key")
