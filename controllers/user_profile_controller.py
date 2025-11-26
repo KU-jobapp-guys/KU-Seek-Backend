@@ -500,9 +500,11 @@ class ProfileController:
 
         if not instance:
             raise ValueError(f"{model_class.__name__} for user_id={user_id} not found")
-
-        # Update only fields that exist on the model
+       
+        forbidden_keys = {"id", "user_id"}
         for key, value in data.items():
+            if key in forbidden_keys:
+                continue
             if hasattr(instance, key):
                 setattr(instance, key, value)
 
