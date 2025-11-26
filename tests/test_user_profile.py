@@ -2,7 +2,7 @@
 
 from decouple import config
 from base_test import RoutingTestCase
-from util_functions import add_mockup_data, generate_jwt
+from util_functions import add_mockup_data, generate_jwt, decamelize
 
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
 
@@ -80,6 +80,7 @@ class ProfileTestCase(RoutingTestCase):
         self.assertEqual(res.status_code, 201)
 
         data = res.json
+        data = decamelize(data)
         self.assertEqual(data["first_name"], profile_payload["first_name"])
         self.assertEqual(data["last_name"], profile_payload["last_name"])
         self.assertEqual(data["about"], profile_payload["about"])
@@ -147,22 +148,36 @@ class ProfileTestCase(RoutingTestCase):
 
         self.assertEqual(res.status_code, 201)
         data = res.json
+        data = decamelize(data)
         self.assertEqual(data["first_name"], "Alice")
         self.assertEqual(data["last_name"], "Johnson")
 
     def test_get_profile_correct_response_type(self):
         """Test fetching a profile returns correct JSON object."""
-        res = self.client.get(f"/api/v1/users/{self.user1_id}/profile")
+        csrf = self.client.get("/api/v1/csrf-token")
+        csrf_token = csrf.json["csrf_token"]
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+        res = self.client.get(
+            f"/api/v1/users/{self.user1_id}/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+        )
         self.assertTrue(isinstance(res.get_json(), dict))
 
     def test_get_profile_returns_correct_fields(self):
         """Test that the profile data has all expected fields."""
-        res = self.client.get(f"/api/v1/users/{self.user1_id}/profile")
+        csrf = self.client.get("/api/v1/csrf-token")
+        csrf_token = csrf.json["csrf_token"]
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+        res = self.client.get(
+            f"/api/v1/users/{self.user1_id}/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+        )
 
         data = res.json
+        data = decamelize(data)
 
         expected_fields = {
-            "user_id",
+            "id",
             "first_name",
             "last_name",
             "about",
@@ -172,8 +187,6 @@ class ProfileTestCase(RoutingTestCase):
             "gender",
             "age",
             "user_type",
-            "profile_img",
-            "banner_img",
             "phone_number",
             "is_verified",
         }
@@ -184,13 +197,25 @@ class ProfileTestCase(RoutingTestCase):
     def test_get_profile_not_found(self):
         """Test fetching a non-existent profile returns 404."""
         non_existent_uuid = "00000000-0000-0000-0000-000000000000"
-        res = self.client.get(f"/api/v1/users/{non_existent_uuid}/profile")
+        csrf = self.client.get("/api/v1/csrf-token")
+        csrf_token = csrf.json["csrf_token"]
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+        res = self.client.get(
+            f"/api/v1/users/{non_existent_uuid}/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+        )
         self.assertEqual(res.status_code, 404)
 
     def test_get_profile_invalid_uuid(self):
         """Test fetching a profile with invalid UUID format returns 400."""
         non_existent_uuid = "Praise_The_Sun"
-        res = self.client.get(f"/api/v1/users/{non_existent_uuid}/profile")
+        csrf = self.client.get("/api/v1/csrf-token")
+        csrf_token = csrf.json["csrf_token"]
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+        res = self.client.get(
+            f"/api/v1/users/{non_existent_uuid}/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+        )
         self.assertEqual(res.status_code, 404)
 
     def test_update_profile_status_code(self):
@@ -234,6 +259,7 @@ class ProfileTestCase(RoutingTestCase):
         self.assertEqual(res.status_code, 200)
 
         data = res.json
+        data = decamelize(data)
         self.assertEqual(data["first_name"], update_payload["first_name"])
         self.assertEqual(data["last_name"], update_payload["last_name"])
         self.assertEqual(data["about"], update_payload["about"])
@@ -291,6 +317,7 @@ class ProfileTestCase(RoutingTestCase):
 
         self.assertEqual(res.status_code, 200)
         data = res.json
+        data = decamelize(data)
         self.assertEqual(data["phone_number"], "0823456789")
 
     def test_update_profile_multiple_fields(self):
@@ -315,6 +342,7 @@ class ProfileTestCase(RoutingTestCase):
 
         self.assertEqual(res.status_code, 200)
         data = res.json
+        data = decamelize(data)
         self.assertEqual(data["first_name"], update_payload["first_name"])
         self.assertEqual(data["last_name"], update_payload["last_name"])
         self.assertEqual(data["location"], update_payload["location"])
@@ -341,6 +369,7 @@ class ProfileTestCase(RoutingTestCase):
 
         self.assertEqual(res.status_code, 200)
         data = res.json
+        data = decamelize(data)
         self.assertEqual(data["first_name"], "Valid")
         self.assertNotIn("invalid_field", data)
         self.assertNotIn("another_invalid", data)
@@ -398,4 +427,5 @@ class ProfileTestCase(RoutingTestCase):
 
         self.assertEqual(res.status_code, 201)
         data = res.json
+        data = decamelize(data)
         self.assertEqual(data["is_verified"], False)

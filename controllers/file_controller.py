@@ -3,7 +3,7 @@
 import os
 
 from flask import send_from_directory
-from .decorators import login_required
+from .decorators import login_required, rate_limit
 from decouple import config
 from swagger_server.openapi_server import models
 from .models.file_model import File
@@ -22,6 +22,7 @@ class FileController:
         self.base_path = os.path.join(os.getcwd(), FILE_DIR)
 
     @login_required
+    @rate_limit
     def get_file(self, file_id: str):
         """
         Return a file for viewing in the browser.
@@ -40,11 +41,12 @@ class FileController:
             if not file:
                 session.close()
                 return models.ErrorMessage("File record not found"), 404
-            file_name = file.file_name
+            file_extension = os.path.splitext(file.file_name)[1]
+            file_name = str(file.id) + file_extension
             session.close()
-        except Exception as e:
+        except Exception:
             session.close()
-            return models.ErrorMessage("Database Error occured: ", e), 400
+            return models.ErrorMessage("Database Error occured"), 400
 
         try:
             return send_from_directory(self.base_path, file_name, as_attachment=False)
@@ -52,6 +54,7 @@ class FileController:
             return models.ErrorMessage("File not found"), 404
 
     @login_required
+    @rate_limit
     def download_file(self, file_id: str):
         """
         Return a file for downloading.

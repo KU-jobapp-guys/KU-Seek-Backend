@@ -1,0 +1,25 @@
+Update on Your Application for {{JobTitle}} at {{CompanyName}}
+
+Hello {{UserName}},
+
+Thank you for applying for the position of "{{JobTitle}}" at {{CompanyName}}.
+
+After careful consideration, the employer has decided not to move forward with your application at this time.
+
+We appreciate your effort and encourage you to keep exploring other opportunities available on KU-Seek. 
+There are many more roles that could be a great fit for your skills and interests.
+
+You can browse more job openings here:
+{{JobBoardLink}}
+
+Best of luck in your job search!
+
+Best regards,  
+KU-Seek Team
+
+---
+
+You’re receiving this email because you applied for a job through KU-Seek.  
+
+———————————————
+© 2025 KU-Seek. All rights reserved.
