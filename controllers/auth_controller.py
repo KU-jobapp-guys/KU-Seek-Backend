@@ -25,6 +25,7 @@ from .models.tos_model import TOSAgreement
 from .models.file_model import File
 from .models.admin_request_model import UserRequest
 from .management.admin import AdminModel
+from .decorators import login_rate_limit, unban_user
 from .management.email.email_sender import EmailSender
 from uuid import UUID
 from werkzeug.utils import secure_filename
@@ -189,8 +190,11 @@ def handle_authentication(body: Dict):
             user = auth_controller.get_user(id_info["sub"])
             if user is None:
                 raise ValueError("User was not found")
-            user_jwt, refresh, user_type, user_id = auth_controller.login_user(user)
-
+            return_values = auth_controller.login_user(user)
+            if len(return_values) == 2:
+                return return_values
+            user_jwt, refresh, user_type, user_id = return_values
+            return jsonify({"message": return_values[0]}), return_values[1]
         else:
             user_info = form.get("user_info")
             user_info = json.loads(user_info)
@@ -376,6 +380,8 @@ class AuthenticationController:
                 status=500, title="Server Error", detail=f"Database Error occured: {e}"
             )
 
+    @login_rate_limit
+    @unban_user
     def login_user(self, uid: str) -> Dict[str, str]:
         """
         Login a user into the system.
@@ -414,7 +420,6 @@ class AuthenticationController:
         user_id = str(uid)
         session.close()
 
-        current_app.config["RateLimiter"].unban_user(str(uid))
         return auth_token, refresh_token, user_type, user_id
 
     def get_user(self, google_uid):
@@ -442,7 +447,6 @@ class AuthenticationController:
         Returns: The user's id in the database
         """
         required_keys = ["google_uid", "email", "user_type"]
-        print(credentials)
         valid_keys = all(key in credentials for key in required_keys)
         if not valid_keys:
             raise TypeError("Invalid credentials.")
