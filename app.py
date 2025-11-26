@@ -9,6 +9,9 @@ from controllers.db_controller import BaseController
 from openapi_server import encoder
 from controllers.models.tag_term_model import Terms
 from controllers.management.admin import YesManModel, AiAdminModel
+from controllers.rate_limiter import RateLimiter
+from controllers.db_rate_limit import DBRateLimit
+from controllers.management.email.email_scheduler import EmailScheduler
 
 
 if not os.path.exists(".env"):
@@ -43,6 +46,7 @@ def create_app(engine=None, admin=None):
 
     Args:
         engine: Optional database engine to use. If None, a new engine will be created.
+        admin: Optional admin model to use for validation.
 
     Returns: A configured connexion app.
     """
@@ -65,14 +69,17 @@ def create_app(engine=None, admin=None):
         },
         supports_credentials=True,
     )
-    # setup CSRF (disabling for now)
+    # setup CSRF
     app.app.secret_key = config("SECRET_KEY", default="very-secure-secret-key")
     CSRFProtect(app.app)
 
-    app.app.config["Database"] = BaseController()
-    # set database controller if provided
+    # Setup database controller
     if engine:
         app.app.config["Database"] = engine
+    else:
+        app.app.config["Database"] = BaseController()
+
+    app.app.config["RateLimiter"] = RateLimiter(DBRateLimit())
 
     # One-time (idempotent) seeding of common Terms into the database.
     # This runs on app start and will only insert missing terms.
@@ -124,5 +131,16 @@ prompt = os.path.join(
 )
 app = create_app(admin=AiAdminModel(prompt_file=prompt, model="gemini-2.0-flash"))
 
+
 if __name__ == "__main__":
-    app.run(port=8000, debug=True, use_reloader=False)
+    try:
+        # Setup email scheduler
+        email_interval = config("EMAIL_SCHEDULER_INTERVAL", cast=int, default=300)
+        email_scheduler = EmailScheduler(
+            database=BaseController(), interval_seconds=email_interval
+        )
+        email_scheduler.start()
+        # Start the app
+        app.run(port=8000, debug=True, use_reloader=False)
+    finally:
+        email_scheduler.stop()

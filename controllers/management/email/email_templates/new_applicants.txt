@@ -1,0 +1,19 @@
+Subject: {{ApplicantCount}} New Applicants for {{JobTitle}}
+
+Hello {{UserName}},
+
+Good news! There are now {{ApplicantCount}} new applicants available for your job posting: "{{JobTitle}}".
+
+You can review the applicants’ profiles, resumes, and application details directly from your dashboard.
+
+Log in to your account to view and manage the applications at your convenience.
+
+Best regards,  
+KU-Seek Team
+
+---
+
+You’re receiving this email because you have a job post on KU-Seek.  
+
+———————————————
+© 2025 KU-Seek. All rights reserved.

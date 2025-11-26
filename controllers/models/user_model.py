@@ -16,6 +16,7 @@ class UserTypes(enum.Enum):
     COMPANY = "Company"
     STAFF = "Staff"
     PROFESSOR = "Professor"
+    ADMIN = "Admin"
 
 
 class User(BaseModel):
@@ -23,8 +24,9 @@ class User(BaseModel):
 
     __tablename__ = "users"
     id: Mapped[uuid.UUID] = MappedColumn(primary_key=True, default=uuid.uuid4)
-    google_uid: Mapped[str] = MappedColumn(String(100), nullable=False)
-    email: Mapped[str] = MappedColumn(String(100), nullable=False)
+    google_uid: Mapped[str] = MappedColumn(String(100), nullable=True, unique=True)
+    password: Mapped[str] = MappedColumn(String(200), nullable=True)
+    email: Mapped[str] = MappedColumn(String(100), nullable=False, unique=True)
     is_verified: Mapped[bool] = MappedColumn(default=False)
     type: Mapped[Enum] = MappedColumn(Enum(UserTypes))
 
@@ -89,6 +91,8 @@ class Company(BaseModel):
     company_type: Mapped[str] = MappedColumn(String(255), nullable=True)
 
     company_industry: Mapped[str] = MappedColumn(String(255), nullable=True)
+
+    company_overview: Mapped[str] = MappedColumn(Text, nullable=True)
 
     company_size: Mapped[str] = MappedColumn(String(255), nullable=False)
 

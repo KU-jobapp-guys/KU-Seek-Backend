@@ -16,7 +16,6 @@ from controllers.models import (
     StudentDocuments,
     StudentHistories,
     ProfessorConnections,
-    Announcements,
     Tags,
     Terms,
     Token,
@@ -24,6 +23,7 @@ from controllers.models import (
     Student,
     Professor,
     Company,
+    TOSAgreement,
 )
 
 
@@ -153,15 +153,6 @@ class ORMTestCase(RoutingTestCase):
         assert pc.professor_id == 1
         assert pc.company_id == 2
 
-    def test_announcements_model(self):
-        """Test Annoucements model instantiation, and access it value."""
-        ann = Announcements(
-            professor_id=1,
-            title="Job Fair 2025",
-            content="Join us at the main hall!",
-        )
-        assert "Job Fair" in ann.title
-
     def test_tags_model(self):
         """Test Tags model instantiation, and access it value."""
         tag = Tags(name="Python")
@@ -271,3 +262,9 @@ class ORMTestCase(RoutingTestCase):
         finally:
             session.rollback()
             session.close()
+
+    def test_tos_model(self):
+        """Test Education model instantiation, and access it value."""
+        tos = TOSAgreement(user_id=1, agree_status=True)
+        assert tos.user_id == 1
+        assert tos.agree_status

@@ -11,5 +11,7 @@ class Token(BaseModel):
     """Model representing refresh tokens issued."""
 
     __tablename__ = "Tokens"
-    uid: Mapped[uuid.UUID] = MappedColumn(ForeignKey("users.id"), nullable=False)
+    uid: Mapped[uuid.UUID] = MappedColumn(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     refresh_id: Mapped[int] = MappedColumn(INTEGER(unsigned=True), primary_key=True)

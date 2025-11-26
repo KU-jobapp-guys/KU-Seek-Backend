@@ -47,7 +47,12 @@ class FileServingTestCase(RoutingTestCase):
         session.add(test_file)
         session.commit()
         session.refresh(test_file)
-        cls.file_id = test_file.id
+        cls.file_id = str(test_file.id)
+        file_id_filename = f"{test_file.id}{os.path.splitext(cls.test_file_name)[1]}"
+        file_id_path = os.path.join(cls.file_dir, file_id_filename)
+        os.rename(cls.test_file_path, file_id_path)
+        cls.test_file_path = file_id_path
+
         session.close()
 
     @classmethod
