@@ -23,12 +23,14 @@ class JobTestCase(RoutingTestCase):
 
     def test_correct_response_type(self):
         """Test fetching a Job GET API."""
-        res = self.client.get("/api/v1/jobs")
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
+        res = self.client.get("/api/v1/jobs", headers={"access_token": jwt})
         self.assertTrue(isinstance(res.get_json(), list))
 
     def test_response_status(self):
         """Test that it return 200."""
-        res = self.client.get("/api/v1/jobs")
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
+        res = self.client.get("/api/v1/jobs", headers={"access_token": jwt})
         self.assertEqual(res.status_code, 200)
 
     def test_amout_of_data(self):
@@ -37,7 +39,8 @@ class JobTestCase(RoutingTestCase):
 
         It should have 2 job datas.
         """
-        res = self.client.get("/api/v1/jobs")
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
+        res = self.client.get("/api/v1/jobs", headers={"access_token": jwt})
         self.assertTrue(len(res.get_json()), 1)
 
     def test_get_specific_job(self):
@@ -207,9 +210,10 @@ class JobTestCase(RoutingTestCase):
             "workHours": "9:00 AM - 5:00 PM",
         }
 
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
         res = self.client.post(
             "/api/v1/jobs/search",
-            headers={"X-CSRFToken": csrf_token},
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
             json=filter_list,
         )
 
