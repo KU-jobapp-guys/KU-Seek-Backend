@@ -9,6 +9,9 @@ class RateLimiter:
         self._rate_limit = rate_limit
         self._interval = interval
         self.__db_rate_limit = db_rate_limit
+        
+        self._login_rate_limit = 5
+        self._login_interval = 15 * 60  # 15 minutes
 
     def request(self, user_id) -> bool:
         """Register a request for the given user_id."""
@@ -42,3 +45,14 @@ class RateLimiter:
     def get_db(self):
         """Get the Redis instance."""
         return self.__db_rate_limit
+
+    def attempt_login(self, ip_address: str) -> bool:
+        """Register a login attempt for rate-limiting purposes."""
+        r = self.get_db()
+        key = "login_attempts:" + ip_address
+        count = r.increment_requests(key)
+        if count == 1:
+            r.expire(key, self._login_interval)
+        if count > self._login_rate_limit:
+            return False
+        return True
