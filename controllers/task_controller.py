@@ -3,6 +3,7 @@
 from typing import List, Dict, Optional
 from .models.task_model import Task
 from .decorators import role_required
+from swagger_server.openapi_server import models
 
 
 class TaskController:
@@ -41,7 +42,7 @@ class TaskController:
             Dict: a response message on a sucessful create operation.
         """
         if "name" not in body:
-            raise ValueError("Task data must contain a 'name' field.")
+            return models.ErrorMessage("Task data must contain a 'name' field."), 400
 
         name = body["name"]
 
