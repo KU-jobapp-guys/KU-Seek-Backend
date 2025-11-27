@@ -190,11 +190,8 @@ def handle_authentication(body: Dict):
             user = auth_controller.get_user(id_info["sub"])
             if user is None:
                 raise ValueError("User was not found")
-            return_values = auth_controller.login_user(user)
-            if len(return_values) == 2:
-                return return_values
-            user_jwt, refresh, user_type, user_id = return_values
-            return jsonify({"message": return_values[0]}), return_values[1]
+            user_jwt, refresh, user_type, user_id = auth_controller.login_user(user)
+            
         else:
             user_info = form.get("user_info")
             user_info = json.loads(user_info)
@@ -295,7 +292,6 @@ def handle_authentication(body: Dict):
         response.set_cookie(
             "refresh_token", refresh, max_age=timedelta(days=30), httponly=True
         )
-
         return response
     except Exception as e:
         print(e)
