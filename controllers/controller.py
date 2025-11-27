@@ -56,8 +56,8 @@ def get_self_profile() -> Dict:
     try:
         profile_manager = ProfileController(current_app.config["Database"])
         return profile_manager.get_self_profile()
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
     except ValueError:
         return jsonify({"message": "No profile data found."}), 404
 
@@ -68,12 +68,12 @@ def get_user_profile(user_id: str) -> Dict:
         profile_manager = ProfileController(current_app.config["Database"])
         profile_data = profile_manager.get_profile_by_uid(user_id)
         return jsonify(profile_data), 200
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
-    except ValueError as e:
-        return jsonify({"message": str(e)}), 404
-    except Exception as e:
-        return jsonify({"message": str(e)}), 500
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
+    except ValueError:
+        return jsonify({"message": "Not found."}), 404
+    except Exception:
+        return jsonify({"message": "An internal server error occurred."}), 500
 
 
 def create_profile(body: Dict) -> Optional[Dict]:
@@ -84,12 +84,12 @@ def create_profile(body: Dict) -> Optional[Dict]:
         new_profile = profile_manager.create_profile(uid, body)
         logger.info("Profile has been created.", user=uid)
         return jsonify(new_profile), 201
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
-    except ValueError as e:
-        return jsonify({"message": str(e)}), 400
-    except Exception as e:
-        return jsonify({"message": str(e)}), 500
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
+    except ValueError:
+        return jsonify({"message": "Bad request."}), 400
+    except Exception:
+        return jsonify({"message": "An internal server error occurred."}), 500
 
 
 def update_profile(body: Dict) -> Optional[Dict]:
@@ -101,12 +101,12 @@ def update_profile(body: Dict) -> Optional[Dict]:
         logger.info("Profile has been updated.", user=uid)
         logger.debug(f"{body}", user=uid)
         return jsonify(profile_updated_data), 200
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
-    except ValueError as e:
-        return jsonify({"message": str(e)}), 404
-    except Exception as e:
-        return jsonify({"message": str(e)}), 500
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
+    except ValueError:
+        return jsonify({"message": "Bad request."}), 404
+    except Exception:
+        return jsonify({"message": "An internal server error occurred."}), 500
 
 
 def upload_profile_images() -> Optional[Dict]:
@@ -114,10 +114,9 @@ def upload_profile_images() -> Optional[Dict]:
     try:
         profile_manager = ProfileController(current_app.config["Database"])
         return profile_manager.upload_profile_images()
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
-    except Exception as e:
-        print(e)
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
+    except Exception:
         return jsonify({"message": "bad image passed"}), 405
 
 
@@ -127,10 +126,10 @@ def get_all_jobs(job_id: str = ""):
         job_manager = JobController(current_app.config["Database"])
         jobs = job_manager.get_all_jobs(job_id)
         return jsonify(jobs), 200
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
-    except Exception as e:
-        return jsonify({"message": str(e)}), 500
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
+    except Exception:
+        return jsonify({"message": "An internal server error occurred."}), 500
 
 
 def post_job(body: Dict):
@@ -141,14 +140,14 @@ def post_job(body: Dict):
         new_job = job_manager.post_job(uid, body)
         logger.info(f"Job:{new_job['jobId']} has been posted.", user=uid)
         return jsonify(new_job), 201
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
-    except ValueError as e:
-        return jsonify({"message": str(e)}), 400
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
+    except ValueError:
+        return jsonify({"message": "Bad request."}), 400
     except ProblemException:
         raise
-    except Exception as e:
-        return jsonify({"message": str(e)}), 500
+    except Exception:
+        return jsonify({"message": "An internal server error occurred."}), 500
 
 
 def get_filtered_jobs(body: Dict):
@@ -160,12 +159,12 @@ def get_filtered_jobs(body: Dict):
             body["userId"] = get_auth_user_id(request)
         filtered_jobs = job_manager.get_filtered_job(body)
         return jsonify(filtered_jobs), 200
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
-    except ValueError as e:
-        return jsonify({"message": str(e)}), 400
-    except Exception as e:
-        return jsonify({"message": str(e)}), 500
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
+    except ValueError:
+        return jsonify({"message": "Bad request."}), 400
+    except Exception:
+        return jsonify({"message": "An internal server error occurred."}), 500
 
 
 def get_bookmark_jobs():
@@ -194,12 +193,12 @@ def post_bookmark_jobs(body: Dict):
         )
         logger.debug(bookmarked_jobs)
         return jsonify(bookmarked_jobs), 201
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
-    except ValueError as e:
-        return jsonify({"message": str(e)}), 400
-    except Exception as e:
-        return jsonify({"message": str(e)}), 500
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
+    except ValueError:
+        return jsonify({"message": "Bad request."}), 400
+    except Exception:
+        return jsonify({"message": "An internal server error occurred."}), 500
 
 
 def delete_bookmark_jobs(job_id: int):
@@ -213,8 +212,8 @@ def delete_bookmark_jobs(job_id: int):
             user=user_id,
         )
         return jsonify(deleted_bookmark), 200
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
     except Exception as e:
