@@ -10,7 +10,6 @@ the application; failing CI signals a missing security control.
 """
 
 import os
-import pytest
 from datetime import datetime, timedelta
 from argon2 import PasswordHasher
 from werkzeug.utils import secure_filename
@@ -26,7 +25,6 @@ from controllers.models.job_model import Job
 from decouple import config
 
 
-@pytest.fixture(autouse=True)
 def patch_jwt_encode_to_str(monkeypatch):
     """Ensure JWT encode returns str not bytes for test environment."""
     import controllers.auth_controller as auth_ctrl
@@ -58,7 +56,6 @@ RoutingTestCase.database = InMemoryDBController()
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
 
 
-@pytest.mark.security
 class SecurityMisuseTests(RoutingTestCase):
     """Test class for security misuse cases in authentication and file endpoints."""
 
