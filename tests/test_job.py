@@ -23,12 +23,14 @@ class JobTestCase(RoutingTestCase):
 
     def test_correct_response_type(self):
         """Test fetching a Job GET API."""
-        res = self.client.get("/api/v1/jobs")
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
+        res = self.client.get("/api/v1/jobs", headers={"access_token": jwt})
         self.assertTrue(isinstance(res.get_json(), list))
 
     def test_response_status(self):
         """Test that it return 200."""
-        res = self.client.get("/api/v1/jobs")
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
+        res = self.client.get("/api/v1/jobs", headers={"access_token": jwt})
         self.assertEqual(res.status_code, 200)
 
     def test_amout_of_data(self):
@@ -37,7 +39,8 @@ class JobTestCase(RoutingTestCase):
 
         It should have 2 job datas.
         """
-        res = self.client.get("/api/v1/jobs")
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
+        res = self.client.get("/api/v1/jobs", headers={"access_token": jwt})
         self.assertTrue(len(res.get_json()), 1)
 
     def test_get_specific_job(self):
@@ -46,7 +49,8 @@ class JobTestCase(RoutingTestCase):
 
         It should return specific job data.
         """
-        res = self.client.get("/api/v1/jobs?job_id=1")
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
+        res = self.client.get("/api/v1/jobs?job_id=1", headers={"access_token": jwt})
         data = res.json
 
         self.assertEqual(data["jobId"], "1")
@@ -56,7 +60,9 @@ class JobTestCase(RoutingTestCase):
 
     def test_output_all_field(self):
         """Test that the data have all field base on schema."""
-        res = self.client.get("/api/v1/jobs")
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
+
+        res = self.client.get("/api/v1/jobs", headers={"access_token": jwt})
 
         data = res.json
 
@@ -204,18 +210,21 @@ class JobTestCase(RoutingTestCase):
             "workHours": "9:00 AM - 5:00 PM",
         }
 
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
         res = self.client.post(
             "/api/v1/jobs/search",
-            headers={"X-CSRFToken": csrf_token},
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
             json=filter_list,
         )
 
         self.assertEqual(res.status_code, 200)
 
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
+
         # weird field name
         res = self.client.post(
             "/api/v1/jobs/search",
-            headers={"X-CSRFToken": csrf_token},
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
             json={"who_tao?": True},
         )
 
@@ -242,10 +251,11 @@ class JobTestCase(RoutingTestCase):
         )
         self.assertEqual(res.status_code, 400)
 
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
         # Test invalid end_date format
         res = self.client.post(
             "/api/v1/jobs/search",
-            headers={"X-CSRFToken": csrf_token},
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
             json={"endDate": "invalid-date"},
         )
         self.assertEqual(res.status_code, 400)
@@ -281,10 +291,12 @@ class JobTestCase(RoutingTestCase):
         res = self.client.get("/api/v1/csrf-token")
         csrf_token = res.json["csrf_token"]
 
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
+
         # Filter by title - should return job with "Senior Python Developer"
         res = self.client.post(
             "/api/v1/jobs/search",
-            headers={"X-CSRFToken": csrf_token},
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
             json={"title": "Senior Python"},
         )
         self.assertEqual(res.status_code, 200)
@@ -292,10 +304,12 @@ class JobTestCase(RoutingTestCase):
         self.assertGreater(len(data), 0)
         self.assertIn("Senior Python", data[0]["role"])
 
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
+
         # Filter by location - should return job in "Bangkok"
         res = self.client.post(
             "/api/v1/jobs/search",
-            headers={"X-CSRFToken": csrf_token},
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
             json={"location": "Bangkok"},
         )
         self.assertEqual(res.status_code, 200)
@@ -307,7 +321,7 @@ class JobTestCase(RoutingTestCase):
         # Filter by salary range - should return jobs with salary_min >= 80000
         res = self.client.post(
             "/api/v1/jobs/search",
-            headers={"X-CSRFToken": csrf_token},
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
             json={"salaryMin": 80000},
         )
         self.assertEqual(res.status_code, 200)
@@ -319,7 +333,7 @@ class JobTestCase(RoutingTestCase):
         # Filter by job_level - should return jobs with "Junior-level"
         res = self.client.post(
             "/api/v1/jobs/search",
-            headers={"X-CSRFToken": csrf_token},
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
             json={"jobLevel": "Junior-level"},
         )
         self.assertEqual(res.status_code, 200)
@@ -330,7 +344,7 @@ class JobTestCase(RoutingTestCase):
 
         res = self.client.post(
             "/api/v1/jobs/search",
-            headers={"X-CSRFToken": csrf_token},
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
             json={"companyName": "TechCorp"},
         )
         self.assertEqual(res.status_code, 200)
@@ -340,11 +354,14 @@ class JobTestCase(RoutingTestCase):
     def test_filter_by_multiple_cliteria(self):
         """Test the Job filter api by have multiple value in the body."""
         res = self.client.get("/api/v1/csrf-token")
+
         csrf_token = res.json["csrf_token"]
+
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
 
         res = self.client.post(
             "/api/v1/jobs/search",
-            headers={"X-CSRFToken": csrf_token},
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
             json={"jobType": "full-time", "location": "Bangkok"},
         )
         self.assertEqual(res.status_code, 200)
@@ -358,10 +375,11 @@ class JobTestCase(RoutingTestCase):
         """Test filter API by give non exist job title to the body."""
         res = self.client.get("/api/v1/csrf-token")
         csrf_token = res.json["csrf_token"]
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
 
         res = self.client.post(
             "/api/v1/jobs/search",
-            headers={"X-CSRFToken": csrf_token},
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
             json={"title": "NonExistentJobTitle12345"},
         )
         self.assertEqual(res.status_code, 200)
@@ -373,9 +391,11 @@ class JobTestCase(RoutingTestCase):
         res = self.client.get("/api/v1/csrf-token")
         csrf_token = res.json["csrf_token"]
 
+        jwt = generate_jwt(self.user2_id, secret=SECRET_KEY)
+
         res = self.client.post(
             "/api/v1/jobs/search",
-            headers={"X-CSRFToken": csrf_token},
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
             json={},
         )
         self.assertEqual(res.status_code, 200)
@@ -383,7 +403,7 @@ class JobTestCase(RoutingTestCase):
 
         self.assertEqual(len(data), 3)
 
-        all_jobs_res = self.client.get("/api/v1/jobs")
+        all_jobs_res = self.client.get("/api/v1/jobs", headers={"access_token": jwt})
         all_jobs_data = all_jobs_res.json
 
         self.assertEqual(len(data), len(all_jobs_data))

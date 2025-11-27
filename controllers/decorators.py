@@ -9,6 +9,7 @@ from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
 from .models import User
 from uuid import UUID
 from flask import current_app
+from typing import Literal
 
 
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
@@ -31,16 +32,16 @@ def login_required(func):
             return models.ErrorMessage("Invalid authentication token provided"), 403
         except ExpiredSignatureError:
             return models.ErrorMessage("Token is expired"), 403
-        except Exception as e:
-            return models.ErrorMessage(f"Invalid authentication token, {e}"), 403
+        except Exception:
+            return models.ErrorMessage("Invalid authentication token"), 403
 
-        # authentication successful, serve the API.
+        # authentication successful
         return func(*args, **kwargs)
 
     return run_function
 
 
-def role_required(roles: list[str] = []):
+def role_required(roles: list[Literal["Student", "Company"]] = []):
     """
     Check if the user has a valid role to use the API.
 
@@ -66,8 +67,8 @@ def role_required(roles: list[str] = []):
                 return models.ErrorMessage("Invalid authentication token provided"), 403
             except ExpiredSignatureError:
                 return models.ErrorMessage("Token is expired"), 403
-            except Exception as e:
-                return models.ErrorMessage(f"Invalid authentication token, {e}"), 403
+            except Exception:
+                return models.ErrorMessage("Invalid authentication token"), 403
 
             # fetch the user's role and validate
             session = current_app.config["Database"].get_session()
@@ -87,9 +88,42 @@ def role_required(roles: list[str] = []):
                 return models.ErrorMessage("User does not have authorization."), 403
 
             session.close()
-            # authorization successful, serve the API.
+            # Authorization successful
+
             return func(*args, **kwargs)
 
         return run_function
 
     return decorator
+
+
+def rate_limit(func):
+    """Apply rate-limiting to an API endpoint."""
+
+    @wraps(func)
+    def run_function(*args, **kwargs):
+        jwt_auth_token = request.headers.get("access_token")
+
+        if not jwt_auth_token:
+            return models.ErrorMessage("User is not authenticated."), 401
+
+        try:
+            token_info = decode(
+                jwt=jwt_auth_token, key=SECRET_KEY, algorithms=["HS512"]
+            )
+
+        except InvalidSignatureError:
+            return models.ErrorMessage("Invalid authentication token provided"), 403
+        except ExpiredSignatureError:
+            return models.ErrorMessage("Token is expired"), 403
+        except Exception:
+            return models.ErrorMessage("Invalid authentication token"), 403
+
+        # authentication successful
+
+        rate_limiter = current_app.config["RateLimiter"]
+        if not rate_limiter.request(token_info["uid"]):
+            raise Warning("Too many requests. Please renew login session.")
+        return func(*args, **kwargs)
+
+    return run_function

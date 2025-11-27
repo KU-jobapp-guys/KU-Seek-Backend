@@ -21,6 +21,7 @@ from datetime import datetime, timedelta, UTC
 from .models.user_model import User, Student, Company, Professor
 from .models.profile_model import Profile
 from .models.token_model import Token
+from .models.tos_model import TOSAgreement as TOSAgreementModel
 from .models.file_model import File
 from .models.admin_request_model import UserRequest
 from .management.admin import AdminModel
@@ -152,16 +153,16 @@ def handle_authentication(body: Dict):
             ],
             redirect_uri=redirect_uri,
         )
-    except Exception as e:
+    except Exception:
         return models.ErrorMessage(
-            f"Error during flow setup invalid flow credentails, {e}"
+            "Error during flow setup: invalid flow credentials"
         ), 400
 
     # Exchange the authorization code for tokens
     try:
         flow.fetch_token(code=form.get("code"))
-    except Exception as e:
-        return models.ErrorMessage(f"Invalid authorization code, {e}"), 400
+    except Exception:
+        return models.ErrorMessage("Invalid authorization code"), 400
 
     credentials = flow.credentials
 
@@ -179,8 +180,8 @@ def handle_authentication(body: Dict):
 
     try:
         is_registered = auth_controller.check_users(id_info["sub"])
-    except Exception as e:
-        return models.ErrorMessage(f"Database error occured, {e}"), 400
+    except Exception:
+        return models.ErrorMessage("Database Error"), 500
 
     user_jwt = {}
     try:
@@ -292,11 +293,8 @@ def handle_authentication(body: Dict):
         )
 
         return response
-    except Exception as e:
-        print(e)
-        return models.ErrorMessage(
-            f"Database error occured during authentication, {e}"
-        ), 400
+    except Exception:
+        return models.ErrorMessage("Database Error"), 500
 
 
 class AuthenticationController:
@@ -368,11 +366,11 @@ class AuthenticationController:
 
             return response
 
-        except Exception as e:
+        except Exception:
             session.rollback()
             session.close()
             raise ProblemException(
-                status=500, title="Server Error", detail=f"Database Error occured: {e}"
+                status=500, title="Server Error", detail="Database Error occured"
             )
 
     def login_user(self, uid: str) -> Dict[str, str]:
@@ -413,6 +411,7 @@ class AuthenticationController:
         user_id = str(uid)
         session.close()
 
+        current_app.config["RateLimiter"].unban_user(str(uid))
         return auth_token, refresh_token, user_type, user_id
 
     def get_user(self, google_uid):
@@ -476,6 +475,10 @@ class AuthenticationController:
             session.add(company)
             session.commit()
 
+        tos = TOSAgreementModel(user_id=user_id, agree_status=True)
+        session.add(tos)
+        session.commit()
+
         session.close()
 
         return user_id
@@ -492,8 +495,8 @@ class AuthenticationController:
         """
         try:
             refresh_id = decode(jwt=refresh_token, key=SECRET_KEY, algorithms=["HS512"])
-        except Exception as e:
-            return models.ErrorMessage(f"Could not decode JWT, {e}"), 400
+        except Exception:
+            return models.ErrorMessage("Could not decode JWT"), 400
 
         session = self.db.get_session()
         valid_token = (
@@ -523,7 +526,7 @@ class AuthenticationController:
             user = session.query(User).where(User.email == email).one_or_none()
         except Exception:
             session.close()
-            return models.ErrorMessage("Database error occurred"), 400
+            return models.ErrorMessage("Database Error"), 500
 
         if not user:
             session.close()

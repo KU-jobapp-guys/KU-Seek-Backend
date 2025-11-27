@@ -23,7 +23,10 @@ class ProfileTestCase(RoutingTestCase):
 
     def test_get_profile_status_code(self):
         """Test fetching a profile returns 200 status code."""
-        res = self.client.get(f"/api/v1/users/{self.user1_id}/profile")
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+        res = self.client.get(
+            f"/api/v1/users/{self.user1_id}/profile", headers={"access_token": jwt}
+        )
         self.assertEqual(res.status_code, 200)
 
     def test_create_profile_status_code(self):
@@ -100,7 +103,7 @@ class ProfileTestCase(RoutingTestCase):
             json={},
         )
 
-        self.assertEqual(res.status_code, 500)
+        self.assertEqual(res.status_code, 400)
 
     def test_create_profile_duplicate(self):
         """Test creating a profile for existing user returns 409."""
@@ -126,7 +129,7 @@ class ProfileTestCase(RoutingTestCase):
             json=profile_payload,
         )
 
-        self.assertEqual(res.status_code, 500)
+        self.assertEqual(res.status_code, 409)
         self.assertIn("Profile already exists", res.json["message"])
 
     def test_create_profile_partial_data(self):
@@ -154,12 +157,24 @@ class ProfileTestCase(RoutingTestCase):
 
     def test_get_profile_correct_response_type(self):
         """Test fetching a profile returns correct JSON object."""
-        res = self.client.get(f"/api/v1/users/{self.user1_id}/profile")
+        csrf = self.client.get("/api/v1/csrf-token")
+        csrf_token = csrf.json["csrf_token"]
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+        res = self.client.get(
+            f"/api/v1/users/{self.user1_id}/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+        )
         self.assertTrue(isinstance(res.get_json(), dict))
 
     def test_get_profile_returns_correct_fields(self):
         """Test that the profile data has all expected fields."""
-        res = self.client.get(f"/api/v1/users/{self.user1_id}/profile")
+        csrf = self.client.get("/api/v1/csrf-token")
+        csrf_token = csrf.json["csrf_token"]
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+        res = self.client.get(
+            f"/api/v1/users/{self.user1_id}/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+        )
 
         data = res.json
         data = decamelize(data)
@@ -185,13 +200,25 @@ class ProfileTestCase(RoutingTestCase):
     def test_get_profile_not_found(self):
         """Test fetching a non-existent profile returns 404."""
         non_existent_uuid = "00000000-0000-0000-0000-000000000000"
-        res = self.client.get(f"/api/v1/users/{non_existent_uuid}/profile")
+        csrf = self.client.get("/api/v1/csrf-token")
+        csrf_token = csrf.json["csrf_token"]
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+        res = self.client.get(
+            f"/api/v1/users/{non_existent_uuid}/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+        )
         self.assertEqual(res.status_code, 404)
 
     def test_get_profile_invalid_uuid(self):
         """Test fetching a profile with invalid UUID format returns 400."""
         non_existent_uuid = "Praise_The_Sun"
-        res = self.client.get(f"/api/v1/users/{non_existent_uuid}/profile")
+        csrf = self.client.get("/api/v1/csrf-token")
+        csrf_token = csrf.json["csrf_token"]
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+        res = self.client.get(
+            f"/api/v1/users/{non_existent_uuid}/profile",
+            headers={"X-CSRFToken": csrf_token, "access_token": jwt},
+        )
         self.assertEqual(res.status_code, 404)
 
     def test_update_profile_status_code(self):
@@ -272,7 +299,7 @@ class ProfileTestCase(RoutingTestCase):
             json={},
         )
 
-        self.assertEqual(res.status_code, 500)
+        self.assertEqual(res.status_code, 400)
         self.assertIn("Request body cannot be empty", res.json["message"])
 
     def test_update_profile_single_field(self):
@@ -382,7 +409,7 @@ class ProfileTestCase(RoutingTestCase):
         )
 
         self.assertEqual(res2.status_code, 500)
-        self.assertIn("Duplicate entry", res2.json["message"])
+        self.assertIn("Failed to create profile", res2.json["message"])
 
     def test_profile_default_is_verified_false(self):
         """Test that is_verified defaults to False when creating profile."""

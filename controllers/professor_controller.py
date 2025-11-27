@@ -1,12 +1,16 @@
 """Module for store api that relate to professor."""
 
 from typing import Dict
-from connexion.exceptions import ProblemException
+from swagger_server.openapi_server import models
 from .models.profile_model import ProfessorConnections, Profile, CompanyTags
 from .models.user_model import Professor, Company
 from .models.tag_term_model import Tags
 from uuid import UUID
-from .decorators import role_required
+from .decorators import rate_limit, role_required
+from logger.custom_logger import get_logger
+
+
+logger = get_logger()
 
 
 class ProfessorController:
@@ -16,6 +20,7 @@ class ProfessorController:
         """Initialize the class."""
         self.db = database
 
+    @rate_limit
     def get_connection(self, user_id: str):
         """
         Return all connections this Professor have.
@@ -25,7 +30,12 @@ class ProfessorController:
         Args:
             user_id: The unique ID of the user (string format).
         """
-        user_uuid = UUID(user_id)
+        try:
+            user_uuid = UUID(user_id)
+        except Exception:
+            return models.ErrorMessage(
+                "Invalid user_id format. Expected UUID string."
+            ), 400
 
         session = self.db.get_session()
         try:
@@ -54,15 +64,14 @@ class ProfessorController:
                 for conn in professor_connections
             ]
 
-        except ProblemException:
-            session.rollback()
-            raise
         except Exception as e:
             session.rollback()
-            raise ProblemException(f"Database Error {str(e)}")
+            logger.exception("Database error getting connections: %s", e)
+            return models.ErrorMessage("Database Error"), 500
         finally:
             session.close()
 
+    @rate_limit
     def get_annoucement(self):
         """
         Return all announcements in the system.
@@ -137,16 +146,15 @@ class ProfessorController:
 
             return results
 
-        except ProblemException:
-            session.rollback()
-            raise
         except Exception as e:
             session.rollback()
-            raise ProblemException(f"Database Error {str(e)}")
+            logger.exception("Database error getting announcements: %s", e)
+            return models.ErrorMessage("Database Error"), 500
         finally:
             session.close()
 
     @role_required(["Professor"])
+    @rate_limit
     def post_connection(self, user_id: str, body: dict):
         """
         Create a new connection for professor.
@@ -158,10 +166,15 @@ class ProfessorController:
         Returns:
             The connection dictionary with id, professor_id, company_id, created_at.
         """
-        user_uuid = UUID(user_id)
+        try:
+            user_uuid = UUID(user_id)
+        except Exception:
+            return models.ErrorMessage(
+                "Invalid user_id format. Expected UUID string."
+            ), 400
 
         if not body:
-            raise ProblemException("Request body cannot be empty.")
+            return models.ErrorMessage("Request body cannot be empty."), 400
 
         session = self.db.get_session()
         try:
@@ -172,7 +185,8 @@ class ProfessorController:
             )
 
             if not professor:
-                raise ProblemException(f"Professor with user_id '{user_id}' not found.")
+                session.close()
+                return models.ErrorMessage("Professor not found"), 404
 
             existing_connection = (
                 session.query(ProfessorConnections)
@@ -184,9 +198,13 @@ class ProfessorController:
             )
 
             if existing_connection:
-                raise ProblemException(
-                    f"Connection already exists between professor"
-                    f" and company {body['company_id']}."
+                session.close()
+                return (
+                    models.ErrorMessage(
+                        f"Connection already exists between\
+                              professor and company {body['company_id']}."
+                    ),
+                    409,
                 )
 
             connection = ProfessorConnections(
@@ -206,16 +224,15 @@ class ProfessorController:
             }
             return connection_data
 
-        except ProblemException:
-            session.rollback()
-            raise
         except Exception as e:
             session.rollback()
-            raise ProblemException(f"Database Error {str(e)}")
+            logger.exception("Database error creating connection: %s", e)
+            return models.ErrorMessage("Database Error"), 500
         finally:
             session.close()
 
     @role_required(["Professor"])
+    @rate_limit
     def delete_connection(self, user_id: str, connection_id: int) -> Dict:
         """
         Delete a connection for a professor.
@@ -229,7 +246,13 @@ class ProfessorController:
         Returns:
             A dictionary with success message.
         """
-        user_uuid = UUID(user_id)
+        try:
+            user_uuid = UUID(user_id)
+        except Exception:
+            return models.ErrorMessage(
+                "Invalid user_id format. Expected UUID string."
+            ), 400
+
         session = self.db.get_session()
         try:
             professor = (
@@ -239,7 +262,8 @@ class ProfessorController:
             )
 
             if not professor:
-                raise ProblemException(f"Professor with user_id '{user_id}' not found.")
+                session.close()
+                return models.ErrorMessage("Professor not found"), 404
 
             connection = (
                 session.query(ProfessorConnections)
@@ -251,10 +275,13 @@ class ProfessorController:
             )
 
             if not connection:
-                # Single-line formatted message
-                raise ProblemException(
-                    f"Connection with id '{connection_id}'\
-                      not found for this professor."
+                session.close()
+                return (
+                    models.ErrorMessage(
+                        f"Connection with id '{connection_id}'\
+                              not found for this professor."
+                    ),
+                    404,
                 )
 
             connection_data = {
@@ -268,14 +295,13 @@ class ProfessorController:
 
             session.delete(connection)
             session.commit()
+            session.close()
 
             return connection_data
 
-        except ProblemException:
-            session.rollback()
-            raise
         except Exception as e:
             session.rollback()
-            raise ProblemException(f"Database Error = {str(e)}")
+            logger.exception("Database error deleting connection: %s", e)
+            return models.ErrorMessage("Database Error"), 500
         finally:
             session.close()
