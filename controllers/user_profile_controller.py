@@ -1,7 +1,8 @@
 """Module for store api that relate to user profile."""
 
 from typing import Optional, Dict
-from connexion.exceptions import ProblemException
+from swagger_server.openapi_server import models
+from logger.custom_logger import get_logger
 from .models.profile_model import Profile, ProfileSkills
 from .models.user_model import User, UserTypes, Student, Company
 from .education_controller import EducationController
@@ -21,6 +22,8 @@ ALGORITHM = "HS512"
 
 BASE_FILE_PATH = config("BASE_FILE_PATH", default="content")
 SECRET_KEY = config("SECRET_KEY", default="very-secure-crytography-key")
+
+logger = get_logger()
 
 
 class ProfileController:
@@ -124,7 +127,14 @@ class ProfileController:
         """
         session = self.db.get_session()
         try:
-            user_uuid = UUID(user_id)
+            try:
+                user_uuid = UUID(user_id)
+            except Exception:
+                session.close()
+                return (
+                    models.ErrorMessage(f"Profile for user_id={user_id} not found"),
+                    404,
+                )
 
             profile = (
                 session.query(Profile)
@@ -133,8 +143,10 @@ class ProfileController:
             )
 
             if not profile:
-                print(f"Profile for user_id={user_id} not found")
-                raise ValueError(f"Profile for user_id={user_id} not found")
+                logger.warning("Profile for user_id=%s not found", user_id)
+                return models.ErrorMessage(
+                    f"Profile for user_id={user_id} not found"
+                ), 404
 
             profile_obj = {
                 "id": str(user_uuid),
@@ -195,12 +207,9 @@ class ProfileController:
 
             return profile_obj
 
-        except SQLAlchemyError as e:
-            print(f"Error fetching profile for user_id={user_id}: {e}")
-            raise RuntimeError(f"Error fetching profile for user_id={user_id}: {e}")
-        except Exception as e:
-            print(f"Unexpected error: {e}")
-            raise RuntimeError(f"Unexpected error: {e}")
+        except SQLAlchemyError:
+            logger.exception("Database error fetching profile for user_id=%s", user_id)
+            return models.ErrorMessage("Database error fetching profile"), 500
         finally:
             session.close()
 
@@ -214,9 +223,7 @@ class ProfileController:
         user_uuid = UUID(user_id)
 
         if not body:
-            raise ProblemException(
-                "Request body cannot be empty.",
-            )
+            return models.ErrorMessage("Request body cannot be empty."), 400
 
         session = self.db.get_session()
         try:
@@ -225,9 +232,10 @@ class ProfileController:
             )
 
             if existing_profile:
-                raise ProblemException(
+                logger.warning("Profile already exists for user %s", user_id)
+                return models.ErrorMessage(
                     f"Profile already exists for user '{user_id}'",
-                )
+                ), 409
 
             profile = Profile()
             profile.user_id = user_uuid
@@ -239,12 +247,11 @@ class ProfileController:
             session.add(profile)
             session.commit()
 
-        except ProblemException:
+        except Exception:
             session.rollback()
-            raise
-        except Exception as e:
-            session.rollback()
-            raise ProblemException(str(e))
+            logger.exception("Failed to create profile for user_id=%s", user_id)
+            session.close()
+            return models.ErrorMessage("Failed to create profile"), 500
         finally:
             session.close()
 
@@ -261,8 +268,8 @@ class ProfileController:
         """
         user_uuid = UUID(user_id)
         if not body:
-            print("Request body cannot be empty.")
-            raise ProblemException("Request body cannot be empty.")
+            logger.warning("Empty request body for update_profile user_id=%s", user_id)
+            return models.ErrorMessage("Request body cannot be empty."), 400
 
         decamel = decamelize(body or {})
 
@@ -288,7 +295,9 @@ class ProfileController:
             user = session.query(User).where(User.id == user_uuid).one_or_none()
 
             if not user:
-                raise ValueError(f"User for user_id={user_id} not found")
+                logger.warning("User for user_id=%s not found", user_id)
+                session.close()
+                return models.ErrorMessage(f"User for user_id={user_id} not found"), 404
 
             models_to_update = [Profile]
 
@@ -300,7 +309,9 @@ class ProfileController:
             work_fields = mapped_body.pop("work_fields", None)
             if work_fields is not None:
                 if not isinstance(work_fields, (list, tuple)):
-                    raise ProblemException("workFields must be a list")
+                    logger.warning("Invalid workFields type for user_id=%s", user_id)
+                    session.close()
+                    return models.ErrorMessage("workFields must be a list"), 400
 
                 session.query(ProfileSkills).filter(
                     ProfileSkills.user_id == user_uuid
@@ -332,9 +343,12 @@ class ProfileController:
 
             session.commit()
 
-        except SQLAlchemyError as e:
+        except SQLAlchemyError:
             session.rollback()
-            raise RuntimeError(f"{e}")
+            logger.exception("Database error updating profile for user_id=%s", user_id)
+            session.close()
+            return models.ErrorMessage("Database error updating profile"), 500
+
         finally:
             session.close()
         return self.get_profile_by_uid(user_id)
@@ -356,7 +370,7 @@ class ProfileController:
         banner_img = files.get("banner_img")
 
         if not profile_img and not banner_img:
-            raise ProblemException("No image files provided")
+            return models.ErrorMessage("No image files provided"), 400
 
         session = self.db.get_session()
         saved_files = []
@@ -440,11 +454,7 @@ class ProfileController:
                         }
                     )
 
-                print("PEAAA: ", profile_file_model.id)
-                print("IS THERE PROFILE ", profile)
-                print("IMG????: ", profile.profile_img)
                 profile.profile_img = str(profile_file_model.id)
-                print("IMG SHOULDN'T BLANK: ", profile.profile_img)
 
             # Handle banner image
             if banner_img:
@@ -530,7 +540,7 @@ class ProfileController:
             ]
             return response, 200
 
-        except Exception as e:
+        except Exception:
             # Rollback database transaction
             session.rollback()
             session.close()
@@ -541,7 +551,8 @@ class ProfileController:
                 if fp and os.path.exists(fp):
                     os.remove(fp)
 
-            raise ProblemException(f"Failed to upload images: {str(e)}")
+            logger.exception("Failed to upload profile images for user_id=%s", user_id)
+            return models.ErrorMessage("Failed to upload images"), 500
 
     def _update_model_fields(self, session, model_class, user_id: UUID, data: Dict):
         """Update fields on any model instance."""
@@ -554,8 +565,10 @@ class ProfileController:
         if not instance:
             raise ValueError(f"{model_class.__name__} for user_id={user_id} not found")
 
-        # Update only fields that exist on the model
+        forbidden_keys = {"id", "user_id"}
         for key, value in data.items():
+            if key in forbidden_keys:
+                continue
             if hasattr(instance, key):
                 setattr(instance, key, value)
 

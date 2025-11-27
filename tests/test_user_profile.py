@@ -23,7 +23,10 @@ class ProfileTestCase(RoutingTestCase):
 
     def test_get_profile_status_code(self):
         """Test fetching a profile returns 200 status code."""
-        res = self.client.get(f"/api/v1/users/{self.user1_id}/profile")
+        jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
+        res = self.client.get(
+            f"/api/v1/users/{self.user1_id}/profile", headers={"access_token": jwt}
+        )
         self.assertEqual(res.status_code, 200)
 
     def test_create_profile_status_code(self):
@@ -101,7 +104,7 @@ class ProfileTestCase(RoutingTestCase):
             json={},
         )
 
-        self.assertEqual(res.status_code, 500)
+        self.assertEqual(res.status_code, 400)
 
     def test_create_profile_duplicate(self):
         """Test creating a profile for existing user returns 409."""
@@ -127,7 +130,7 @@ class ProfileTestCase(RoutingTestCase):
             json=profile_payload,
         )
 
-        self.assertEqual(res.status_code, 500)
+        self.assertEqual(res.status_code, 409)
         self.assertIn("Profile already exists", res.json["message"])
 
     def test_create_profile_partial_data(self):
@@ -300,7 +303,7 @@ class ProfileTestCase(RoutingTestCase):
             json={},
         )
 
-        self.assertEqual(res.status_code, 500)
+        self.assertEqual(res.status_code, 400)
         self.assertIn("Request body cannot be empty", res.json["message"])
 
     def test_update_profile_single_field(self):
@@ -409,7 +412,7 @@ class ProfileTestCase(RoutingTestCase):
         )
 
         self.assertEqual(res2.status_code, 500)
-        self.assertIn("Duplicate entry", res2.json["message"])
+        self.assertIn("Failed to create profile", res2.json["message"])
 
     def test_profile_default_is_verified_false(self):
         """Test that is_verified defaults to False when creating profile."""
