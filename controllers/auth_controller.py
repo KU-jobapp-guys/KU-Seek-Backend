@@ -1,35 +1,38 @@
 """Module for sending csrf-tokens."""
 
-import random
-import jwt
-import json
 import os
-
-from flask import make_response, request
-from connexion.exceptions import ProblemException
+import json
+import random
+from datetime import datetime, timedelta, UTC
+from uuid import UUID
 from typing import Dict, TypedDict
-from flask import jsonify, current_app
+
+import jwt
+from jwt import encode, decode
+from flask import make_response, request, jsonify, current_app
 from flask_wtf.csrf import generate_csrf
+from connexion.exceptions import ProblemException
+from werkzeug.utils import secure_filename
+from decouple import config
 from google_auth_oauthlib.flow import Flow
 from google.oauth2 import id_token
 from google.auth.transport import requests
-from decouple import config
-from jwt import encode, decode
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
+
 from swagger_server.openapi_server import models
-from datetime import datetime, timedelta, UTC
 from logger.custom_logger import get_logger
+
 from .models.user_model import User, Student, Company, Professor
 from .models.profile_model import Profile
 from .models.token_model import Token
 from .models.tos_model import TOSAgreement
 from .models.file_model import File
 from .models.admin_request_model import UserRequest
+
 from .management.admin import AdminModel
 from .management.email.email_sender import EmailSender, GmailEmailStrategy
-from uuid import UUID
-from werkzeug.utils import secure_filename
-from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
+
 
 
 SECRET_KEY = config("SECRET_KEY", default="good-key123")
