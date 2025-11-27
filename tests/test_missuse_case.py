@@ -1,39 +1,39 @@
 """Security misuse tests based on the Threat Models.
 
-This test file implements negative tests aligned with the user's three threat
-models: Authentication Flow, System DFD and Submit Job Application.
+Implements negative tests aligned with the user's three threat models:
+Authentication Flow, System DFD, and Submit Job Application.
 
-Note: Some tests assert desired security controls (e.g., account lockout).
-These will intentionally fail until corresponding defensive code exists in
-the application; failing CI signals a missing security control.
+Some tests assert desired security controls (e.g., account lockout). These will
+intentionally fail until corresponding defensive code exists in the application;
+failing CI signals a missing security control.
 """
 
 import io
-import pytest
+import importlib
 from datetime import datetime, timedelta
+import os
+
+import pytest
 from argon2 import PasswordHasher
-from tests.util_functions import generate_jwt
-from werkzeug.utils import secure_filename
-from controllers.models.token_model import Token
+from decouple import config
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session as ORMSession
+from werkzeug.utils import secure_filename
+
 from base_test import RoutingTestCase
 from controllers.models import BaseModel
-from controllers.models.user_model import User, UserTypes, Student, Company
 from controllers.models.file_model import File
 from controllers.models.job_model import Job
-from decouple import config
-import importlib
+from controllers.models.token_model import Token
+from controllers.models.user_model import User, UserTypes, Student, Company
+from tests.util_functions import generate_jwt
 
 
 @pytest.fixture(autouse=True)
 def patch_jwt_encode_to_str(monkeypatch):
-    """Test-only fixture: ensure JWT encode returns str not bytes for app endpoints.
-
-    This is a test-side workaround for environments where jwt.encode returns bytes (PyJWT versions).
-    It patches the symbol in the controller module to avoid JSON serialization errors in login.
-    """
+    """Ensure JWT encode returns str, not bytes, for app endpoints."""
     import controllers.auth_controller as auth_ctrl
+
     orig_encode = getattr(auth_ctrl, "encode", None)
 
     def wrapper(*args, **kwargs):
@@ -65,7 +65,8 @@ class SecurityMisuseTests(RoutingTestCase):
         super().setUpClass()
         session = cls.database.get_session()
 
-        stu = User(google_uid="stu-uid", email="student@example.com", type=UserTypes.STUDENT)
+        stu = User(google_uid="stu-uid", email="student@example.com",
+                   type=UserTypes.STUDENT)
         session.add(stu)
         session.commit()
         session.refresh(stu)
@@ -78,11 +79,13 @@ class SecurityMisuseTests(RoutingTestCase):
         session.refresh(student)
         cls.student_id = student.id
 
-        cu = User(google_uid="co-uid", email="company@example.com", type=UserTypes.COMPANY)
+        cu = User(google_uid="co-uid", email="company@example.com",
+                  type=UserTypes.COMPANY)
         session.add(cu)
         session.commit()
         session.refresh(cu)
         cls.company_user_id = cu.id
+
         comp = Company(user_id=cu.id, company_name="Acme", company_size="10")
         session.add(comp)
         session.commit()
@@ -149,7 +152,8 @@ class SecurityMisuseTests(RoutingTestCase):
         assert last_status in (429, 403)
 
     def test_cors_disallows_unlisted_origin(self):
-        res = self.client.get("/api/v1/companies", headers={"Origin": "http://evil.com"})
+        res = self.client.get("/api/v1/companies",
+                              headers={"Origin": "http://evil.com"})
         assert res.headers.get("Access-Control-Allow-Origin") != "http://evil.com"
 
     def test_refresh_cookie_http_only(self):
@@ -176,18 +180,23 @@ class SecurityMisuseTests(RoutingTestCase):
         assert "HttpOnly" in refresh_cookie
 
     def test_submit_job_application_requires_auth_and_csrf(self):
-        r = self.client.post(f"/api/v1/application/{self.job_id}", data={}, content_type="multipart/form-data")
+        r = self.client.post(f"/api/v1/application/{self.job_id}",
+                             data={}, content_type="multipart/form-data")
         assert r.status_code in (400, 401, 403)
 
     def test_refresh_invalid_after_logout(self):
         from controllers.auth_controller import AuthenticationController
-        auth = AuthenticationController(self.database, self.app.app.config.get("Admin"))
+        auth = AuthenticationController(
+            self.database, self.app.app.config.get("Admin")
+        )
         with self.app.app.app_context():
             _, refresh, _, _ = auth.login_user(self.student_user_id)
         self.client.set_cookie("localhost", "refresh_token", refresh)
         csrf_token = self.client.get("/api/v1/csrf-token").get_json()["csrf_token"]
         self.client.set_cookie("localhost", "csrf_token", csrf_token)
-        logout_res = self.client.post("/api/v1/auth/logout", headers={"X-CSRFToken": csrf_token})
+        logout_res = self.client.post(
+            "/api/v1/auth/logout", headers={"X-CSRFToken": csrf_token}
+        )
         assert logout_res.status_code in (200, 204)
         refresh_res = self.client.get("/api/v1/refresh")
         assert refresh_res.status_code in (400, 401, 403)
@@ -195,14 +204,18 @@ class SecurityMisuseTests(RoutingTestCase):
     def test_logout_revokes_refresh_token(self):
         """On logout the stored refresh token should be removed from DB."""
         from controllers.auth_controller import AuthenticationController
-        auth = AuthenticationController(self.database, self.app.app.config.get("Admin"))
+        auth = AuthenticationController(
+            self.database, self.app.app.config.get("Admin")
+        )
         with self.app.app.app_context():
             _, refresh, _, _ = auth.login_user(self.student_user_id)
 
         self.client.set_cookie("localhost", "refresh_token", refresh)
         csrf_token = self.client.get("/api/v1/csrf-token").get_json()["csrf_token"]
         self.client.set_cookie("localhost", "csrf_token", csrf_token)
-        logout_res = self.client.post("/api/v1/auth/logout", headers={"X-CSRFToken": csrf_token})
+        logout_res = self.client.post(
+            "/api/v1/auth/logout", headers={"X-CSRFToken": csrf_token}
+        )
         assert logout_res.status_code in (200, 204)
 
         session = self.database.get_session()
@@ -220,7 +233,6 @@ class SecurityMisuseTests(RoutingTestCase):
                 pass
 
         session = self.database.get_session()
-        import os
         base = os.environ.get("BASE_FILE_PATH", "content")
         os.makedirs(base, exist_ok=True)
         filename = "test_rate_limit.txt"
@@ -229,7 +241,10 @@ class SecurityMisuseTests(RoutingTestCase):
             f.write("Rate limit test content")
 
         from controllers.models.file_model import File as FileModel
-        test_file = FileModel(owner=self.student_user_id, file_name=filename, file_path=path, file_type="letter")
+        test_file = FileModel(
+            owner=self.student_user_id, file_name=filename,
+            file_path=path, file_type="letter"
+        )
         session.add(test_file)
         session.commit()
         session.refresh(test_file)
@@ -237,9 +252,9 @@ class SecurityMisuseTests(RoutingTestCase):
         session.close()
 
         self.app.app.config["RateLimiter"] = FakeRateLimiter()
-
         jwt_token = generate_jwt(self.student_user_id, secret=SECRET_KEY)
-        res = self.client.get(f"/api/v1/file/{file_id}", headers={"access_token": jwt_token})
+        res = self.client.get(f"/api/v1/file/{file_id}",
+                              headers={"access_token": jwt_token})
         assert res.status_code in (429, 500)
 
     def test_sensitive_data_not_exposed_on_profile(self):
@@ -258,13 +273,17 @@ class SecurityMisuseTests(RoutingTestCase):
 
     def test_path_traversal_prevented(self):
         """File GET should not expose files outside of the content directory."""
-        import os
         base = os.environ.get("BASE_FILE_PATH", "content")
         os.makedirs(base, exist_ok=True)
 
         session = self.database.get_session()
         gen_filename = "../../this_should_not_be_accessible.pdf"
-        f = File(owner=self.student_user_id, file_name=gen_filename, file_path=os.path.join(base, "nowhere.pdf"), file_type="letter")
+        f = File(
+            owner=self.student_user_id,
+            file_name=gen_filename,
+            file_path=os.path.join(base, "nowhere.pdf"),
+            file_type="letter",
+        )
         session.add(f)
         session.commit()
         session.refresh(f)
@@ -272,11 +291,12 @@ class SecurityMisuseTests(RoutingTestCase):
         session.close()
 
         jwt_token = generate_jwt(self.student_user_id, secret=SECRET_KEY)
-        res = self.client.get(f"/api/v1/file/{file_id}", headers={"access_token": jwt_token})
+        res = self.client.get(f"/api/v1/file/{file_id}",
+                              headers={"access_token": jwt_token})
         assert res.status_code in (404, 400)
 
     def test_filename_sanitization(self):
-        malicious = r"..\/..\/etc\/passwd.png"
+        malicious = "../../etc/passwd.png"
         sanitized = secure_filename(malicious)
         assert ".." not in sanitized
         assert "/" not in sanitized
