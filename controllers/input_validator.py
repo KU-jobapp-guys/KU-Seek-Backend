@@ -125,7 +125,7 @@ class InputValidator:
         if not student:
             raise ValueError("Student not found")
 
-        if not len(current_applicants) < job.capacity:
+        if len(current_applicants) >= job.capacity:
             raise ValueError("Invalid job provided.")
         
         if str(student.id) in [
@@ -202,6 +202,9 @@ class InputValidator:
             ValueError(err_msg) on failure
         """
         cleaned = dict(body)
+
+        if "kuId" not in body:
+            raise ValueError("Missing required field: kuId")
 
         nisit_id = cleaned.get("kuId")
         if not isinstance(nisit_id, str) or not re.fullmatch(r"\d{10}", nisit_id):
