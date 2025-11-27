@@ -83,11 +83,11 @@ def create_app(engine=None, admin=None):
     @app.app.after_request
     def add_security_headers(resp):
         """Set security headers."""
-        resp.headers['Content-Security-Policy']='default-src \'self\''
-        resp.headers['X-Frame-Options']="DENY"
-        resp.headers['X-Content-Type-Options']='nosniff'
+        resp.headers["Content-Security-Policy"] = "default-src 'self'"
+        resp.headers["X-Frame-Options"] = "DENY"
+        resp.headers["X-Content-Type-Options"] = "nosniff"
         return resp
-    
+
     app.app.config["RateLimiter"] = RateLimiter(DBRateLimit())
 
     # One-time (idempotent) seeding of common Terms into the database.
