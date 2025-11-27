@@ -1,9 +1,12 @@
 """Controller for Tags and Terms endpoints."""
 
 from typing import List, Dict
-from connexion.exceptions import ProblemException
+from swagger_server.openapi_server import models
+from logger.custom_logger import get_logger
 from .models.tag_term_model import Tags, Terms
 from .decorators import login_required, role_required, rate_limit
+
+logger = get_logger()
 
 
 class SkillsController:
@@ -24,12 +27,14 @@ class SkillsController:
         try:
             tag = session.query(Tags).where(Tags.id == tag_id).one_or_none()
             if not tag:
-                raise ValueError("Tag not found")
+                logger.warning("Tag not found: %s", tag_id)
+                return models.ErrorMessage("Tag not found"), 404
 
             return {"id": tag.id, "name": tag.name}
-        except Exception as e:
+        except Exception:
             session.rollback()
-            raise ProblemException(f"Database Error {str(e)}")
+            logger.exception("Database error fetching tag %s", tag_id)
+            return models.ErrorMessage("Database error"), 500
         finally:
             session.close()
 
@@ -44,12 +49,14 @@ class SkillsController:
         try:
             term = session.query(Terms).where(Terms.id == term_id).one_or_none()
             if not term:
-                raise ValueError("Term not found")
+                logger.warning("Term not found: %s", term_id)
+                return models.ErrorMessage("Term not found"), 404
 
             return {"id": term.id, "name": term.name, "type": term.type}
-        except Exception as e:
+        except Exception:
             session.rollback()
-            raise ProblemException(f"Database Error {str(e)}")
+            logger.exception("Database error fetching term %s", term_id)
+            return models.ErrorMessage("Database error"), 500
         finally:
             session.close()
 
@@ -61,9 +68,10 @@ class SkillsController:
         try:
             terms = session.query(Terms).all()
             return [{"id": t.id, "name": t.name, "type": t.type} for t in terms]
-        except Exception as e:
+        except Exception:
             session.rollback()
-            raise ProblemException(f"Database Error {str(e)}")
+            logger.exception("Database error fetching terms")
+            return models.ErrorMessage("Database error"), 500
         finally:
             session.close()
 
@@ -74,9 +82,10 @@ class SkillsController:
         try:
             tags = session.query(Tags).all()
             return [t.name for t in tags]
-        except Exception as e:
+        except Exception:
             session.rollback()
-            raise ProblemException(f"Database Error {str(e)}")
+            logger.exception("Database error fetching tags")
+            return models.ErrorMessage("Database error"), 500
         finally:
             session.close()
 
@@ -88,7 +97,8 @@ class SkillsController:
         Returns the id of the tag (new or existing).
         """
         if not name or not isinstance(name, str):
-            raise ValueError("Invalid tag name")
+            logger.warning("Invalid tag name provided: %s", name)
+            return models.ErrorMessage("Invalid tag name"), 400
 
         session = self.db.get_session()
         try:
@@ -101,8 +111,9 @@ class SkillsController:
             session.commit()
             session.refresh(tag)
             return tag.id, True
-        except Exception as e:
+        except Exception:
             session.rollback()
-            raise ProblemException(f"Database Error {str(e)}")
+            logger.exception("Database error creating tag %s", name)
+            return models.ErrorMessage("Database error"), 500
         finally:
             session.close()

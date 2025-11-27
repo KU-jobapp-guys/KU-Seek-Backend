@@ -90,7 +90,7 @@ class BookmarkTestCase(RoutingTestCase):
             headers={"X-CSRFToken": csrf_token, "access_token": jwt},
         )
 
-        self.assertEqual(res.status_code, 500)
+        self.assertEqual(res.status_code, 404)
         self.assertIn("Bookmark not found", res.json["message"])
 
     def test_delete_bookmark_invalid_field(self):
