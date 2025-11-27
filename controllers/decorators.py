@@ -28,11 +28,11 @@ def login_required(func):
             decode(jwt=jwt_auth_token, key=SECRET_KEY, algorithms=["HS512"])
 
         except InvalidSignatureError:
-            return models.ErrorMessage("Invalid authentication token provided"), 403
+            return models.ErrorMessage("Invalid authentication token provided"), 401
         except ExpiredSignatureError:
-            return models.ErrorMessage("Token is expired"), 403
+            return models.ErrorMessage("Token is expired"), 401
         except Exception as e:
-            return models.ErrorMessage(f"Invalid authentication token, {e}"), 403
+            return models.ErrorMessage(f"Invalid authentication token, {e}"), 401
 
         # authentication successful, serve the API.
         return func(*args, **kwargs)
@@ -63,11 +63,11 @@ def role_required(roles: list[str] = []):
                 )
 
             except InvalidSignatureError:
-                return models.ErrorMessage("Invalid authentication token provided"), 403
+                return models.ErrorMessage("Invalid authentication token provided"), 401
             except ExpiredSignatureError:
-                return models.ErrorMessage("Token is expired"), 403
+                return models.ErrorMessage("Token is expired"), 401
             except Exception as e:
-                return models.ErrorMessage(f"Invalid authentication token, {e}"), 403
+                return models.ErrorMessage(f"Invalid authentication token, {e}"), 401
 
             # fetch the user's role and validate
             session = current_app.config["Database"].get_session()
