@@ -26,6 +26,7 @@ from .models.file_model import File
 from .models.admin_request_model import UserRequest
 from .management.admin import AdminModel
 from .management.email.email_sender import EmailSender
+from .input_validator import InputValidator
 from uuid import UUID
 from werkzeug.utils import secure_filename
 from argon2 import PasswordHasher
@@ -438,11 +439,7 @@ class AuthenticationController:
 
         Returns: The user's id in the database
         """
-        required_keys = ["google_uid", "email", "user_type"]
-        print(credentials)
-        valid_keys = all(key in credentials for key in required_keys)
-        if not valid_keys:
-            raise TypeError("Invalid credentials.")
+        credentials = InputValidator.register(user_type, credentials)
 
         session = self.db.get_session()
 

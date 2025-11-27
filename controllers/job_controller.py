@@ -7,6 +7,7 @@ from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 from swagger_server.openapi_server import models
 from logger.custom_logger import get_logger
+from .input_validator import InputValidator
 from .models.job_model import Job, JobSkills, JobTags, Bookmark, JobApplication
 from .models.user_model import Company, Student
 from .models.tag_term_model import Tags, Terms
@@ -108,57 +109,17 @@ class JobController:
             mapped_body[camel_map.get(k, k)] = v
         body = mapped_body
 
-        required_fields = [
-            "title",
-            "salary_min",
-            "salary_max",
-            "location",
-            "work_hours",
-            "job_type",
-            "job_level",
-            "capacity",
-            "end_date",
-        ]
-
-        missing_fields = [field for field in required_fields if field not in body]
-        if missing_fields:
-            return (
-                models.ErrorMessage(
-                    f"Missing required fields: {', '.join(missing_fields)}"
-                ),
-                400,
-            )
-
         session = self.db.get_session()
 
-        if isinstance(user_id, str):
-            try:
-                user_id = uuid.UUID(user_id)
-            except ValueError:
-                return (
-                    models.ErrorMessage(
-                        "Invalid user_id format. Expected UUID string."
-                    ),
-                    400,
-                )
-
         try:
-            end_date = body["end_date"]
-            if isinstance(end_date, str):
-                end_date = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
-
-            company_obj = (
-                session.query(Company).where(Company.user_id == user_id).one_or_none()
-            )
-
-            if not company_obj:
+            try:
+                body = InputValidator.job_post(session, user_id, body)
+            except ValueError as e:
                 session.close()
-                return models.ErrorMessage(
-                    "Company not found for current user. Create a company first."
-                ), 404
+                raise ValueError(f"Input validation error: {str(e)}")
 
             job = Job(
-                company_id=company_obj.id,
+                company_id=body["company_obj"].id,
                 title=body["title"],
                 description=body.get("description"),
                 salary_min=body["salary_min"],
@@ -168,7 +129,7 @@ class JobController:
                 job_type=body["job_type"],
                 job_level=body["job_level"],
                 capacity=body["capacity"],
-                end_date=end_date,
+                end_date=body["end_date"],
                 status="pending",
             )
 
