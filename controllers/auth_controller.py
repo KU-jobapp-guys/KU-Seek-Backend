@@ -24,7 +24,6 @@ from .models.token_model import Token
 from .models.tos_model import TOSAgreement
 from .models.file_model import File
 from .models.admin_request_model import UserRequest
-from .models.tos_model import TOSAgreement
 from .management.admin import AdminModel
 from .management.email.email_sender import EmailSender
 from .input_validator import InputValidator
@@ -443,7 +442,6 @@ class AuthenticationController:
 
         Returns: The user's id in the database
         """
-
         credentials = InputValidator.register(user_type, credentials)
 
         session = self.db.get_session()

@@ -2,12 +2,14 @@
 
 import re
 import uuid
-from datetime import datetime, date, timezone
+from datetime import datetime, timezone
 from .models.job_model import Job, JobApplication
 from .models.user_model import Student, Company
 
 
 class InputValidator:
+    """Input validation controller class."""
+
     @classmethod
     def job_post(cls, db_session, user_id, body):
         """Validate job post payload.
@@ -16,13 +18,12 @@ class InputValidator:
             cleaned on success
             ValueError(error_message) on failure
         """
-
         if isinstance(user_id, str):
             try:
                 user_id = uuid.UUID(user_id)
             except ValueError:
                 raise ValueError("Invalid user_id format. Expected UUID string.")
-            
+
         company_obj = (
             db_session.query(Company).where(Company.user_id == user_id).one_or_none()
         )
@@ -87,17 +88,18 @@ class InputValidator:
 
         try:
             if isinstance(end_date, str):
-                cleaned["end_date"] = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+                cleaned["end_date"] = datetime.fromisoformat(
+                    end_date.replace("Z", "+00:00")
+                )
         except (TypeError, ValueError):
             raise ValueError("Field 'end_date' must be a date or ISO date string")
-        
+
         if cleaned["end_date"] < now:
             raise ValueError("Field 'end_date' must be in the future")
 
         cleaned["company_obj"] = company_obj
 
         return cleaned
-        
 
     @classmethod
     def job_application(cls, db_session, user_id, job_id, body):
@@ -107,10 +109,11 @@ class InputValidator:
             cleaned on success
             ValueError(error_message) on failure
         """
-
         job = db_session.query(Job).where(Job.id == job_id).one_or_none()
         current_applicants = (
-            db_session.query(JobApplication).where(JobApplication.job_id == job_id).all()
+            db_session.query(JobApplication)
+            .where(JobApplication.job_id == job_id)
+            .all()
         )
 
         student = (
@@ -127,7 +130,7 @@ class InputValidator:
 
         if len(current_applicants) >= job.capacity:
             raise ValueError("Invalid job provided.")
-        
+
         if str(student.id) in [
             str(applicant.student_id) for applicant in current_applicants
         ]:
@@ -175,7 +178,7 @@ class InputValidator:
         try:
             salary = float(cleaned.get("expected_salary"))
         except (TypeError, ValueError):
-            raise ValueError("Field 'expected_salary' must be numeric")  
+            raise ValueError("Field 'expected_salary' must be numeric")
 
         if salary < 0:
             raise ValueError("Field 'expected_salary' must be non-negative")
@@ -184,14 +187,16 @@ class InputValidator:
 
         phone = cleaned.get("phone_number")
         if not isinstance(phone, str) or not re.fullmatch(r"\d{9,}", phone):
-            raise ValueError("Field 'phone_number' must be a non-empty string with at least 9 characters")
+            raise ValueError(
+                "Field 'phone_number' must be \
+                    a non-empty string with at least 9 characters"
+            )
         cleaned["phone_number"] = phone.strip()
 
-        cleaned['job'] = job
-        cleaned['student'] = student
+        cleaned["job"] = job
+        cleaned["student"] = student
 
         return cleaned
-    
 
     @classmethod
     def student_registration(cls, body):
@@ -212,7 +217,6 @@ class InputValidator:
         cleaned["kuId"] = nisit_id.strip()
 
         return cleaned
-    
 
     @classmethod
     def company_registration(cls, body):
@@ -236,33 +240,41 @@ class InputValidator:
         cleaned["companyName"] = company_name.strip()
 
         valid_sizes = [
-            'less than 100',
-            '101 - 1,000',
-            '1,001 - 10,000',
-            'more than 10,000'
+            "less than 100",
+            "101 - 1,000",
+            "1,001 - 10,000",
+            "more than 10,000",
         ]
 
         company_size = cleaned.get("companySize")
-        if not isinstance(company_size, str) or not company_size.strip() or company_size not in valid_sizes:
-            raise ValueError("Field 'companySize' must be a non-empty string and one of the valid sizes")
+        if (
+            not isinstance(company_size, str)
+            or not company_size.strip()
+            or company_size not in valid_sizes
+        ):
+            raise ValueError(
+                "Field 'companySize' must be a \
+                    non-empty string and one of the valid sizes"
+            )
         cleaned["companySize"] = company_size.strip()
 
         return cleaned
 
-
     @classmethod
     def professor_registration(cls, body):
         """Validate professor profile payload.
+
         Nothing to validate yet during registration.
 
         Returns:
             body
         """
         return body
-    
+
     @classmethod
     def register(cls, user_type, body):
         """Validate registration payload based on user_type.
+
         Returns:
             cleaned on success
             ValueError(err_msg) on failure

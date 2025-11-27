@@ -7,7 +7,7 @@ from jwt import decode
 
 from .input_validator import InputValidator
 from .decorators import role_required, rate_limit
-from flask import request, session
+from flask import request
 from decouple import config, Csv
 from sqlalchemy.orm import joinedload
 from .job_controller import JobController
@@ -62,8 +62,8 @@ class JobApplicationController:
             session.close()
             return models.ErrorMessage(f"Input validation error: {str(e)}"), 400
 
-        job = form['job']
-        student = form['student']
+        job = form["job"]
+        student = form["student"]
 
         # handle fields
         job_application = JobApplication(

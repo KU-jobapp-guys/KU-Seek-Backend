@@ -106,22 +106,9 @@ class JobController:
             mapped_body[camel_map.get(k, k)] = v
         body = mapped_body
 
-        required_fields = [
-            "title",
-            "salary_min",
-            "salary_max",
-            "location",
-            "work_hours",
-            "job_type",
-            "job_level",
-            "capacity",
-            "end_date",
-        ]
-
         session = self.db.get_session()
 
         try:
-            
             try:
                 body = InputValidator.job_post(session, user_id, body)
             except ValueError as e:
