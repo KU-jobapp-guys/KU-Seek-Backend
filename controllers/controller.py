@@ -27,8 +27,6 @@ def _normalize_response(result, default_status=200):
     - If `result` is a (body, status) tuple, return that status and JSON body.
     - If `result` is an OpenAPI model with `to_dict()`, convert it.
     - Otherwise jsonify `result` with `default_status`.
-    - If you are reading this message it's mean I love you,
-      and FUCK YOU MAN STOP READING MY DOCSTRING ALREADY GO TOUCH GRASS.
     """
     if isinstance(result, tuple) and len(result) == 2:
         body, status = result
