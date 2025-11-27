@@ -191,7 +191,7 @@ def handle_authentication(body: Dict):
             if user is None:
                 raise ValueError("User was not found")
             user_jwt, refresh, user_type, user_id = auth_controller.login_user(user)
-            
+
         else:
             user_info = form.get("user_info")
             user_info = json.loads(user_info)
