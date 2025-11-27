@@ -142,7 +142,6 @@ def handle_oauth_authentication(body: dict):
     redirect_uri = config("REDIRECT_URI", default="http://localhost:5173/login")
     base_path = os.path.join(os.getcwd(), BASE_FILE_PATH)
 
-
     form = request.form
     # Create the OAuth flow
     try:
@@ -178,34 +177,52 @@ def handle_oauth_authentication(body: dict):
         current_app.config["Database"], current_app.config["Admin"]
     )
 
-    user = auth_controller.get_user('email', id_info["email"])
+    user = auth_controller.get_user("email", id_info["email"])
     if user:
-        if (not user.google_uid):
-            auth_controller.add_user_google_uid(user_id=user.id, google_uid=id_info["sub"])
+        if not user.google_uid:
+            auth_controller.add_user_google_uid(
+                user_id=user.id, google_uid=id_info["sub"]
+            )
         user_jwt, refresh, user_type, user_id = auth_controller.login_user(user.id)
     else:
-        if not form.get('user_info'):
-            return models.ErrorMessage('This account is not registered yet.'), 400
-        
+        if not form.get("user_info"):
+            return models.ErrorMessage("This account is not registered yet."), 400
+
         user_info = json.loads(form.get("user_info"))
         validation_file = request.files.get("id_doc")
         val_filename = secure_filename(validation_file.filename)
         val_filepath = base_path + "/" + val_filename
         validation_file.save(val_filepath)
-        validation_res = json.loads(auth_controller.admin.verify_user(user_info, val_filepath))
+        validation_res = json.loads(
+            auth_controller.admin.verify_user(user_info, val_filepath)
+        )
         user_info["google_uid"] = id_info["sub"]
         user_info["email"] = id_info["email"]
-        user_info["user_type"] = validation_res["role"] if validation_res["valid"] else "staff"
+        user_info["user_type"] = (
+            validation_res["role"] if validation_res["valid"] else "staff"
+        )
 
         user_id = auth_controller.register_user(user_info, user_info["user_type"])
         user_jwt, refresh, user_type, user_id = auth_controller.login_user(user_id)
 
-        post_register_process(user_id, user_info, validation_file, validation_res, user_type, id_info["email"])
+        post_register_process(
+            user_id,
+            user_info,
+            validation_file,
+            validation_res,
+            user_type,
+            id_info["email"],
+        )
 
     response = make_response(
-        models.UserCredentials(user_jwt, id_info["email"], user_type, user_id).to_dict(), 200
+        models.UserCredentials(
+            user_jwt, id_info["email"], user_type, user_id
+        ).to_dict(),
+        200,
     )
-    response.set_cookie("refresh_token", refresh, max_age=timedelta(days=30), httponly=True)
+    response.set_cookie(
+        "refresh_token", refresh, max_age=timedelta(days=30), httponly=True
+    )
     return response
 
 
@@ -231,35 +248,50 @@ def handle_credential_authentication(body: dict):
         current_app.config["Database"], current_app.config["Admin"]
     )
 
-    user = auth_controller.get_user('email', email)
+    user = auth_controller.get_user("email", email)
     if user:
-        if (user.password == None):
-            return models.ErrorMessage('This email has been registered.'), 400
+        if (user.password is None) or (request.files.get("id_doc") is not None):
+            return models.ErrorMessage("This email has been registered."), 400
         return auth_controller.credential_login(email, password)
     else:
         validation_file = request.files.get("id_doc")
         val_filename = secure_filename(validation_file.filename)
         val_filepath = base_path + "/" + val_filename
         validation_file.save(val_filepath)
-        validation_res = json.loads(auth_controller.admin.verify_user(user_info, val_filepath))
+        validation_res = json.loads(
+            auth_controller.admin.verify_user(user_info, val_filepath)
+        )
         user_info["email"] = email
-        user_info["user_type"] = validation_res["role"] if validation_res["valid"] else "staff"
+        user_info["user_type"] = (
+            validation_res["role"] if validation_res["valid"] else "staff"
+        )
 
-        print('user_info: ', user_info)
+        print("user_info: ", user_info)
 
         user_id = auth_controller.register_user(user_info, user_info["user_type"])
         user_jwt, refresh, user_type, user_id = auth_controller.login_user(user_id)
 
-        post_register_process(user_id, user_info, validation_file, validation_res, user_type, email)
+        post_register_process(
+            user_id, user_info, validation_file, validation_res, user_type, email
+        )
 
         response = make_response(
             models.UserCredentials(user_jwt, email, user_type, user_id).to_dict(), 200
         )
-        response.set_cookie("refresh_token", refresh, max_age=timedelta(days=30), httponly=True)
+        response.set_cookie(
+            "refresh_token", refresh, max_age=timedelta(days=30), httponly=True
+        )
         return response
 
 
-def post_register_process(user_id: str, user_info: dict, validation_file, validation_res: dict, user_type: str, email: str):
+def post_register_process(
+    user_id: str,
+    user_info: dict,
+    validation_file,
+    validation_res: dict,
+    user_type: str,
+    email: str,
+):
     """
     Handles post-registration operations including:
     - Save validation file
@@ -312,7 +344,9 @@ def post_register_process(user_id: str, user_info: dict, validation_file, valida
         mail_file = "welcome"
     try:
         email_sender = EmailSender(GmailEmailStrategy())
-        email_sender.send_email(email, "Welcome to KU-Seek", mail_file, template_args=[])
+        email_sender.send_email(
+            email, "Welcome to KU-Seek", mail_file, template_args=[]
+        )
     except Exception as e:
         logger.error("Registration email error: ", e)
 
@@ -328,10 +362,12 @@ class AuthenticationController:
     def check_users(self, field: str, value: str) -> bool:
         """Check if a user exists in the users table."""
         session = self.db.get_session()
-        exists = session.query(User).filter(getattr(User, field) == value).first() is not None
+        exists = (
+            session.query(User).filter(getattr(User, field) == value).first()
+            is not None
+        )
         session.close()
         return exists
-
 
     def logout_user(self, refresh_token: str) -> bool:
         """
@@ -445,7 +481,9 @@ class AuthenticationController:
         """Return the user with the matching field and value."""
         session = self.db.get_session()
         try:
-            user = session.query(User).where(getattr(User, field) == value).one_or_none()
+            user = (
+                session.query(User).where(getattr(User, field) == value).one_or_none()
+            )
             return user
         finally:
             session.close()
@@ -457,7 +495,7 @@ class AuthenticationController:
         user = session.query(User).filter_by(id=user_id).first()
         if user:
             if google_uid and not user.google_uid:
-                user.google_uid =  google_uid
+                user.google_uid = google_uid
                 session.commit()
         session.close()
 
@@ -476,7 +514,9 @@ class AuthenticationController:
         """
         required_oauth_keys = ["google_uid", "email", "user_type"]
         required_credential_keys = ["email", "password", "user_type"]
-        valid_keys = all(key in credentials for key in required_oauth_keys) or all(key in credentials for key in required_credential_keys)
+        valid_keys = all(key in credentials for key in required_oauth_keys) or all(
+            key in credentials for key in required_credential_keys
+        )
         if not valid_keys:
             raise TypeError("Invalid credentials.")
 
@@ -485,10 +525,14 @@ class AuthenticationController:
 
         # register the user in the system
         user = User(
-            google_uid=credentials.get("google_uid") if credentials.get("google_uid") else None,
+            google_uid=credentials.get("google_uid")
+            if credentials.get("google_uid")
+            else None,
             email=credentials["email"],
             type=credentials["user_type"],
-            password=hasher.hash(credentials["password"]) if credentials.get("password") else None,
+            password=hasher.hash(credentials["password"])
+            if credentials.get("password")
+            else None,
         )
         session.add(user)
         session.commit()
