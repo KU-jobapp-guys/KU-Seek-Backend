@@ -5,6 +5,34 @@ from controllers.db_controller import AbstractDatabaseController
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 from controllers.models import BaseModel
+import sys
+import types
+
+# If tests are running in an environment without the `redis` library, stub a minimal
+# `redis` module so `controllers.db_rate_limit` can import with no errors. This keeps
+# tests isolated and avoids requiring `redis` for unit test runs.
+if "redis" not in sys.modules:
+    class _RedisStub:
+        def __init__(self, *a, **kw):
+            pass
+
+        def incr(self, *a, **kw):
+            return 1
+
+        def expire(self, *a, **kw):
+            return None
+
+        def sadd(self, *a, **kw):
+            return None
+
+        def srem(self, *a, **kw):
+            return None
+
+        def sismember(self, *a, **kw):
+            return False
+
+    sys.modules["redis"] = types.SimpleNamespace(Redis=_RedisStub)
+
 from app import create_app
 from decouple import config
 
@@ -78,17 +106,27 @@ class TestingController(AbstractDatabaseController):
 class SimpleTestCase(unittest.TestCase):
     """Simple test case with database setup."""
 
-    database = TestingController()
+    # Defer instantiation of TestingController so we don't attempt to connect
+    # or create databases during module import. Tests may override this by
+    # setting `database` before setUpClass runs.
+    database = None
 
     @classmethod
     def setUpClass(cls):
         """Create an instance of the app and database."""
-        cls.database._get_testing_database()
+        if cls.database is None:
+            cls.database = TestingController()
+        # If the database controller exposes an explicit creation method,
+        # call it. Otherwise assume it will create sessions lazily.
+        if hasattr(cls.database, "_get_testing_database"):
+            cls.database._get_testing_database()
 
     @classmethod
     def tearDownClass(cls):
         """Destroy the testing database and close the unittest."""
-        cls.database._destroy_testing_database()
+        if getattr(cls, "database", None) is not None and hasattr(cls.database, "_destroy_testing_database"):
+            cls.database._destroy_testing_database()
+            cls.database = None
 
 
 class RoutingTestCase(SimpleTestCase):
@@ -108,5 +146,21 @@ class RoutingTestCase(SimpleTestCase):
             message=r"Passing a schema to Validator\.iter_errors is deprecated",
         )
 
+        # Provide a fake rate limiter to avoid requiring a Redis backend during tests
+        class FakeRateLimiter:
+            def request(self, user_id):
+                return True
+
+            def unban_user(self, user_id):
+                pass
+
+            def ban_user(self, user_id):
+                pass
+
+            def is_banned(self, user_id):
+                return False
+
         cls.app = create_app(cls.database)
+        # Replace the RateLimiter with a fake one to avoid Redis dependency.
+        cls.app.app.config["RateLimiter"] = FakeRateLimiter()
         cls.client = cls.app.app.test_client()
