@@ -152,7 +152,7 @@ class ProfileTestCase(RoutingTestCase):
 
         self.assertEqual(res.status_code, 201)
         data = res.json
-     
+
         data = decamelize(data)
         self.assertEqual(data["first_name"], "Alice")
         self.assertEqual(data["last_name"], "Johnson")
