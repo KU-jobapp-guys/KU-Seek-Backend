@@ -61,7 +61,7 @@ jobs:
         run: alembic upgrade head
 
       - name: Run tests
-        run: pytest -vv
+        run: python -m unittest discover tests
 
       - name: Cleanup
         if: always()

@@ -17,7 +17,7 @@ from werkzeug.utils import secure_filename
 from controllers.models.token_model import Token
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session as ORMSession
-from tests.base_test import RoutingTestCase
+from base_test import RoutingTestCase
 from controllers.models import BaseModel
 from controllers.models.user_model import User, UserTypes, Student, Company
 from controllers.models.file_model import File
