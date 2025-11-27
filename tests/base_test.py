@@ -78,11 +78,18 @@ class TestingController(AbstractDatabaseController):
 class SimpleTestCase(unittest.TestCase):
     """Simple test case with database setup."""
 
-    database = TestingController()
+    # Defer creation of the testing controller until tests run so test modules
+    # can override `RoutingTestCase.database` without triggering a DB connection
+    # at import time (which can fail on CI or developer machines).
+    database = None
 
     @classmethod
     def setUpClass(cls):
         """Create an instance of the app and database."""
+        # Lazily instantiate the default testing controller if a subclass
+        # did not override it.
+        if cls.database is None:
+            cls.database = TestingController()
         cls.database._get_testing_database()
 
     @classmethod

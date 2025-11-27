@@ -17,7 +17,7 @@ from tests.util_functions import generate_jwt
 from controllers.models.token_model import Token
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session as ORMSession
-from base_test import RoutingTestCase
+from tests.base_test import RoutingTestCase
 from controllers.models import BaseModel
 from controllers.models.user_model import User, UserTypes, Student, Company
 from controllers.models.file_model import File
@@ -25,19 +25,9 @@ from controllers.models.job_model import Job
 from decouple import config
 
 
-def patch_jwt_encode_to_str(monkeypatch):
-    """Ensure JWT encode returns str not bytes for test environment."""
-    import controllers.auth_controller as auth_ctrl
-
-    orig_encode = getattr(auth_ctrl, "encode", None)
-
-    def wrapper(*args, **kwargs):
-        token = orig_encode(*args, **kwargs) if orig_encode else None
-        if isinstance(token, bytes):
-            return token.decode("utf-8")
-        return token
-
-    monkeypatch.setattr(auth_ctrl, "encode", wrapper)
+# For tests we patch `controllers.auth_controller.encode` to always return
+# a `str` so responses are JSON serializable when using PyJWT behaviour that
+# returns `bytes`. This patch is performed in `setUpClass`.
 
 
 engine = create_engine("sqlite:///:memory:")
@@ -45,11 +35,30 @@ BaseModel.metadata.create_all(engine)
 
 
 class InMemoryDBController:
-    """Controller for in-memory DB used in tests."""
+    """Controller for in-memory DB used in tests.
+
+    BaseTest expects the controller to expose lifecycle methods for
+    creating and destroying the testing database. Implement those
+    (in-memory equivalents) so the test harness can call them.
+    """
+
+    def __init__(self):
+        # Keep a reference to the in-memory engine as the "pool" so
+        # the rest of the code that expects .pool or get_session can
+        # work as though it were a DB engine/pool.
+        self.pool = engine
+
+    def _get_testing_database(self):
+        """Create tables for the in-memory DB testing lifecycle."""
+        BaseModel.metadata.create_all(self.pool)
+
+    def _destroy_testing_database(self):
+        """Remove tables from the in-memory DB when tests tear down."""
+        BaseModel.metadata.drop_all(self.pool)
 
     def get_session(self):
         """Return a new SQLAlchemy session bound to in-memory engine."""
-        return ORMSession(bind=engine)
+        return ORMSession(bind=self.pool)
 
 
 RoutingTestCase.database = InMemoryDBController()
@@ -63,6 +72,18 @@ class SecurityMisuseTests(RoutingTestCase):
     def setUpClass(cls):
         """Set up initial users, company, student, and job in the test database."""
         super().setUpClass()
+        # Force auth_controller.encode to return str (PyJWT may return bytes).
+        # This keeps responses JSON serializable in tests.
+        import controllers.auth_controller as auth_ctrl
+        _orig_encode = getattr(auth_ctrl, "encode", None)
+
+        def _encode_wrapper(*args, **kwargs):
+            token = _orig_encode(*args, **kwargs) if _orig_encode else None
+            if isinstance(token, bytes):
+                return token.decode("utf-8")
+            return token
+
+        auth_ctrl.encode = _encode_wrapper
         session = cls.database.get_session()
 
         stu = User(
@@ -81,6 +102,21 @@ class SecurityMisuseTests(RoutingTestCase):
         session.commit()
         session.refresh(student)
         cls.student_id = student.id
+
+        # Create an initial profile for the student so profile endpoints return data
+        from controllers.models.profile_model import Profile
+        profile = Profile(
+            user_id=stu.id,
+            first_name="Test",
+            last_name="Student",
+            email=cls.student_email,
+            contact_email=cls.student_email,
+            user_type="student",
+        )
+        session.add(profile)
+        session.commit()
+        session.refresh(profile)
+        cls.student_profile = profile
 
         cu = User(
             google_uid="co-uid",
@@ -299,7 +335,26 @@ class SecurityMisuseTests(RoutingTestCase):
         session.commit()
         session.close()
 
-        res = self.client.get(f"/api/v1/users/{self.student_user_id}/profile")
+        from tests.util_functions import generate_jwt
+        # Ensure a permissive RateLimiter to avoid 429 blocking during test
+        class _AllowAllRateLimiter:
+            def request(self, user_id):
+                return True
+
+            def unban_user(self, user_id):
+                pass
+
+            def is_banned(self, user_id):
+                return False
+
+        self.app.app.config["RateLimiter"] = _AllowAllRateLimiter()
+        jwt_token = generate_jwt(self.student_user_id, secret=SECRET_KEY)
+        res = self.client.get(
+            f"/api/v1/users/{self.student_user_id}/profile",
+            headers={"access_token": jwt_token},
+        )
+        # run basic assertion below
+        # Remove the debug output; test should assert the response below
         assert res.status_code == 200
         json_resp = res.get_json()
         assert "password" not in json_resp
