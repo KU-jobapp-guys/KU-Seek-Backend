@@ -32,6 +32,7 @@ STUDENT_DASHBOARD_URL = config(
     "STUDENT_DASHBOARD_URL", default="http://localhost:5173/student/dashboard"
 )
 
+JOB_APP_LIMIT = config("JOB_APP_LIMIT", default="10")
 
 class JobApplicationController:
     """Controller for handling job application operations."""
@@ -66,6 +67,15 @@ class JobApplicationController:
         if not student:
             session.close()
             return models.ErrorMessage("Student not found"), 400
+
+        if session.query(JobApplication).where(
+            JobApplication.student_id == student.id,
+            JobApplication.status == "pending"
+        ).count() > int(JOB_APP_LIMIT):
+            session.close()
+            return models.ErrorMessage(
+                f"A student can apply for only {JOB_APP_LIMIT} jobs at a time."
+            ), 401
 
         if not job:
             session.close()
