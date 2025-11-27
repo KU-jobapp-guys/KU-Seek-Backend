@@ -575,6 +575,26 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Education"
+    post:
+      summary: Create a new education record
+      operationId: controllers.controller.post_education
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EducationInput"
+      responses:
+        201:
+          description: Education created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Education"
+        400:
+          description: Bad request
+        401:
+          description: User not authenticated
 
   /student/histories:
     get:
