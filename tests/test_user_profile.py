@@ -201,7 +201,7 @@ class ProfileTestCase(RoutingTestCase):
         """Test fetching a non-existent profile returns 404."""
         non_existent_uuid = "00000000-0000-0000-0000-000000000000"
         res = self.client.get(f"/api/v1/users/{non_existent_uuid}/profile")
-        self.assertEqual(res.status_code, 500)
+        self.assertEqual(res.status_code, 401)
         csrf = self.client.get("/api/v1/csrf-token")
         csrf_token = csrf.json["csrf_token"]
         jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
@@ -215,7 +215,7 @@ class ProfileTestCase(RoutingTestCase):
         """Test fetching a profile with invalid UUID format returns 400."""
         non_existent_uuid = "Praise_The_Sun"
         res = self.client.get(f"/api/v1/users/{non_existent_uuid}/profile")
-        self.assertEqual(res.status_code, 500)
+        self.assertEqual(res.status_code, 401)
         csrf = self.client.get("/api/v1/csrf-token")
         csrf_token = csrf.json["csrf_token"]
         jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
@@ -313,7 +313,7 @@ class ProfileTestCase(RoutingTestCase):
         csrf_token = res.json["csrf_token"]
 
         update_payload = {
-            "first_name": "0823456789",
+            "phone_number": "0823456789",
         }
 
         res = self.client.patch(
