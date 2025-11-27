@@ -476,12 +476,11 @@ class JobApplicationTestCase(RoutingTestCase):
         )
 
         self.assertEqual(res.status_code, 401)
-        self.assertIn(
-            f"A student can apply for only {
-                config('JOB_APP_LIMIT', default='4')
-            } jobs at a time.",
-            res.json["message"],
+        expected_msg = (
+            f"A student can apply for only {config('JOB_APP_LIMIT', default='4')}"
+            " jobs at a time."
         )
+        self.assertIn(expected_msg, res.json["message"])
 
         if created_app_ids or created_job_ids:
             cleanup_s = self.database.get_session()
