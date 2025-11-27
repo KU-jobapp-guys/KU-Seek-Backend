@@ -425,6 +425,19 @@ paths:
       summary: Get user setting
       description: Retrieve the user's personal information.
       operationId: controllers.controller.get_user_setting
+      responses:
+        200:
+          description: Return the user setting data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        401:
+          description: Invalid access_token
+        403:
+          description: Invalid authorization
+        404:
+          description: Not found
 
   /users/me:
     get:
