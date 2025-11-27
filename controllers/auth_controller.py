@@ -34,7 +34,6 @@ from .management.admin import AdminModel
 from .management.email.email_sender import EmailSender, GmailEmailStrategy
 
 
-
 SECRET_KEY = config("SECRET_KEY", default="good-key123")
 
 ALGORITHM = "HS512"
