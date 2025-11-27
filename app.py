@@ -77,6 +77,15 @@ def create_app(engine=None, admin=None):
     else:
         app.app.config["Database"] = BaseController()
 
+    # set up response headers
+    @app.app.after_request
+    def add_security_headers(resp):
+        """Set security headers."""
+        resp.headers['Content-Security-Policy']='default-src \'self\''
+        resp.headers['X-Frame-Options']="DENY"
+        resp.headers['X-Content-Type-Options']='nosniff'
+        return resp
+
     # One-time (idempotent) seeding of common Terms into the database.
     # This runs on app start and will only insert missing terms.
     terms_list = [
