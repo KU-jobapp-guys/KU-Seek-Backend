@@ -43,9 +43,7 @@ class InMemoryDBController:
     """
 
     def __init__(self):
-        # Keep a reference to the in-memory engine as the "pool" so
-        # the rest of the code that expects .pool or get_session can
-        # work as though it were a DB engine/pool.
+        """Initialize the in-memory DB controller."""
         self.pool = engine
 
     def _get_testing_database(self):
@@ -75,6 +73,7 @@ class SecurityMisuseTests(RoutingTestCase):
         # Force auth_controller.encode to return str (PyJWT may return bytes).
         # This keeps responses JSON serializable in tests.
         import controllers.auth_controller as auth_ctrl
+
         _orig_encode = getattr(auth_ctrl, "encode", None)
 
         def _encode_wrapper(*args, **kwargs):
@@ -105,6 +104,7 @@ class SecurityMisuseTests(RoutingTestCase):
 
         # Create an initial profile for the student so profile endpoints return data
         from controllers.models.profile_model import Profile
+
         profile = Profile(
             user_id=stu.id,
             first_name="Test",
@@ -336,6 +336,7 @@ class SecurityMisuseTests(RoutingTestCase):
         session.close()
 
         from tests.util_functions import generate_jwt
+
         # Ensure a permissive RateLimiter to avoid 429 blocking during test
         class _AllowAllRateLimiter:
             def request(self, user_id):
