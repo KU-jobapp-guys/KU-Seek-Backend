@@ -405,7 +405,10 @@ class JobApplicationTestCase(RoutingTestCase):
             limit = int(config("JOB_APP_LIMIT", default="4"))
             current_pending = (
                 session.query(JobApplication)
-                .where(JobApplication.student_id == self.student_id, JobApplication.status == "pending")
+                .where(
+                    JobApplication.student_id == self.student_id,
+                    JobApplication.status == "pending",
+                )
                 .count()
             )
             to_create = max(0, limit - current_pending)
@@ -474,7 +477,9 @@ class JobApplicationTestCase(RoutingTestCase):
 
         self.assertEqual(res.status_code, 401)
         self.assertIn(
-            f"A student can apply for only {config('JOB_APP_LIMIT', default='4')} jobs at a time.",
+            f"A student can apply for only {
+                config('JOB_APP_LIMIT', default='4')
+            } jobs at a time.",
             res.json["message"],
         )
 
@@ -482,9 +487,13 @@ class JobApplicationTestCase(RoutingTestCase):
             cleanup_s = self.database.get_session()
             try:
                 if created_app_ids:
-                    cleanup_s.query(JobApplication).filter(JobApplication.id.in_(created_app_ids)).delete(synchronize_session=False)
+                    cleanup_s.query(JobApplication).filter(
+                        JobApplication.id.in_(created_app_ids)
+                    ).delete(synchronize_session=False)
                 if created_job_ids:
-                    cleanup_s.query(Job).filter(Job.id.in_(created_job_ids)).delete(synchronize_session=False)
+                    cleanup_s.query(Job).filter(Job.id.in_(created_job_ids)).delete(
+                        synchronize_session=False
+                    )
                 cleanup_s.commit()
             finally:
                 cleanup_s.close()
