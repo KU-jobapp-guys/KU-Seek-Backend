@@ -73,9 +73,9 @@ class CompanyController:
             session.close()
             return mapped, 200
 
-        except Exception as e:
+        except Exception:
             session.close()
-            return models.ErrorMessage(f"Database exception occurred: {e}"), 400
+            return models.ErrorMessage("Database Error"), 500
 
     @login_required
     def get_all_companies(self) -> List[Dict]:
@@ -121,6 +121,6 @@ class CompanyController:
             session.close()
             return company_data, 200
 
-        except Exception as e:
+        except Exception:
             session.close()
-            return models.ErrorMessage(f"Database exception occurred: {e}"), 400
+            return models.ErrorMessage("Database Error"), 500
