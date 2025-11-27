@@ -96,8 +96,8 @@ paths:
     post:
       tags:
         - Authentication
-      summary: Login or Register a user and return user credentials.
-      operationId: controllers.auth_controller.handle_authentication
+      summary: Login or Register a user and return user credentials using Google OAuth.
+      operationId: controllers.auth_controller.handle_oauth_authentication
       requestBody:
         required: true
         content:
@@ -108,6 +108,30 @@ paths:
                 code:
                   type: string
                   description: The grant code from the oauth2 flow
+      responses: 
+        200:
+          description: return client_id and access/refresh tokens
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserCredentials'
+        400:
+          description: Invalid authorization code 
+
+  /auth/credential:
+    post:
+      tags:
+        - Authentication
+      summary: Login or Register a user and return user credentials using Email and Password.
+      operationId: controllers.auth_controller.handle_credential_authentication
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
       responses: 
         200:
           description: return client_id and access/refresh tokens

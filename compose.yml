@@ -25,8 +25,7 @@ services:
     ports:
       - "6379:6379"
       - "8001:8001"
-    environment:
-      REDIS_ARGS: --requirepass ${REDIS_PASSWORD}
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
     volumes:
       - redis_data:/data
     restart: unless-stopped
