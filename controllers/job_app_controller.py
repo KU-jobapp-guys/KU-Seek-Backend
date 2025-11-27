@@ -4,8 +4,10 @@ import os
 from typing import Dict
 from uuid import UUID
 from jwt import decode
+
+from .input_validator import InputValidator
 from .decorators import role_required, rate_limit
-from flask import request
+from flask import request, session
 from decouple import config, Csv
 from sqlalchemy.orm import joinedload
 from .job_controller import JobController
@@ -52,34 +54,16 @@ class JobApplicationController:
 
         session = self.db.get_session()
 
-        job: Job = session.query(Job).where(Job.id == job_id).one_or_none()
-        current_applicants = (
-            session.query(JobApplication).where(JobApplication.job_id == job_id).all()
-        )
+        user_id = token_info["uid"]
 
-        student = (
-            session.query(Student)
-            .where(Student.user_id == UUID(token_info["uid"]))
-            .one_or_none()
-        )
-
-        if not student:
+        try:
+            form = InputValidator.job_application(session, user_id, job_id, form)
+        except ValueError as e:
             session.close()
-            return models.ErrorMessage("Student not found"), 400
+            return models.ErrorMessage(f"Input validation error: {str(e)}"), 400
 
-        if not job:
-            session.close()
-            return models.ErrorMessage("Job not found."), 400
-
-        if not len(current_applicants) < job.capacity:
-            session.close()
-            return models.ErrorMessage("Invalid job provided."), 400
-
-        if str(student.id) in [
-            str(applicant.student_id) for applicant in current_applicants
-        ]:
-            session.close()
-            return models.ErrorMessage("Could not create job application."), 400
+        job = form['job']
+        student = form['student']
 
         # handle fields
         job_application = JobApplication(

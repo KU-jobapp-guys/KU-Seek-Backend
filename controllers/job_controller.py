@@ -5,6 +5,8 @@ import uuid
 from typing import List, Dict
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
+
+from .input_validator import InputValidator
 from .models.job_model import Job, JobSkills, JobTags, Bookmark, JobApplication
 from .models.user_model import Company, Student
 from .models.tag_term_model import Tags, Terms
@@ -116,34 +118,18 @@ class JobController:
             "end_date",
         ]
 
-        missing_fields = [field for field in required_fields if field not in body]
-        if missing_fields:
-            raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
-
         session = self.db.get_session()
 
-        if isinstance(user_id, str):
-            try:
-                user_id = uuid.UUID(user_id)
-            except ValueError:
-                raise ValueError("Invalid user_id format. Expected UUID string.")
-
         try:
-            end_date = body["end_date"]
-            if isinstance(end_date, str):
-                end_date = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
-
-            company_obj = (
-                session.query(Company).where(Company.user_id == user_id).one_or_none()
-            )
-
-            if not company_obj:
-                raise ValueError(
-                    "Company not found for current user. Create a company first."
-                )
+            
+            try:
+                body = InputValidator.job_post(session, user_id, body)
+            except ValueError as e:
+                session.close()
+                raise ValueError(f"Input validation error: {str(e)}")
 
             job = Job(
-                company_id=company_obj.id,
+                company_id=body["company_obj"].id,
                 title=body["title"],
                 description=body.get("description"),
                 salary_min=body["salary_min"],
@@ -153,7 +139,7 @@ class JobController:
                 job_type=body["job_type"],
                 job_level=body["job_level"],
                 capacity=body["capacity"],
-                end_date=end_date,
+                end_date=body["end_date"],
                 status="pending",
             )
 
