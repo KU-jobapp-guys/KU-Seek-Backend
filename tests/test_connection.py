@@ -19,7 +19,6 @@ class ProfessorConnectionTestCase(RoutingTestCase):
 
         session = cls.database.get_session()
 
-        # company profiles (for user1..user7)
         uids = [
             cls.user1_id,
             cls.user2_id,
@@ -336,7 +335,7 @@ class ProfessorConnectionTestCase(RoutingTestCase):
             json=connection_payload,
         )
 
-        self.assertEqual(res2.status_code, 500)
+        self.assertEqual(res2.status_code, 409)
         self.assertIn("already exists", res2.json["message"])
 
         res3 = self.client.get(
@@ -390,5 +389,4 @@ class ProfessorConnectionTestCase(RoutingTestCase):
         )
         company_7_prof2 = [c for c in connections_prof2.json if c["company_id"] == 7]
         self.assertEqual(len(company_7_prof2), 1)
-
         self.assertNotEqual(res1.json["id"], res2.json["id"])

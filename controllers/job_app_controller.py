@@ -229,7 +229,7 @@ class JobApplicationController:
                 if os.path.exists(file_path):
                     os.remove(file_path)
 
-            return models.ErrorMessage("Failed to create job application"), 404
+            return models.ErrorMessage("Database Error"), 500
 
     @role_required(["Student"])
     @rate_limit
@@ -254,7 +254,7 @@ class JobApplicationController:
 
         if not student:
             session.close()
-            return models.ErrorMessage("Student not found"), 400
+            return models.ErrorMessage("Student not found"), 404
 
         job_apps = (
             session.query(JobApplication)
@@ -490,6 +490,6 @@ class JobApplicationController:
 
             return job_apps, 200
 
-        except Exception as e:
+        except Exception:
             session.close()
-            return models.ErrorMessage(f"Database exception occurred: {e}"), 400
+            return models.ErrorMessage("Database Error"), 500

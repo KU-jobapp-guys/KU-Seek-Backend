@@ -5,7 +5,8 @@ import uuid
 from typing import List, Dict
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
-
+from swagger_server.openapi_server import models
+from logger.custom_logger import get_logger
 from .input_validator import InputValidator
 from .models.job_model import Job, JobSkills, JobTags, Bookmark, JobApplication
 from .models.user_model import Company, Student
@@ -20,6 +21,7 @@ class JobController:
     def __init__(self, database):
         """Initialize the class."""
         self.db = database
+        self.logger = get_logger()
 
     @login_required
     @rate_limit
@@ -49,9 +51,10 @@ class JobController:
                     session.close()
                     return []
                 return self.__job_with_company_terms_tags(session, jobs)
-        except Exception as e:
+        except Exception:
             session.close()
-            raise Exception(f"Error retrieving jobs: {str(e)}")
+            self.logger.exception("Error retrieving jobs")
+            return models.ErrorMessage("Database Error"), 500
 
     @role_required(["Company"])
     @rate_limit
@@ -142,20 +145,32 @@ class JobController:
 
             if "skill_names" in body and body["skill_names"]:
                 if not isinstance(body["skill_names"], list):
-                    raise ValueError("skill_names must be an array of strings")
+                    session.rollback()
+                    session.close()
+                    return (
+                        models.ErrorMessage("skill_names must be an array of strings"),
+                        400,
+                    )
                 for name in body["skill_names"]:
                     if not name:
                         continue
                     name = str(name).strip()
                     term = session.query(Terms).where(Terms.name == name).one_or_none()
                     if not term:
-                        raise ValueError(f"Term not found: {name}")
+                        session.rollback()
+                        session.close()
+                        return models.ErrorMessage(f"Term not found: {name}"), 404
                     job_skill = JobSkills(job_id=job.id, skill_id=term.id)
                     session.add(job_skill)
 
             if "tag_names" in body and body["tag_names"]:
                 if not isinstance(body["tag_names"], list):
-                    raise ValueError("tag_names must be an array of strings")
+                    session.rollback()
+                    session.close()
+                    return (
+                        models.ErrorMessage("tag_names must be an array of strings"),
+                        400,
+                    )
                 for name in body["tag_names"]:
                     if not name:
                         continue
@@ -171,14 +186,16 @@ class JobController:
                 session, jobs, single_response=True
             )
 
-        except IntegrityError as e:
+        except IntegrityError:
             session.rollback()
             session.close()
-            raise ValueError(f"Invalid foreign key reference: {str(e)}")
-        except Exception as e:
+            self.logger.exception("Integrity error creating job")
+            return models.ErrorMessage("Invalid foreign key reference"), 400
+        except Exception:
             session.rollback()
             session.close()
-            raise Exception(f"Error creating job: {str(e)}")
+            self.logger.exception("Error creating job")
+            return models.ErrorMessage("Database Error"), 500
 
     @login_required
     @rate_limit
@@ -192,7 +209,12 @@ class JobController:
             try:
                 user_id = uuid.UUID(user_id)
             except ValueError:
-                raise ValueError("Invalid user_id format. Expected UUID string.")
+                return (
+                    models.ErrorMessage(
+                        "Invalid user_id format. Expected UUID string."
+                    ),
+                    400,
+                )
 
         session = self.db.get_session()
         try:
@@ -223,9 +245,10 @@ class JobController:
                 )
             session.close()
             return result
-        except Exception as e:
+        except Exception:
             session.close()
-            raise Exception(f"Error retrieving bookmarked jobs: {str(e)}")
+            self.logger.exception("Error retrieving bookmarked jobs")
+            return models.ErrorMessage("Database Error"), 500
 
     @login_required
     @rate_limit
@@ -245,11 +268,19 @@ class JobController:
             try:
                 user_id = uuid.UUID(user_id)
             except ValueError:
-                raise ValueError("Invalid user_id format. Expected UUID string.")
+                return (
+                    models.ErrorMessage(
+                        "Invalid user_id format. Expected UUID string."
+                    ),
+                    400,
+                )
 
         for key in body.keys():
             if key != "job_id":
-                raise ValueError(f"Cannot filter by these keys: {key}")
+                return (
+                    models.ErrorMessage(f"Cannot filter by these keys: {key}"),
+                    400,
+                )
 
         session = self.db.get_session()
 
@@ -280,9 +311,10 @@ class JobController:
                 "createdAt": result.get("created_at"),
             }
 
-        except Exception as e:
+        except Exception:
             session.close()
-            raise Exception(f"Error retrieving bookmarked jobs: {str(e)}")
+            self.logger.exception("Error creating bookmark")
+            return models.ErrorMessage("Database Error"), 500
 
     @login_required
     @rate_limit
@@ -296,7 +328,12 @@ class JobController:
             try:
                 user_id = uuid.UUID(user_id)
             except ValueError:
-                raise ValueError("Invalid user_id format. Expected UUID string.")
+                return (
+                    models.ErrorMessage(
+                        "Invalid user_id format. Expected UUID string."
+                    ),
+                    400,
+                )
 
         session = self.db.get_session()
 
@@ -307,7 +344,7 @@ class JobController:
 
             if not student:
                 session.close()
-                raise ValueError("Student not found")
+                return models.ErrorMessage("Student not found"), 404
 
             bookmark = (
                 session.query(Bookmark)
@@ -317,7 +354,7 @@ class JobController:
 
             if not bookmark:
                 session.close()
-                raise ValueError("Bookmark not found")
+                return models.ErrorMessage("Bookmark not found"), 404
             result = {
                 "id": bookmark.id,
                 "job_id": bookmark.job_id,
@@ -340,10 +377,11 @@ class JobController:
                 "createdAt": result.get("created_at"),
             }
 
-        except Exception as e:
+        except Exception:
             session.rollback()
             session.close()
-            raise Exception(f"Error deleting bookmark: {str(e)}")
+            self.logger.exception("Error deleting bookmark")
+            return models.ErrorMessage("Database Error"), 500
 
     @login_required
     @rate_limit
@@ -547,11 +585,13 @@ class JobController:
 
             return self.__job_with_company_terms_tags(session, jobs)
 
-        except ValueError:
-            raise
-        except Exception as e:
+        except ValueError as e:
             session.close()
-            raise Exception(f"Error filtering jobs: {str(e)}")
+            return models.ErrorMessage(str(e)), 400
+        except Exception:
+            session.close()
+            self.logger.exception("Error filtering jobs")
+            return models.ErrorMessage("Database Error"), 500
 
     def __job_with_company_terms_tags(self, session, jobs, single_response=None):
         """Return jobs data shaped for the frontend.
@@ -688,4 +728,5 @@ class JobController:
                 return tag.id
         except Exception:
             session.rollback()
+            self.logger.exception("Error creating/getting tag")
             raise

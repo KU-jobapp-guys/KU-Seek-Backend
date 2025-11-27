@@ -159,10 +159,8 @@ class EmailScheduler:
                         session.commit()
 
                 session.close()
-                print("Finished email batch job", flush=True)
 
             except Exception:
-                # Log exception when its real
                 if "session" in locals():
                     session.rollback()
                     session.close()
