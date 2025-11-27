@@ -37,8 +37,8 @@ ALGORITHM = "HS512"
 
 BASE_FILE_PATH = config("BASE_FILE_PATH", default="content")
 
-REFRESH_EXP_TIME = config("REFRESH_TOKEN_EXPIRY_MIN", default=30)
-ACCESS_EXP_TIME = config("ACCESS_TOKEN_EXPIRY_MIN", default=5)
+REFRESH_EXP_TIME = config("REFRESH_TOKEN_EXPIRY_MIN", default=60, cast=int)
+ACCESS_EXP_TIME = config("ACCESS_TOKEN_EXPIRY_MIN", default=5, cast=int)
 
 
 def get_auth_user_id(request):
@@ -389,7 +389,7 @@ class AuthenticationController:
         """
         # access token generation
         iat = int(datetime.now(UTC).timestamp())
-        exp = int((datetime.now(UTC) + timedelta(hours=1)).timestamp())
+        exp = int((datetime.now(UTC) + timedelta(minutes=ACCESS_EXP_TIME)).timestamp())
 
         payload = {"uid": str(uid), "iat": iat, "exp": exp}
 
@@ -398,7 +398,7 @@ class AuthenticationController:
         # Refresh token payload
         refresh_id = random.getrandbits(32)
         iat = int(datetime.now(UTC).timestamp())
-        exp = int((datetime.now(UTC) + timedelta(hours=30)).timestamp())
+        exp = int((datetime.now(UTC) + timedelta(minutes=REFRESH_EXP_TIME)).timestamp())
 
         payload = {"uid": str(uid), "refresh": refresh_id, "iat": iat, "exp": exp}
 
@@ -497,7 +497,7 @@ class AuthenticationController:
 
         session = self.db.get_session()
         valid_token = (
-            session.query(Token).where(Token.refresh_id == refresh_id).one_or_none()
+            session.query(Token).where(Token.refresh_id == refresh_id["refresh"]).one_or_none()
         )
 
         if not valid_token:
@@ -506,9 +506,14 @@ class AuthenticationController:
         user_id = valid_token.uid
         session.close()
 
-        access, refresh = self.login_user(user_id)
+        access, refresh, user_type, user_id = self.login_user(user_id)
 
-        response = make_response(access, 200)
+        response = make_response(
+            models.UserCredentials(
+                access_token=access, type=user_type, user_id=user_id
+            ).to_dict(),
+            200,
+        )
         # set the refresh token as a HttpOnly cookie
         response.set_cookie(
             "refresh_token", refresh, max_age=timedelta(days=30), httponly=True
