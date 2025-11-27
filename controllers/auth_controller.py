@@ -1,7 +1,6 @@
 """Module for sending csrf-tokens."""
 
 import random
-import shutil
 import jwt
 import json
 import os
@@ -293,11 +292,14 @@ def post_register_process(
     email: str,
 ):
     """
-    Handles post-registration operations including:
-    - Save validation file
-    - Create user request
-    - Create profile
-    - Send welcome email
+    Perform post-registration tasks for a new user.
+
+    This includes:
+
+    - Saving the validation file.
+    - Creating the user request.
+    - Setting up the user profile.
+    - Sending a welcome email.
     """
     session = current_app.config["Database"].get_session()
 
