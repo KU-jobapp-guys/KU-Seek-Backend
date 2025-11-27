@@ -3,12 +3,16 @@
 from typing import List, Dict
 from uuid import UUID
 from datetime import datetime, timezone
-from connexion.exceptions import ProblemException
+from swagger_server.openapi_server import models
 from flask import request
 from .decorators import role_required
 from .models.profile_model import StudentHistories
 from .models.user_model import Student
 from .auth_controller import get_auth_user_id
+from logger.custom_logger import get_logger
+
+
+logger = get_logger()
 
 
 class HistoryController:
@@ -34,9 +38,8 @@ class HistoryController:
             )
 
             if not student:
-                raise ProblemException(
-                    status=404, title="Not Found", detail="Student not found"
-                )
+                session.close()
+                return models.ErrorMessage("Student not found"), 404
 
             histories = (
                 session.query(StudentHistories)
@@ -58,12 +61,10 @@ class HistoryController:
 
             return results
 
-        except ProblemException:
-            session.rollback()
-            raise
         except Exception as e:
             session.rollback()
-            raise ProblemException(f"Database Error {str(e)}")
+            logger.exception("Database error in get_histories: %s", e)
+            return models.ErrorMessage("Database Error"), 500
         finally:
             session.close()
 
@@ -76,11 +77,7 @@ class HistoryController:
         timestamp is updated to now; otherwise a new row is inserted.
         """
         if not body or "job_id" not in body:
-            raise ProblemException(
-                status=400,
-                title="Bad Request",
-                detail="'job_id' is a required property",
-            )
+            return models.ErrorMessage("'job_id' is a required property"), 400
 
         def _ensure_trim(session, student_id: int):
             """Ensure the history table for a student is trimmed to 15 rows.
@@ -123,9 +120,8 @@ class HistoryController:
             )
 
             if not student:
-                raise ProblemException(
-                    status=404, title="Not Found", detail="Student not found"
-                )
+                session.close()
+                return models.ErrorMessage("Student not found"), 404
 
             job_id = body["job_id"]
 
@@ -171,15 +167,9 @@ class HistoryController:
                 else None,
             }
 
-        except ProblemException:
-            session.rollback()
-            raise
         except Exception as e:
             session.rollback()
-            raise ProblemException(
-                status=500,
-                title="Internal Server Error",
-                detail=f"Database Error {str(e)}",
-            )
+            logger.exception("Database error in post_history: %s", e)
+            return models.ErrorMessage("Database Error"), 500
         finally:
             session.close()

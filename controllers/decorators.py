@@ -32,8 +32,8 @@ def login_required(func):
             return models.ErrorMessage("Invalid authentication token provided"), 403
         except ExpiredSignatureError:
             return models.ErrorMessage("Token is expired"), 403
-        except Exception as e:
-            return models.ErrorMessage(f"Invalid authentication token, {e}"), 403
+        except Exception:
+            return models.ErrorMessage("Invalid authentication token"), 403
 
         # authentication successful
         return func(*args, **kwargs)
@@ -67,8 +67,8 @@ def role_required(roles: list[Literal["Student", "Company"]] = []):
                 return models.ErrorMessage("Invalid authentication token provided"), 403
             except ExpiredSignatureError:
                 return models.ErrorMessage("Token is expired"), 403
-            except Exception as e:
-                return models.ErrorMessage(f"Invalid authentication token, {e}"), 403
+            except Exception:
+                return models.ErrorMessage("Invalid authentication token"), 403
 
             # fetch the user's role and validate
             session = current_app.config["Database"].get_session()
@@ -116,8 +116,8 @@ def rate_limit(func):
             return models.ErrorMessage("Invalid authentication token provided"), 403
         except ExpiredSignatureError:
             return models.ErrorMessage("Token is expired"), 403
-        except Exception as e:
-            return models.ErrorMessage(f"Invalid authentication token, {e}"), 403
+        except Exception:
+            return models.ErrorMessage("Invalid authentication token"), 403
 
         # authentication successful
 
