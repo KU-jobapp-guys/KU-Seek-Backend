@@ -13,9 +13,12 @@ from .file_controller import FileController
 from typing import Dict, Optional
 from logger.custom_logger import get_logger
 from flask import current_app
+from .education_controller import EducationController
 from .history_controller import HistoryController
 from .skills_controller import SkillsController
 from .admin_controller import AdminController
+from swagger_server.openapi_server import models
+from connexion.exceptions import ProblemException
 
 
 logger = get_logger()
@@ -89,6 +92,18 @@ def get_user_profile(user_id: str) -> Dict:
         return _normalize_response(profile_data, 200)
     except Warning:
         return jsonify({"message": "Too many requests."}), 429
+
+
+def get_user_setting() -> Dict:
+    """GET user setting from the database."""
+    try:
+        profile_manager = ProfileController(current_app.config["Database"])
+        setting_data = profile_manager.get_user_setting(get_auth_user_id(request))
+        return jsonify(setting_data), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 404
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
 
 
 def create_profile(body: Dict) -> Optional[Dict]:
@@ -299,6 +314,62 @@ def post_student_history(body: Dict):
     if isinstance(body, dict):
         body["user_id"] = get_auth_user_id(request)
     return history_manager.post_history(body)
+
+
+def get_educations(education_id: int = None):
+    """Return all educations or a single education by id."""
+    try:
+        education_manager = EducationController(current_app.config["Database"])
+        data = education_manager.get_educations(education_id)
+        return jsonify(data), 200
+    except ValueError:
+        return models.ErrorMessage("Education not found"), 404
+    except Exception:
+        logger.exception("Error fetching educations")
+        return models.ErrorMessage("Database Error"), 500
+
+
+def post_education(body: Dict):
+    """Create a new education record."""
+    try:
+        education_manager = EducationController(current_app.config["Database"])
+        new_edu = education_manager.post_education(get_auth_user_id(request), body)
+        return jsonify(new_edu), 201
+    except ProblemException:
+        return models.ErrorMessage("Request body cannot be empty."), 400
+    except ValueError:
+        return models.ErrorMessage("Bad request"), 400
+    except Exception:
+        logger.exception("Error creating education")
+        return models.ErrorMessage("Database Error"), 500
+
+
+def patch_education(education_id: int, body: Dict):
+    """Update an education record partially."""
+    try:
+        education_manager = EducationController(current_app.config["Database"])
+        updated = education_manager.patch_education(education_id, body)
+        return jsonify(updated), 200
+    except ValueError:
+        return models.ErrorMessage("Education not found"), 404
+    except ProblemException:
+        return models.ErrorMessage("Request body cannot be empty."), 400
+    except Exception:
+        logger.exception("Error updating education")
+        return models.ErrorMessage("Database Error"), 500
+
+
+def delete_education(education_id: int):
+    """Delete an education record."""
+    try:
+        education_manager = EducationController(current_app.config["Database"])
+        deleted = education_manager.delete_education(education_id)
+        return jsonify(deleted), 200
+    except ValueError:
+        return models.ErrorMessage("Education not found"), 404
+    except Exception:
+        logger.exception("Error deleting education")
+        return models.ErrorMessage("Database Error"), 500
 
 
 def get_tag_by_id(tag_id: int):

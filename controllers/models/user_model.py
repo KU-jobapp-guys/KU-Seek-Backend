@@ -44,10 +44,6 @@ class Student(BaseModel):
 
     nisit_id: Mapped[str] = MappedColumn(String(255), unique=True, nullable=False)
 
-    education_id: Mapped[Optional[int]] = MappedColumn(
-        Integer, ForeignKey("educations.id", ondelete="SET NULL"), nullable=True
-    )
-
     gpa: Mapped[float] = MappedColumn(DECIMAL(3, 2), nullable=True)
 
     interests: Mapped[str] = MappedColumn(Text, nullable=True)

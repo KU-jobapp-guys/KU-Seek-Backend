@@ -121,6 +121,7 @@ class ORMTestCase(RoutingTestCase):
         """Test Education model instantiation, and access it value."""
         edu = Education(
             curriculum_name="Computer Engineering",
+            user_id=fake_uuid(),
             university="Kasetsart University",
             major="Software Engineering",
             year_of_study=fake_date(),
@@ -183,7 +184,6 @@ class ORMTestCase(RoutingTestCase):
         student = Student(
             user_id=fake_uuid(),
             nisit_id="65123456",
-            education_id=None,
             gpa=3.75,
             interests="AI, Backend",
         )

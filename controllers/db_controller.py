@@ -45,7 +45,7 @@ class BaseController(AbstractDatabaseController):
 
         db_engine = create_engine(
             connection_url,
-            pool_size=1,
+            pool_size=10,
             max_overflow=0,
             pool_timeout=10,
         )

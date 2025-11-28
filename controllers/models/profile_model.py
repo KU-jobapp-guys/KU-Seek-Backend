@@ -72,6 +72,10 @@ class Education(BaseModel):
 
     id: Mapped[int] = MappedColumn(Integer, primary_key=True, autoincrement=True)
 
+    user_id: Mapped[uuid.UUID] = MappedColumn(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True, nullable=False
+    )
+
     curriculum_name: Mapped[str] = MappedColumn(String(255), nullable=False)
 
     university: Mapped[str] = MappedColumn(String(255), nullable=False)

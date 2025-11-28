@@ -83,12 +83,13 @@ class ProfileTestCase(RoutingTestCase):
         self.assertEqual(res.status_code, 201)
 
         data = res.json
+        self.assertEqual(data["firstName"], profile_payload["first_name"])
+        self.assertEqual(data["lastName"], profile_payload["last_name"])
         data = decamelize(data)
         self.assertEqual(data["first_name"], profile_payload["first_name"])
         self.assertEqual(data["last_name"], profile_payload["last_name"])
         self.assertEqual(data["about"], profile_payload["about"])
         self.assertEqual(data["location"], profile_payload["location"])
-        self.assertEqual(data["contact_email"], profile_payload["contact_email"])
         self.assertEqual(data["age"], profile_payload["age"])
 
     def test_create_profile_empty_body(self):
@@ -151,6 +152,7 @@ class ProfileTestCase(RoutingTestCase):
 
         self.assertEqual(res.status_code, 201)
         data = res.json
+
         data = decamelize(data)
         self.assertEqual(data["first_name"], "Alice")
         self.assertEqual(data["last_name"], "Johnson")
@@ -185,8 +187,6 @@ class ProfileTestCase(RoutingTestCase):
             "last_name",
             "about",
             "location",
-            "email",
-            "contact_email",
             "gender",
             "age",
             "user_type",
@@ -200,6 +200,8 @@ class ProfileTestCase(RoutingTestCase):
     def test_get_profile_not_found(self):
         """Test fetching a non-existent profile returns 404."""
         non_existent_uuid = "00000000-0000-0000-0000-000000000000"
+        res = self.client.get(f"/api/v1/users/{non_existent_uuid}/profile")
+        self.assertEqual(res.status_code, 401)
         csrf = self.client.get("/api/v1/csrf-token")
         csrf_token = csrf.json["csrf_token"]
         jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
@@ -212,6 +214,8 @@ class ProfileTestCase(RoutingTestCase):
     def test_get_profile_invalid_uuid(self):
         """Test fetching a profile with invalid UUID format returns 400."""
         non_existent_uuid = "Praise_The_Sun"
+        res = self.client.get(f"/api/v1/users/{non_existent_uuid}/profile")
+        self.assertEqual(res.status_code, 401)
         csrf = self.client.get("/api/v1/csrf-token")
         csrf_token = csrf.json["csrf_token"]
         jwt = generate_jwt(self.user1_id, secret=SECRET_KEY)
@@ -350,7 +354,6 @@ class ProfileTestCase(RoutingTestCase):
         self.assertEqual(data["last_name"], update_payload["last_name"])
         self.assertEqual(data["location"], update_payload["location"])
         self.assertEqual(data["age"], update_payload["age"])
-        self.assertEqual(data["phone_number"], update_payload["phone_number"])
 
     def test_update_profile_ignores_invalid_fields(self):
         """Test that updating with invalid fields ignores them."""

@@ -1,7 +1,7 @@
 openapi: 3.0.0
 
 info:
-  title: KU SEEK 
+  title: KU SEEK
   description: CRUD operations for KU SEEK
   version: 2.0.0
 
@@ -23,7 +23,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  csrf_token: 
+                  csrf_token:
                     type: string
 
   /refresh:
@@ -46,11 +46,11 @@ paths:
               schema:
                 type: object
                 properties:
-                  access_token: 
+                  access_token:
                     type: string
         400:
           description: Invalid refresh token provided in header
-  
+
   /auth/logout:
     post:
       summary: Logout a user from the system
@@ -108,7 +108,7 @@ paths:
                 code:
                   type: string
                   description: The grant code from the oauth2 flow
-      responses: 
+      responses:
         200:
           description: return client_id and access/refresh tokens
           content:
@@ -116,9 +116,9 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/UserCredentials'
+                  $ref: "#/components/schemas/UserCredentials"
         400:
-          description: Invalid authorization code 
+          description: Invalid authorization code
 
   /companies:
     get:
@@ -244,8 +244,8 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Job'
-  
+                  $ref: "#/components/schemas/Job"
+
     post:
       tags:
         - Job Post
@@ -256,7 +256,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/JobPost'
+              $ref: "#/components/schemas/JobPost"
 
       responses:
         201:
@@ -266,8 +266,8 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Job'
-    
+                  $ref: "#/components/schemas/Job"
+
   /jobs/search:
     post:
       tags:
@@ -279,7 +279,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/JobFilter'
+              $ref: "#/components/schemas/JobFilter"
 
       responses:
         200:
@@ -289,8 +289,8 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Job'
-   
+                  $ref: "#/components/schemas/Job"
+
   /bookmarks:
     get:
       tags:
@@ -305,31 +305,31 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Job'
+                  $ref: "#/components/schemas/Job"
     post:
       tags:
         - Bookmark
       summary: Add new bookmarked job to the database
-      operationId: controllers.controller.post_bookmark_jobs 
+      operationId: controllers.controller.post_bookmark_jobs
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BookmarkInput'
+              $ref: "#/components/schemas/BookmarkInput"
       responses:
         200:
           description: A new of bookmarked job
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/BookmarkOutput'
-    
+                $ref: "#/components/schemas/BookmarkOutput"
+
     delete:
       tags:
         - Bookmark
       summary: Delete bookmarked job in the database
-      operationId: controllers.controller.delete_bookmark_jobs 
+      operationId: controllers.controller.delete_bookmark_jobs
       parameters:
         - name: job_id
           in: query
@@ -342,9 +342,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BookmarkOutput'
-
-
+                $ref: "#/components/schemas/BookmarkOutput"
   /test/tasks:
     get:
       summary: Get all tasks in the database
@@ -357,7 +355,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Task'
+                  $ref: "#/components/schemas/Task"
     post:
       summary: Create a new task
       operationId: controllers.controller.create_task
@@ -366,14 +364,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TaskInput'
+              $ref: "#/components/schemas/TaskInput"
       responses:
         201:
           description: Task created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Task'
+                $ref: "#/components/schemas/Task"
 
   /test/tasks/{task_id}:
     parameters:
@@ -392,7 +390,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Task'
+                $ref: "#/components/schemas/Task"
         404:
           description: Task not found
     put:
@@ -403,14 +401,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TaskInput'
+              $ref: "#/components/schemas/TaskInput"
       responses:
         200:
           description: Task updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Task'
+                $ref: "#/components/schemas/Task"
         404:
           description: Task not found
     delete:
@@ -422,6 +420,24 @@ paths:
         404:
           description: Task not found
 
+  /settings:
+    get:
+      summary: Get user setting
+      description: Retrieve the user's personal information.
+      operationId: controllers.controller.get_user_setting
+      responses:
+        200:
+          description: Return the user setting data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        401:
+          description: Invalid access_token
+        403:
+          description: Invalid authorization
+        404:
+          description: Not found
 
   /users/me:
     get:
@@ -457,7 +473,7 @@ paths:
           description: The ID of the user whose profile to created
           schema:
             type: string
-      
+
       responses:
         200:
           description: Return the user profile data created successfully
@@ -499,54 +515,86 @@ paths:
         - Profile
       summary: Create an user profile
       operationId: controllers.controller.create_profile
- 
+
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserProfileInput'
-      
+              $ref: "#/components/schemas/UserProfileInput"
+
       responses:
         200:
           description: User profile created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
-        
+                $ref: "#/components/schemas/UserProfile"
+
         400:
           description: Error BAD REQUEST
-        
+
         409:
           description: Profile already exists for user
 
     patch:
       tags:
         - Profile
-      summary: Update an existing user profile
+      summary: Update existing user profile and settings
       operationId: controllers.controller.update_profile
-      
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserProfileInput'
-
+              $ref: "#/components/schemas/UserProfileInput"
       responses:
         200:
           description: User profile updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
-        
+                $ref: "#/components/schemas/UserProfile"
+
         400:
           description: Error BAD REQUEST
 
         404:
           description: user profile not found
+
+  /educations:
+    get:
+      summary: Get all education records
+      operationId: controllers.controller.get_educations
+      responses:
+        200:
+          description: A list of educations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Education"
+    post:
+      summary: Create a new education record
+      operationId: controllers.controller.post_education
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EducationInput"
+      responses:
+        201:
+          description: Education created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Education"
+        400:
+          description: Bad request
+        401:
+          description: User not authenticated
 
   /student/histories:
     get:
@@ -561,10 +609,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/StudentHistory'
-        404:
-          description: Student not found
-
+                  $ref: "#/components/schemas/StudentHistory"
     post:
       summary: Create or update a student history entry
       description: Insert a new history row or update the viewed_at timestamp if the (student, job) pair exists.
@@ -574,16 +619,55 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StudentHistoryInput'
+              $ref: "#/components/schemas/StudentHistoryInput"
       responses:
-        200:
-          description: Created or updated history entry
+        201:
+          description: History entry created or updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StudentHistory'
+                $ref: "#/components/schemas/StudentHistory"
         400:
           description: Invalid input
+
+  /educations/{education_id}:
+    parameters:
+      - name: education_id
+        in: path
+        required: true
+        description: The ID of the education record
+        schema:
+          type: integer
+    patch:
+      summary: Update an existing education record
+      operationId: controllers.controller.patch_education
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EducationPatch"
+      responses:
+        200:
+          description: Education updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Education"
+        404:
+          description: Education not found
+    delete:
+      summary: Delete an education record
+      operationId: controllers.controller.delete_education
+      responses:
+        200:
+          description: Education deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Education"
+        404:
+          description: Education not found
 
 
   /annoucements:
@@ -663,10 +747,10 @@ paths:
           description: Applications retrieved successfully.
           content:
             application/json:
-              schema: 
+              schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/StudentApplication'
+                  $ref: "#/components/schemas/StudentApplication"
         400:
           description: Invalid credentials
 
@@ -689,10 +773,10 @@ paths:
           description: Applications retrieved successfully.
           content:
             application/json:
-              schema: 
+              schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/JobApplication'
+                  $ref: "#/components/schemas/JobApplication"
         400:
           description: "Invalid job or credentials provided."
 
@@ -707,7 +791,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ApplicationSubmission'
+              $ref: "#/components/schemas/ApplicationSubmission"
       responses:
         201:
           description: Application created successfully.
@@ -737,7 +821,7 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/ApplicationStatusUpdate'
+                $ref: "#/components/schemas/ApplicationStatusUpdate"
       responses:
         200:
           description: Application statuses updated successfully.
@@ -746,7 +830,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/JobApplication'
+                  $ref: "#/components/schemas/JobApplication"
         400:
           description: Invalid request body or application IDs provided.
         401:
@@ -796,7 +880,6 @@ paths:
           description: Database error occurred
         404:
           description: File not found (either database record or physical file)
-
 
   /file/download/{file_id}:
     get:
@@ -857,20 +940,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TagInput'
+              $ref: "#/components/schemas/TagInput"
       responses:
         200:
           description: Existing tag returned
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tag'
+                $ref: "#/components/schemas/Tag"
         201:
           description: New tag created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tag'
+                $ref: "#/components/schemas/Tag"
 
   /tags/{tag_id}:
     parameters:
@@ -888,7 +971,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tag'
+                $ref: "#/components/schemas/Tag"
         404:
           description: Tag not found
 
@@ -904,7 +987,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Term'
+                  $ref: "#/components/schemas/Term"
 
   /terms/{term_id}:
     parameters:
@@ -922,10 +1005,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Term'
+                $ref: "#/components/schemas/Term"
         404:
           description: Term not found
-
 
 components:
   securitySchemes:
@@ -1237,7 +1319,106 @@ components:
           type: integer
           description: Total number of applicants
           example: 4
-    
+
+    Education:
+      type: object
+      required:
+        - id
+        - user_id
+        - curriculum_name
+        - university
+        - major
+        - year_of_study
+        - graduate_year
+      properties:
+        id:
+          type: integer
+          description: The unique identifier for an education record
+          example: 1
+        user_id:
+          type: string
+          format: uuid
+          description: The unique identifier for the user (foreign key to User table)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        curriculum_name:
+          type: string
+          description: The name of the curriculum or degree program
+          example: "Computer Science"
+        university:
+          type: string
+          description: The university name
+          example: "Kasetsart University"
+        major:
+          type: string
+          description: The major or field of study
+          example: "Computer Science"
+        year_of_study:
+          type: string
+          format: date
+          description: The start or year of study
+          example: "2020-08-01"
+        graduate_year:
+          type: string
+          format: date
+          description: The graduation year or date
+          example: "2024-05-15"
+
+    EducationInput:
+      type: object
+      required:
+        - curriculum_name
+        - university
+        - major
+        - year_of_study
+        - graduate_year
+      properties:
+        curriculum_name:
+          type: string
+          description: The name of the curriculum or degree program
+          example: "Computer Science"
+        user_id:
+          type: string
+          format: uuid
+          description: The unique identifier for the user (foreign key to User table)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        university:
+          type: string
+          description: The university name
+          example: "Kasetsart University"
+        major:
+          type: string
+          description: The major or field of study
+          example: "Computer Science"
+        year_of_study:
+          type: string
+          format: date
+          description: The start or year of study
+          example: "2020-08-01"
+        graduate_year:
+          type: string
+          format: date
+          description: The graduation year or date
+          example: "2024-05-15"
+
+    EducationPatch:
+      type: object
+      properties:
+        curriculum_name:
+          type: string
+        user_id:
+          type: string
+          format: uuid
+        university:
+          type: string
+        major:
+          type: string
+        year_of_study:
+          type: string
+          format: date
+        graduate_year:
+          type: string
+          format: date
+
     JobFilter:
       type: object
       properties:
@@ -1306,8 +1487,7 @@ components:
           type: boolean
           description: Job that company post by themself (need JWT)
           default: false
-      
-  
+
     JobPost:
       type: object
       required:
@@ -1481,7 +1661,7 @@ components:
           maxLength: 255
           description: Full address of the company
           example: "123 Tech Street, Bangkok, Thailand 10110"
-          
+
     Task:
       type: object
       required:
@@ -1541,7 +1721,7 @@ components:
         refresh_token:
           type: string
           description: The refresh token
-    
+
     BookmarkInput:
       type: object
       required:
@@ -1550,7 +1730,7 @@ components:
         jobId:
           type: integer
           description: The job id (frontend camelCase)
-    
+
     BookmarkOutput:
       type: object
       properties:
@@ -1566,7 +1746,7 @@ components:
         createdAt:
           type: string
           description: date that this bookmark got created
- 
+
     UserProfileInput:
       type: object
       properties:
@@ -1597,7 +1777,7 @@ components:
           enum: ["M", "F"]
           example: "M"
         age:
-          type: integer 
+          type: integer
           description: The age of the user
           example: 22
         user_type:
@@ -1617,6 +1797,7 @@ components:
           type: string
           description: The phone number of the user
           example: "0812345678"
+
     
     ProfileImageInput:
       properties:
@@ -1687,7 +1868,7 @@ components:
           maxLength: 1
           nullable: true
           description: The gender of the user (single character)
-          enum: ["M", "F"]  
+          enum: ["M", "F"]
           example: "M"
         age:
           type: integer
@@ -1819,8 +2000,7 @@ components:
           type: string
           example: "1 year"
         job:
-          $ref: '#/components/schemas/Job'
-
+          $ref: "#/components/schemas/Job"
 
     ApplicationSubmission:
       type: object
@@ -1891,7 +2071,7 @@ components:
         applicationId:
           type: integer
           format: uuid
-          description: The unique identifier of the job application 
+          description: The unique identifier of the job application
           example: 12
         status:
           type: string

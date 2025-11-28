@@ -5,6 +5,7 @@ from swagger_server.openapi_server import models
 from logger.custom_logger import get_logger
 from .models.profile_model import Profile, ProfileSkills
 from .models.user_model import User, UserTypes, Student, Company
+from .education_controller import EducationController
 from .decorators import login_required, rate_limit
 from jwt import decode
 from flask import request
@@ -16,8 +17,6 @@ from werkzeug.utils import secure_filename
 from .models.file_model import File
 from .models.tag_term_model import Tags
 from .serialization import decamelize
-
-SECRET_KEY = config("SECRET_KEY", default="good-key123")
 
 ALGORITHM = "HS512"
 
@@ -33,6 +32,67 @@ class ProfileController:
     def __init__(self, database):
         """Initialize the class."""
         self.db = database
+        self.education_controller = EducationController(database)
+
+    def get_user_setting(self, user_id: str) -> Optional[Dict]:
+        """
+        Return a user setting in the database.
+
+        Retrieves a user setting from the MySQL database.
+
+        Returns:
+            The user setting dictionary if found, otherwise None.
+        """
+        session = self.db.get_session()
+        try:
+            user_uuid = UUID(user_id)
+
+            profile = (
+                session.query(Profile)
+                .filter(Profile.user_id == user_uuid)
+                .one_or_none()
+            )
+
+            if not profile:
+                print(f"Profile for user_id={user_id} not found")
+                raise ValueError(f"Profile for user_id={user_id} not found")
+
+            profile_obj = {
+                "id": str(profile.user_id),
+                "firstName": profile.first_name,
+                "lastName": profile.last_name,
+                "age": profile.age,
+                "gender": profile.gender,
+                "location": profile.location,
+                "email": profile.email,
+                "contactEmail": profile.contact_email,
+                "phoneNumber": profile.phone_number,
+            }
+
+            if profile.user_type == "student":
+                student = (
+                    session.query(Student)
+                    .filter(Student.user_id == user_uuid)
+                    .one_or_none()
+                )
+                if student:
+                    profile_obj["gpa"] = student.gpa
+
+            elif profile.user_type == "company":
+                company = (
+                    session.query(Company)
+                    .filter(Company.user_id == user_uuid)
+                    .one_or_none()
+                )
+                if company:
+                    profile_obj["name"] = company.company_name
+            return profile_obj
+
+        except SQLAlchemyError as e:
+            print(f"Error fetching profile for user_id={user_id}: {e}")
+            raise RuntimeError(f"Error fetching profile for user_id={user_id}: {e}")
+        finally:
+            session.close()
 
     @login_required
     @rate_limit
@@ -89,12 +149,12 @@ class ProfileController:
                 ), 404
 
             profile_obj = {
-                "id": str(profile.user_id),
+                "id": str(user_uuid),
                 "firstName": profile.first_name,
                 "lastName": profile.last_name,
                 "about": profile.about,
-                "age": profile.age,
                 "gender": profile.gender,
+                "age": profile.age,
                 "location": profile.location,
                 "email": profile.email,
                 "contactEmail": profile.contact_email,
@@ -112,6 +172,14 @@ class ProfileController:
                     .one_or_none()
                 )
                 if student:
+                    profile_obj["interests"] = student.interests
+                    profile_obj["educations"] = (
+                        self.education_controller.get_educations_by_user(
+                            user_uuid, session=session
+                        )
+                        or []
+                    )
+
                     profile_obj["gpa"] = student.gpa
             elif profile.user_type == "company":
                 company = (
@@ -195,6 +263,7 @@ class ProfileController:
         """
         Update fields in the UserProfile table dynamically.
 
+        PATCH /users/profile
         Corresponds to PATCH /users/profile
         """
         user_uuid = UUID(user_id)
