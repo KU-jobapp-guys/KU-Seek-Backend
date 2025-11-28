@@ -8,6 +8,10 @@ from decouple import config
 from swagger_server.openapi_server import models
 from .models.file_model import File
 from uuid import UUID
+from logger.custom_logger import get_logger
+
+
+logger = get_logger()
 
 
 FILE_DIR = config("BASE_FILE_PATH", default="content")
@@ -44,9 +48,10 @@ class FileController:
             file_extension = os.path.splitext(file.file_name)[1]
             file_name = str(file.id) + file_extension
             session.close()
-        except Exception:
+        except Exception as e:
             session.close()
-            return models.ErrorMessage("Database Error occured"), 400
+            logger.exception("Database error retrieving file record: %s", e)
+            return models.ErrorMessage("Database Error"), 400
 
         try:
             return send_from_directory(self.base_path, file_name, as_attachment=False)
@@ -77,7 +82,10 @@ class FileController:
             session.close()
         except Exception as e:
             session.close()
-            return models.ErrorMessage("Database Error occured: ", e), 400
+            logger.exception(
+                "Database error retrieving file record for download: %s", e
+            )
+            return models.ErrorMessage("Database Error"), 400
 
         try:
             return send_from_directory(self.base_path, file_name, as_attachment=True)

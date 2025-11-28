@@ -52,7 +52,8 @@ class JobApplicationTestCase(RoutingTestCase):
         session.refresh(student)
         cls.user_id = user.id
         cls.student_id = student.id
-        cls.company_id = company_user.id
+        cls.company_user_id = company_user.id
+        cls.company_id = company.id
 
         # create 3 jobs in the database
         job1 = Job(
@@ -162,7 +163,7 @@ class JobApplicationTestCase(RoutingTestCase):
 
     def test_invalid_role_access(self):
         """A User with an unauthorized role cannot access the Job Application APIs."""
-        jwt = generate_jwt(self.company_id, secret=SECRET_KEY)
+        jwt = generate_jwt(self.company_user_id, secret=SECRET_KEY)
         res = self.client.get("/api/v1/application", headers={"access_token": jwt})
         self.assertEqual(res.status_code, 403)
         self.assertIn("User does not have auth", res.json["message"])
@@ -176,7 +177,7 @@ class JobApplicationTestCase(RoutingTestCase):
 
     def test_get_job_applications_from_job_post(self):
         """A Company can get all job applications belonging to a job post."""
-        jwt = generate_jwt(self.company_id, secret=SECRET_KEY)
+        jwt = generate_jwt(self.company_user_id, secret=SECRET_KEY)
         res = self.client.get("/api/v1/application/1", headers={"access_token": jwt})
         self.assertEqual(res.status_code, 200)
         self.assertEqual(len(res.json), 1)
@@ -340,7 +341,6 @@ class JobApplicationTestCase(RoutingTestCase):
             session.add(other_company)
             session.commit()
             session.refresh(other_company)
-
             other_job = Job(
                 company_id=other_company.id,
                 title="Different Job",
@@ -381,7 +381,7 @@ class JobApplicationTestCase(RoutingTestCase):
         finally:
             session.close()
 
-        jwt = generate_jwt(self.company_id, secret=SECRET_KEY)
+        jwt = generate_jwt(self.company_user_id, secret=SECRET_KEY)
 
         data = [{"applicationId": job_application_id, "status": "accepted"}]
 
@@ -394,11 +394,113 @@ class JobApplicationTestCase(RoutingTestCase):
         self.assertEqual(res.status_code, 403)
         self.assertIn("User is not the job owner", res.json["message"])
 
+    def test_job_application_limit_exceeded(self):
+        """Student cannot create a job application when over JOB_APP_LIMIT."""
+        jwt = generate_jwt(self.user_id, secret=SECRET_KEY)
+
+        session = self.database.get_session()
+        created_job_ids = []
+        created_app_ids = []
+        try:
+            limit = int(config("JOB_APP_LIMIT", default="4"))
+            current_pending = (
+                session.query(JobApplication)
+                .where(
+                    JobApplication.student_id == self.student_id,
+                    JobApplication.status == "pending",
+                )
+                .count()
+            )
+            to_create = max(0, limit - current_pending)
+
+            for i in range(to_create):
+                extra_job = Job(
+                    company_id=self.company_id,
+                    title=f"Extra job to reach limit {i}",
+                    salary_min=0,
+                    salary_max=0,
+                    location="Some street",
+                    work_hours="8",
+                    job_type="other",
+                    job_level="internship",
+                    status="approved",
+                    visibility=True,
+                    capacity=1,
+                    end_date=datetime.now() + timedelta(hours=1),
+                )
+                session.add(extra_job)
+                session.commit()
+                session.refresh(extra_job)
+                created_job_ids.append(extra_job.id)
+
+                extra_app = JobApplication(
+                    job_id=extra_job.id,
+                    student_id=self.student_id,
+                    first_name="John",
+                    last_name="Doe",
+                    contact_email="faker@gmail.com",
+                    resume="file_x",
+                    letter_of_application="file_y",
+                    years_of_experience="1",
+                    expected_salary="10000",
+                    phone_number="0812345678",
+                    status="pending",
+                    applied_at=datetime.now(),
+                )
+                session.add(extra_app)
+                session.commit()
+                created_app_ids.append(extra_app.id)
+        finally:
+            session.close()
+
+        resume = BytesIO(b"Fake resume content for testing")
+        letter = BytesIO(b"Fake application letter content for testing")
+
+        data = {
+            "firstName": "John",
+            "lastName": "Doe",
+            "email": "john.doe@example.com",
+            "yearsOfExperience": "2",
+            "expectedSalary": "15000",
+            "phoneNumber": "0812345678",
+            "resume": (resume, "resume.pdf", "application/pdf"),
+            "applicationLetter": (letter, "letter.pdf", "application/pdf"),
+        }
+
+        csrf = self.client.get("/api/v1/csrf-token")
+        res = self.client.post(
+            "/api/v1/application/2",
+            data=data,
+            headers={"access_token": jwt, "X-CSRFToken": csrf.json["csrf_token"]},
+            content_type="multipart/form-data",
+        )
+
+        self.assertEqual(res.status_code, 401)
+        expected_msg = (
+            f"A student can apply for only {config('JOB_APP_LIMIT', default='4')}"
+            " jobs at a time."
+        )
+        self.assertIn(expected_msg, res.json["message"])
+
+        if created_app_ids or created_job_ids:
+            cleanup_s = self.database.get_session()
+            try:
+                if created_app_ids:
+                    cleanup_s.query(JobApplication).filter(
+                        JobApplication.id.in_(created_app_ids)
+                    ).delete(synchronize_session=False)
+                if created_job_ids:
+                    cleanup_s.query(Job).filter(Job.id.in_(created_job_ids)).delete(
+                        synchronize_session=False
+                    )
+                cleanup_s.commit()
+            finally:
+                cleanup_s.close()
+
     def test_update_job_application_for_invalid_application(self):
         """Only valid job applications can be updated."""
-        jwt = generate_jwt(self.company_id, secret=SECRET_KEY)
+        jwt = generate_jwt(self.company_user_id, secret=SECRET_KEY)
 
-        # Use a non-existent application ID
         data = [{"applicationId": 99999999999, "status": "accepted"}]
 
         csrf = self.client.get("/api/v1/csrf-token")
@@ -414,7 +516,7 @@ class JobApplicationTestCase(RoutingTestCase):
         """A company can update a job application."""
         # Get the existing application ID from job 1
 
-        jwt = generate_jwt(self.company_id, secret=SECRET_KEY)
+        jwt = generate_jwt(self.company_user_id, secret=SECRET_KEY)
 
         data = [{"applicationId": self.job_app_id, "status": "accepted"}]
 
@@ -484,7 +586,7 @@ class JobApplicationTestCase(RoutingTestCase):
         app_ids = [app.id for app in job_apps]
         session.close()
 
-        jwt = generate_jwt(self.company_id, secret=SECRET_KEY)
+        jwt = generate_jwt(self.company_user_id, secret=SECRET_KEY)
 
         data = [
             {"applicationId": app_ids[0], "status": "accepted"},

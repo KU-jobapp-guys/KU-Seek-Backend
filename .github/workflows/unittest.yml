@@ -24,6 +24,7 @@ jobs:
           echo "DB_PORT=12000" >> .env
           echo "TESTING_DB=test_db" >> .env
           echo "SECRET_KEY=sadness_ahead" >> .env
+          echo "JOB_APP_LIMIT=${{ secrets.JOB_APP_LIMIT }}" >> .env
 
       - name: Start services
         run: docker compose up -d

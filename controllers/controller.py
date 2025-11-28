@@ -75,8 +75,10 @@ def get_self_profile() -> Dict:
     try:
         profile_manager = ProfileController(current_app.config["Database"])
         return profile_manager.get_self_profile()
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
+    except ValueError:
+        return jsonify({"message": "No profile data found."}), 404
 
 
 def get_user_profile(user_id: str) -> Dict:
@@ -85,8 +87,8 @@ def get_user_profile(user_id: str) -> Dict:
         profile_manager = ProfileController(current_app.config["Database"])
         profile_data = profile_manager.get_profile_by_uid(user_id)
         return _normalize_response(profile_data, 200)
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def create_profile(body: Dict) -> Optional[Dict]:
@@ -97,8 +99,8 @@ def create_profile(body: Dict) -> Optional[Dict]:
         new_profile = profile_manager.create_profile(uid, body)
         logger.info("Profile has been created.", user=uid)
         return _normalize_response(new_profile, 201)
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def update_profile(body: Dict) -> Optional[Dict]:
@@ -110,8 +112,8 @@ def update_profile(body: Dict) -> Optional[Dict]:
         logger.info("Profile has been updated.", user=uid)
         logger.debug(f"{body}", user=uid)
         return _normalize_response(profile_updated_data, 200)
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def upload_profile_images() -> Optional[Dict]:
@@ -119,8 +121,8 @@ def upload_profile_images() -> Optional[Dict]:
     try:
         profile_manager = ProfileController(current_app.config["Database"])
         return profile_manager.upload_profile_images()
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def get_all_jobs(job_id: str = ""):
@@ -129,8 +131,8 @@ def get_all_jobs(job_id: str = ""):
         job_manager = JobController(current_app.config["Database"])
         jobs = job_manager.get_all_jobs(job_id)
         return _normalize_response(jobs, 200)
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def post_job(body: Dict):
@@ -141,8 +143,8 @@ def post_job(body: Dict):
         new_job = job_manager.post_job(uid, body)
         logger.info(f"Job:{new_job['jobId']} has been posted.", user=uid)
         return _normalize_response(new_job, 201)
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def get_filtered_jobs(body: Dict):
@@ -154,8 +156,8 @@ def get_filtered_jobs(body: Dict):
             body["userId"] = get_auth_user_id(request)
         filtered_jobs = job_manager.get_filtered_job(body)
         return _normalize_response(filtered_jobs, 200)
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def get_bookmark_jobs():
@@ -164,8 +166,8 @@ def get_bookmark_jobs():
         job_manager = JobController(current_app.config["Database"])
         bookmarked_jobs = job_manager.get_bookmark_jobs(get_auth_user_id(request))
         return _normalize_response(bookmarked_jobs, 200)
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def post_bookmark_jobs(body: Dict):
@@ -182,8 +184,8 @@ def post_bookmark_jobs(body: Dict):
         )
         logger.debug(bookmarked_jobs)
         return _normalize_response(bookmarked_jobs, 201)
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def delete_bookmark_jobs(job_id: int):
@@ -198,8 +200,8 @@ def delete_bookmark_jobs(job_id: int):
         bid = deleted_bookmark.get("id") if isinstance(deleted_bookmark, dict) else None
         logger.info(f"Bookmark:{bid} for Job:{job_id} has been deleted.", user=user_id)
         return _normalize_response(deleted_bookmark, 200)
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def get_professor_connection():
@@ -209,8 +211,8 @@ def get_professor_connection():
         connection_controller = ProfessorController(current_app.config["Database"])
         professor_connection = connection_controller.get_connection(user_id)
         return _normalize_response(professor_connection, 200)
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def post_new_connection(body: dict):
@@ -221,8 +223,8 @@ def post_new_connection(body: dict):
             get_auth_user_id(request), body
         )
         return _normalize_response(new_connection, 201)
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def delete_connection(connection_id: int):
@@ -234,8 +236,8 @@ def delete_connection(connection_id: int):
             user_id, connection_id
         )
         return _normalize_response(deleted_connection, 200)
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def get_professor_annoucement():
@@ -244,8 +246,8 @@ def get_professor_annoucement():
         connection_controller = ProfessorController(current_app.config["Database"])
         annoucements = connection_controller.get_annoucement()
         return _normalize_response(annoucements, 200)
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def create_job_application(job_id: int) -> Optional[Dict]:
@@ -263,8 +265,8 @@ def create_job_application(job_id: int) -> Optional[Dict]:
         else:
             logger.warning(f"{job_application}")
         return job_application
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def fetch_user_job_applications() -> Optional[Dict]:
@@ -272,8 +274,8 @@ def fetch_user_job_applications() -> Optional[Dict]:
     try:
         app_manager = JobApplicationController(current_app.config["Database"])
         return app_manager.fetch_user_job_applications()
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def fetch_job_applications_from_job(job_id: int) -> Optional[Dict]:
@@ -281,8 +283,8 @@ def fetch_job_applications_from_job(job_id: int) -> Optional[Dict]:
     try:
         app_manager = JobApplicationController(current_app.config["Database"])
         return app_manager.fetch_job_application_from_job_post(job_id)
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def get_student_histories():
@@ -305,8 +307,8 @@ def get_tag_by_id(tag_id: int):
         skills = SkillsController(current_app.config["Database"])
         tag = skills.get_tag(tag_id)
         return jsonify(tag), 200
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def get_term_by_id(term_id: int):
@@ -315,8 +317,8 @@ def get_term_by_id(term_id: int):
         skills = SkillsController(current_app.config["Database"])
         term = skills.get_term(term_id)
         return jsonify(term), 200
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def get_all_terms():
@@ -325,8 +327,8 @@ def get_all_terms():
         skills = SkillsController(current_app.config["Database"])
         terms = skills.get_terms()
         return jsonify(terms), 200
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def post_tag(body: Dict):
@@ -343,17 +345,17 @@ def post_tag(body: Dict):
         name = body.get("name")
         try:
             tag_id, created = skills.post_tag(name)
-        except ValueError as e:
-            return jsonify({"message": str(e)}), 400
+        except ValueError:
+            return jsonify({"message": "Bad request."}), 400
         except Exception:
             raise
 
         status = 201 if created else 200
         return jsonify({"id": tag_id}), status
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
-    except ValueError as e:
-        return jsonify({"message": str(e)}), 400
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
+    except ValueError:
+        return jsonify({"message": "Bad request."}), 400
     except Exception as e:
         logger.exception("Unexpected error in post_tag: %s", e)
         return jsonify({"message": "Internal server error"}), 500
@@ -364,8 +366,8 @@ def update_job_applications_status(job_id: int, body: list[Dict]) -> Optional[Di
     try:
         app_manager = JobApplicationController(current_app.config["Database"])
         return app_manager.update_job_applications_status(job_id, body)
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def get_company():
@@ -386,8 +388,8 @@ def get_file(file_id: str) -> Response:
     try:
         file_manager = FileController(current_app.config["Database"])
         return file_manager.get_file(file_id)
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def download_file(file_id: str) -> Response:
@@ -395,8 +397,8 @@ def download_file(file_id: str) -> Response:
     try:
         file_manager = FileController(current_app.config["Database"])
         return file_manager.download_file(file_id)
-    except Warning as e:
-        return jsonify({"message": str(e)}), 429
+    except Warning:
+        return jsonify({"message": "Too many requests."}), 429
 
 
 def get_all_user_request() -> Optional[Dict]:

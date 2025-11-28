@@ -626,7 +626,8 @@ class JobController:
 
         except ValueError as e:
             session.close()
-            return models.ErrorMessage(str(e)), 400
+            self.logger.exception("Validation error filtering jobs: %s", e)
+            return models.ErrorMessage("Bad request"), 400
         except Exception:
             session.close()
             self.logger.exception("Error filtering jobs")
